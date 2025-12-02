@@ -27,6 +27,8 @@ import 'package:campus_care/screens/student/profile/student_profile_screen.dart'
 import 'package:campus_care/screens/student/timetable/student_timetable_screen.dart';
 import 'package:campus_care/screens/student/notifications/student_notifications_screen.dart';
 import 'package:campus_care/screens/student/medical/student_medical_reports_screen.dart';
+import 'package:campus_care/screens/student/exams/student_exam_timetable_screen.dart';
+import 'package:campus_care/screens/student/exams/student_results_screen.dart';
 import 'package:campus_care/screens/teacher/leave/leave_history_screen.dart';
 import 'package:campus_care/screens/teacher/profile/change_password_screen.dart';
 import 'package:campus_care/screens/teacher/profile/settings_screen.dart';
@@ -75,6 +77,8 @@ class AppRoutes {
   static const String studentTimetable = '/student/timetable';
   static const String studentNotifications = '/student/notifications';
   static const String studentMedicalReports = '/student/medical-reports';
+  static const String studentExamTimetable = '/student/exam-timetable';
+  static const String studentResults = '/student/results';
   static const String payment = '/student/payment';
 
   // Teacher Additional Routes
@@ -129,6 +133,10 @@ class AppRoutes {
     GetPage(
         name: studentMedicalReports,
         page: () => const StudentMedicalReportsScreen()),
+    GetPage(
+        name: studentExamTimetable,
+        page: () => const StudentExamTimetableScreen()),
+    GetPage(name: studentResults, page: () => const StudentResultsScreen()),
     GetPage(
         name: payment,
         page: () {

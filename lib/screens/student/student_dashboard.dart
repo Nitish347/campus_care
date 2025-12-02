@@ -228,6 +228,13 @@ class StudentDashboard extends StatelessWidget {
                     iconColor: Colors.red,
                   ),
                   DashboardCard(
+                    icon: Icons.assignment_outlined,
+                    title: 'Exams',
+                    subtitle: '5 upcoming',
+                    onTap: () => Get.toNamed(AppRoutes.studentExamTimetable),
+                    iconColor: Colors.purple,
+                  ),
+                  DashboardCard(
                     icon: Icons.schedule_outlined,
                     title: 'Timetable',
                     subtitle: 'View schedule',
