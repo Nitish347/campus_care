@@ -1,3 +1,4 @@
+import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -183,20 +184,7 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
       body: Column(
         children: [
           // Summary Header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  theme.colorScheme.primaryContainer,
-                  theme.colorScheme.secondaryContainer,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Row(
+          SummaryCard(child:  Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildSummaryItem(

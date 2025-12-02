@@ -1,3 +1,4 @@
+import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
@@ -371,20 +372,7 @@ class _StudentTimetableScreenState extends State<StudentTimetableScreen>
       body: Column(
         children: [
           // Current day indicator
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  theme.colorScheme.primaryContainer,
-                  theme.colorScheme.secondaryContainer,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Row(
+          SummaryCard(child: Row(
               children: [
                 Icon(
                   Icons.calendar_today,

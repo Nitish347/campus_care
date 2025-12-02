@@ -29,6 +29,8 @@ import 'package:campus_care/screens/student/notifications/student_notifications_
 import 'package:campus_care/screens/student/medical/student_medical_reports_screen.dart';
 import 'package:campus_care/screens/student/exams/student_exam_timetable_screen.dart';
 import 'package:campus_care/screens/student/exams/student_results_screen.dart';
+import 'package:campus_care/screens/teacher/homework/teacher_homework_management_screen.dart';
+import 'package:campus_care/screens/teacher/attendance/teacher_attendance_management_screen.dart';
 import 'package:campus_care/screens/teacher/leave/leave_history_screen.dart';
 import 'package:campus_care/screens/teacher/profile/change_password_screen.dart';
 import 'package:campus_care/screens/teacher/profile/settings_screen.dart';
@@ -82,6 +84,10 @@ class AppRoutes {
   static const String payment = '/student/payment';
 
   // Teacher Additional Routes
+  static const String teacherHomeworkManagement =
+      '/teacher/homework-management';
+  static const String teacherAttendanceManagement =
+      '/teacher/attendance-management';
   static const String leaveHistory = '/teacher/leave-history';
   static const String changePassword = '/teacher/change-password';
   static const String settings = '/teacher/settings';
@@ -112,6 +118,12 @@ class AppRoutes {
 
     // Teacher Pages
     GetPage(name: teacherDashboard, page: () => const TeacherDashboard()),
+    GetPage(
+        name: teacherHomeworkManagement,
+        page: () => const TeacherHomeworkManagementScreen()),
+    GetPage(
+        name: teacherAttendanceManagement,
+        page: () => const TeacherAttendanceManagementScreen()),
     GetPage(name: attendance, page: () => const AttendanceScreen()),
     GetPage(name: homework, page: () => const HomeworkScreen()),
     GetPage(name: chatList, page: () => const ChatListScreen()),

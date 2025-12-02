@@ -1,14 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
-import 'package:campus_care/widgets/inputs/custom_text_field.dart';
-import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
-import 'package:campus_care/widgets/buttons/primary_button.dart';
-import 'package:campus_care/widgets/common/info_card.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
-import 'package:campus_care/widgets/common/section_header.dart';
 
 class TeacherProfileScreen extends StatelessWidget {
   const TeacherProfileScreen({super.key});
@@ -17,321 +12,409 @@ class TeacherProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final authController = Get.find<AuthController>();
-    final user = authController.currentUser;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile & Leave'),
-      ),
-      body: SingleChildScrollView(
-        child: ResponsivePadding(
-          child: Column(
-            children: [
-              // Profile Header
-              InfoCard(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: theme.colorScheme.primaryContainer,
-                        child: Text(
-                          user?.name.substring(0, 1).toUpperCase() ?? 'T',
-                          style: theme.textTheme.headlineMedium?.copyWith(
-                            color: theme.colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        user?.name ?? 'Teacher',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        user?.email ?? '',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      PrimaryButton(
-                        onPressed: () {
-                          _showEditProfileDialog(context);
-                        },
-                        child: const Text('Edit Profile'),
-                      ),
+      body: CustomScrollView(
+        slivers: [
+          // Modern App Bar with Gradient
+          SliverAppBar(
+            expandedHeight: 280,
+            pinned: true,
+            stretch: true,
+            flexibleSpace: FlexibleSpaceBar(
+              background: _buildProfileHeader(context, authController),
+              stretchModes: const [
+                StretchMode.zoomBackground,
+                StretchMode.blurBackground,
+              ],
+            ),
+          ),
+
+          // Profile Content
+          SliverToBoxAdapter(
+            child: ResponsivePadding(
+              child: Column(
+                children: [
+                  const SizedBox(height: 24),
+
+                  // Quick Stats
+                  _buildQuickStatsRow(context),
+                  const SizedBox(height: 24),
+
+                  // Personal Information
+                  _buildSectionCard(
+                    context,
+                    'Personal Information',
+                    Icons.person_rounded,
+                    Colors.blue,
+                    [
+                      _buildInfoRow(context, Icons.badge_rounded, 'Teacher ID',
+                          'TCH-2024-001'),
+                      _buildInfoRow(
+                          context,
+                          Icons.email_rounded,
+                          'Email',
+                          authController.currentUser?.email ??
+                              'teacher@example.com'),
+                      _buildInfoRow(context, Icons.phone_rounded, 'Phone',
+                          '+1 234 567 8900'),
+                      _buildInfoRow(context, Icons.location_on_rounded,
+                          'Address', '123 Main Street, City'),
                     ],
                   ),
-                ),
-              ),
-              const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
-              // Personal Information
-              SectionHeader(title: 'Personal Information'),
-              const SizedBox(height: 12),
-              InfoCard(
-                child: Column(
-                  children: [
-                    _buildInfoTile(context, 'Email', user?.email ?? ''),
-                    const Divider(),
-                    _buildInfoTile(context, 'Phone', user?.phone ?? 'Not provided'),
-                    const Divider(),
-                    _buildInfoTile(context, 'Role', 'Teacher'),
-                    const Divider(),
-                    _buildInfoTile(context, 'Department', 'Mathematics'),
-                    const Divider(),
-                    _buildInfoTile(context, 'Experience', '5 years'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
+                  // Professional Information
+                  _buildSectionCard(
+                    context,
+                    'Professional Information',
+                    Icons.work_rounded,
+                    Colors.purple,
+                    [
+                      _buildInfoRow(context, Icons.school_rounded, 'Department',
+                          'Mathematics'),
+                      _buildInfoRow(context, Icons.class_rounded, 'Classes',
+                          '5A, 5B, 6A'),
+                      _buildInfoRow(context, Icons.calendar_today_rounded,
+                          'Joining Date', 'Sep 01, 2020'),
+                      _buildInfoRow(context, Icons.stars_rounded, 'Experience',
+                          '5 Years'),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
 
-              // Leave Management
-              SectionHeader(title: 'Leave Management'),
-              const SizedBox(height: 12),
-              InfoCard(
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.calendar_today),
-                      title: const Text('Leave Balance'),
-                      trailing: Text(
-                        '15 days',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                    const Divider(),
-                    ListTile(
-                      leading: const Icon(Icons.add_circle_outline),
-                      title: const Text('Apply for Leave'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        _showLeaveDialog(context);
-                      },
-                    ),
-                    const Divider(),
-                      ListTile(
-                        leading: const Icon(Icons.history),
-                        title: const Text('Leave History'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          Get.toNamed(AppRoutes.leaveHistory);
-                        },
-                      ),
-                  ],
-                ),
+                  // Action Buttons
+                  _buildActionButtons(context, authController),
+                  const SizedBox(height: 32),
+                ],
               ),
-              const SizedBox(height: 24),
-
-              // Quick Actions
-              SectionHeader(title: 'Quick Actions'),
-              const SizedBox(height: 12),
-              InfoCard(
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.lock),
-                      title: const Text('Change Password'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        Get.toNamed(AppRoutes.changePassword);
-                      },
-                    ),
-                    const Divider(),
-                    ListTile(
-                      leading: const Icon(Icons.settings),
-                      title: const Text('Settings'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        Get.toNamed(AppRoutes.settings);
-                      },
-                    ),
-                    const Divider(),
-                    ListTile(
-                      leading: const Icon(Icons.logout, color: Colors.red),
-                      title: const Text('Logout', style: TextStyle(color: Colors.red)),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => authController.logout(),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoTile(BuildContext context, String label, String value) {
-    final theme = Theme.of(context);
-    return ListTile(
-      title: Text(
-        label,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
-      subtitle: Text(
-        value,
-        style: theme.textTheme.bodyLarge,
-      ),
-    );
-  }
-
-  void _showEditProfileDialog(BuildContext context) {
-    final authController = Get.find<AuthController>();
-    final user = authController.currentUser;
-    
-    final nameController = TextEditingController(text: user?.name ?? '');
-    final phoneController = TextEditingController(text: user?.phone ?? '');
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Profile'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CustomTextField(
-                controller: nameController,
-                labelText: 'Name',
-                prefixIcon: const Icon(Icons.person),
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: phoneController,
-                labelText: 'Phone',
-                keyboardType: TextInputType.phone,
-                prefixIcon: const Icon(Icons.phone),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          PrimaryButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Get.snackbar('Success', 'Profile updated successfully');
-            },
-            child: const Text('Save'),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showLeaveDialog(BuildContext context) {
-    final fromDateController = TextEditingController();
-    final toDateController = TextEditingController();
-    final reasonController = TextEditingController();
-    String? selectedLeaveType;
-    DateTime? fromDate;
+  Widget _buildProfileHeader(
+      BuildContext context, AuthController authController) {
+    final theme = Theme.of(context);
 
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Apply for Leave'),
-          content: SingleChildScrollView(
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Gradient Background
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
+            ),
+          ),
+        ),
+
+        // Glassmorphism Effect
+        BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.1),
+                  Colors.white.withOpacity(0.05),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Profile Content
+        SafeArea(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 40),
+
+              // Profile Avatar
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 30,
+                      spreadRadius: 5,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                  border: Border.all(
+                      color: Colors.white.withOpacity(0.3), width: 4),
+                ),
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    authController.currentUser?.name
+                            .substring(0, 1)
+                            .toUpperCase() ??
+                        'T',
+                    style: theme.textTheme.displayLarge?.copyWith(
+                      color: const Color(0xFF4F46E5),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Name
+              Text(
+                authController.currentUser?.name ?? 'Teacher Name',
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+
+              // Email Badge
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.email_rounded,
+                        color: Colors.white, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      authController.currentUser?.email ??
+                          'teacher@example.com',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickStatsRow(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatCard(
+              context, Icons.class_rounded, 'Classes', '5', Colors.blue),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatCard(
+              context, Icons.people_rounded, 'Students', '120', Colors.green),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatCard(context, Icons.assignment_rounded, 'Homework',
+              '8', Colors.orange),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(BuildContext context, IconData icon, String label,
+      String value, Color color) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard(
+    BuildContext context,
+    String title,
+    IconData icon,
+    Color accentColor,
+    List<Widget> children,
+  ) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(left: BorderSide(color: accentColor, width: 4)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, color: accentColor, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    title,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ...children,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(
+      BuildContext context, IconData icon, String label, String value) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 20, color: theme.colorScheme.primary),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CustomDropdown<String>(
-                  value: selectedLeaveType,
-                  labelText: 'Leave Type',
-                  items: ['Sick Leave', 'Casual Leave', 'Earned Leave', 'Other']
-                      .map((type) => DropdownMenuItem(
-                            value: type,
-                            child: Text(type),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedLeaveType = value;
-                    });
-                  },
+                Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  readOnly: true,
-                  controller: fromDateController,
-                  labelText: 'From Date',
-                  prefixIcon: const Icon(Icons.calendar_today),
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        fromDate = picked;
-                        fromDateController.text = DateFormat('MMM dd, yyyy').format(picked);
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  readOnly: true,
-                  controller: toDateController,
-                  labelText: 'To Date',
-                  prefixIcon: const Icon(Icons.calendar_today),
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: fromDate ?? DateTime.now(),
-                      firstDate: fromDate ?? DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        toDateController.text = DateFormat('MMM dd, yyyy').format(picked);
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  controller: reasonController,
-                  labelText: 'Reason',
-                  maxLines: 3,
-                  prefixIcon: const Icon(Icons.note),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            PrimaryButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Get.snackbar('Success', 'Leave application submitted');
-              },
-              child: const Text('Submit'),
-            ),
-          ],
-        ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildActionButtons(
+      BuildContext context, AuthController authController) {
+    final theme = Theme.of(context);
+
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: FilledButton.icon(
+            onPressed: () {},
+            icon: const Icon(Icons.edit),
+            label: const Text('Edit Profile'),
+            style: FilledButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: OutlinedButton.icon(
+            onPressed: () => authController.logout(),
+            icon: const Icon(Icons.logout),
+            label: const Text('Logout'),
+            style: OutlinedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

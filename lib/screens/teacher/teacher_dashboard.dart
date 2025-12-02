@@ -185,14 +185,15 @@ class TeacherDashboard extends StatelessWidget {
                   icon: Icons.assignment_outlined,
                   title: 'Manage Homework',
                   subtitle: 'Assign & review',
-                  onTap: () => Get.toNamed(AppRoutes.homework),
+                  onTap: () => Get.toNamed(AppRoutes.teacherHomeworkManagement),
                   iconColor: theme.colorScheme.primary,
                 ),
                 DashboardCard(
                   icon: Icons.checklist_outlined,
                   title: 'Mark Attendance',
                   subtitle: 'Take attendance',
-                  onTap: () => Get.toNamed(AppRoutes.attendance),
+                  onTap: () =>
+                      Get.toNamed(AppRoutes.teacherAttendanceManagement),
                   iconColor: theme.colorScheme.secondary,
                 ),
                 DashboardCard(
