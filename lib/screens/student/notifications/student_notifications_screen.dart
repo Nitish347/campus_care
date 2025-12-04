@@ -1,3 +1,5 @@
+import 'package:campus_care/utils/app_utils.dart';
+import 'package:campus_care/widgets/popup_widgets/notification_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:campus_care/models/notice_model.dart';
@@ -97,250 +99,13 @@ class _StudentNotificationsScreenState
     }
   }
 
-  Color _getPriorityColor(String priority) {
-    switch (priority.toLowerCase()) {
-      case 'high':
-        return Colors.red;
-      case 'medium':
-        return Colors.orange;
-      case 'low':
-        return Colors.blue;
-      default:
-        return Colors.grey;
-    }
-  }
 
-  IconData _getPriorityIcon(String priority) {
-    switch (priority.toLowerCase()) {
-      case 'high':
-        return Icons.priority_high;
-      case 'medium':
-        return Icons.info_outline;
-      case 'low':
-        return Icons.low_priority;
-      default:
-        return Icons.notifications_outlined;
-    }
-  }
 
-  void _showNoticeDetails(NoticeModel notice) {
-    final theme = Theme.of(context);
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: _getPriorityColor(notice.priority)
-                      .withValues(alpha: 0.1),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _getPriorityColor(notice.priority)
-                            .withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        _getPriorityIcon(notice.priority),
-                        color: _getPriorityColor(notice.priority),
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            notice.title,
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getPriorityColor(notice.priority)
-                                  .withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              notice.priority.toUpperCase(),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: _getPriorityColor(notice.priority),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-              ),
-              // Content
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildDetailRow(
-                        context,
-                        Icons.description,
-                        'Description',
-                        notice.description,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildDetailRow(
-                        context,
-                        Icons.calendar_today,
-                        'Issued Date',
-                        DateFormat('EEEE, MMMM dd, yyyy').format(notice.issuedDate),
-                      ),
-                      if (notice.expiryDate != null) ...[
-                        const SizedBox(height: 16),
-                        _buildDetailRow(
-                          context,
-                          Icons.event_busy,
-                          'Expiry Date',
-                          DateFormat('EEEE, MMMM dd, yyyy').format(notice.expiryDate!),
-                        ),
-                      ],
-                      if (notice.attachment != null &&
-                          notice.attachment!.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        Text(
-                          'Attachments',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ...notice.attachment!.map((attachment) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.attach_file,
-                                  size: 20,
-                                  color: theme.colorScheme.primary,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    attachment,
-                                    style: theme.textTheme.bodyMedium,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              // Footer
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                    ),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Close'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildDetailRow(
-    BuildContext context,
-    IconData icon,
-    String label,
-    String value,
-  ) {
-    final theme = Theme.of(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            icon,
-            size: 20,
-            color: theme.colorScheme.primary,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -370,14 +135,14 @@ class _StudentNotificationsScreenState
                   itemCount: _notices.length,
                   itemBuilder: (context, index) {
                     final notice = _notices[index];
-                    final priorityColor = _getPriorityColor(notice.priority);
+                    final priorityColor = AppUtils.getPriorityColor(notice.priority);
                     final isExpired = notice.expiryDate != null &&
                         notice.expiryDate!.isBefore(DateTime.now());
 
                     return InfoCard(
                       margin: const EdgeInsets.only(bottom: 12),
                       child: InkWell(
-                        onTap: () => _showNoticeDetails(notice),
+                        onTap: () => NotificationDetailPopup.show(context, notice),
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
                           decoration: BoxDecoration(
@@ -389,23 +154,23 @@ class _StudentNotificationsScreenState
                             ),
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(10),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: priorityColor.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    _getPriorityIcon(notice.priority),
-                                    color: priorityColor,
-                                    size: 24,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
+                                // Container(
+                                //   padding: const EdgeInsets.all(12),
+                                //   decoration: BoxDecoration(
+                                //     color: priorityColor.withValues(alpha: 0.1),
+                                //     borderRadius: BorderRadius.circular(12),
+                                //   ),
+                                //   child: Icon(
+                                //     AppUtils.getPriorityIcon(notice.priority),
+                                //     color: priorityColor,
+                                //     size: 24,
+                                //   ),
+                                // ),
+                                const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
@@ -416,32 +181,32 @@ class _StudentNotificationsScreenState
                                           Expanded(
                                             child: Text(
                                               notice.title,
-                                              style: theme.textTheme.titleLarge
+                                              style: theme.textTheme.titleMedium
                                                   ?.copyWith(
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: priorityColor
-                                                  .withValues(alpha: 0.2),
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                            ),
-                                            child: Text(
-                                              notice.priority.toUpperCase(),
-                                              style: theme.textTheme.labelSmall
-                                                  ?.copyWith(
-                                                color: priorityColor,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
+                                          // Container(
+                                          //   padding: const EdgeInsets.symmetric(
+                                          //     horizontal: 8,
+                                          //     vertical: 4,
+                                          //   ),
+                                          //   decoration: BoxDecoration(
+                                          //     color: priorityColor
+                                          //         .withValues(alpha: 0.2),
+                                          //     borderRadius:
+                                          //         BorderRadius.circular(6),
+                                          //   ),
+                                          //   child: Text(
+                                          //     notice.priority.toUpperCase(),
+                                          //     style: theme.textTheme.labelSmall
+                                          //         ?.copyWith(
+                                          //       color: priorityColor,
+                                          //       fontWeight: FontWeight.bold,
+                                          //     ),
+                                          //   ),
+                                          // ),
                                         ],
                                       ),
                                       const SizedBox(height: 8),
@@ -498,10 +263,10 @@ class _StudentNotificationsScreenState
                                     ],
                                   ),
                                 ),
-                                Icon(
-                                  Icons.chevron_right,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
+                                // Icon(
+                                //   Icons.chevron_right,
+                                //   color: theme.colorScheme.onSurfaceVariant,
+                                // ),
                               ],
                             ),
                           ),

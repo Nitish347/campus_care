@@ -135,7 +135,7 @@ class TeacherDashboard extends StatelessWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 1.5,
+              childAspectRatio: 1.2,
               children: [
                 StatCard(
                   icon: Icons.class_outlined,
@@ -179,7 +179,7 @@ class TeacherDashboard extends StatelessWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 1.1,
+              childAspectRatio: 0.9,
               children: [
                 DashboardCard(
                   icon: Icons.assignment_outlined,
@@ -198,9 +198,9 @@ class TeacherDashboard extends StatelessWidget {
                 ),
                 DashboardCard(
                   icon: Icons.edit_outlined,
-                  title: 'Enter Marks',
-                  subtitle: 'Grade students',
-                  onTap: () => Get.toNamed(AppRoutes.marksEntry),
+                  title: 'Manage Exams',
+                  subtitle: 'Exams & marks',
+                  onTap: () => Get.toNamed(AppRoutes.examManagement),
                   iconColor: theme.colorScheme.tertiary,
                 ),
                 DashboardCard(

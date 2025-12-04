@@ -1,8 +1,12 @@
+import 'package:campus_care/widgets/common/summary_card.dart';
+import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
+import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:campus_care/models/homework_model.dart';
 import 'package:campus_care/screens/teacher/homework/add_edit_homework_screen.dart';
+import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 
@@ -10,12 +14,10 @@ class TeacherHomeworkManagementScreen extends StatefulWidget {
   const TeacherHomeworkManagementScreen({super.key});
 
   @override
-  State<TeacherHomeworkManagementScreen> createState() =>
-      _TeacherHomeworkManagementScreenState();
+  State<TeacherHomeworkManagementScreen> createState() => _TeacherHomeworkManagementScreenState();
 }
 
-class _TeacherHomeworkManagementScreenState
-    extends State<TeacherHomeworkManagementScreen> {
+class _TeacherHomeworkManagementScreenState extends State<TeacherHomeworkManagementScreen> {
   String _selectedFilter = 'All';
   final List<String> _filters = ['All', 'Mathematics', 'Science', 'English'];
 
@@ -27,9 +29,14 @@ class _TeacherHomeworkManagementScreenState
       description: 'Complete exercises 1-20 from textbook',
       subject: 'Mathematics',
       teacherId: 'teacher1',
+      classId: 'class_5a',
+      section: 'A',
       assignedStudents: ['student1', 'student2', 'student3'],
       dueDate: DateTime.now().add(const Duration(days: 3)),
       createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      priority: 'high',
+      totalMarks: 20,
+      attachments: ['worksheet.pdf'],
     ),
     HomeWorkModel(
       id: '2',
@@ -37,9 +44,13 @@ class _TeacherHomeworkManagementScreenState
       description: 'Prepare a model on solar system',
       subject: 'Science',
       teacherId: 'teacher1',
+      classId: 'class_5a',
+      section: 'A',
       assignedStudents: ['student1', 'student2'],
       dueDate: DateTime.now().add(const Duration(days: 7)),
       createdAt: DateTime.now().subtract(const Duration(days: 5)),
+      priority: 'medium',
+      totalMarks: 30,
     ),
     HomeWorkModel(
       id: '3',
@@ -47,9 +58,13 @@ class _TeacherHomeworkManagementScreenState
       description: 'Write an essay on environmental conservation',
       subject: 'English',
       teacherId: 'teacher1',
+      classId: 'class_5b',
+      section: 'B',
       assignedStudents: ['student1', 'student2', 'student3', 'student4'],
       dueDate: DateTime.now().subtract(const Duration(days: 1)),
       createdAt: DateTime.now().subtract(const Duration(days: 10)),
+      priority: 'high',
+      totalMarks: 25,
     ),
   ];
 
@@ -102,8 +117,7 @@ class _TeacherHomeworkManagementScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final overdueCount =
-        _homework.where((h) => _getStatus(h.dueDate) == 'Overdue').length;
+    final overdueCount = _homework.where((h) => _getStatus(h.dueDate) == 'Overdue').length;
 
     return Scaffold(
       appBar: AppBar(
@@ -130,20 +144,10 @@ class _TeacherHomeworkManagementScreenState
       ),
       body: Column(
         children: [
+        ClassSectionDropDown(),
+
           // Summary Header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  theme.colorScheme.primaryContainer,
-                  theme.colorScheme.secondaryContainer,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
+          SummaryCard(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -182,7 +186,7 @@ class _TeacherHomeworkManagementScreenState
             ),
           ),
 
-          // Homework Table
+          // Homework List
           Expanded(
             child: _filteredHomework.isEmpty
                 ? EmptyState(
@@ -193,222 +197,262 @@ class _TeacherHomeworkManagementScreenState
                         : 'No homework found for $_selectedFilter',
                   )
                 : ResponsivePadding(
-                    child: SingleChildScrollView(
+                    child: ListView.builder(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Card(
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                            color: theme.colorScheme.outlineVariant,
-                            width: 1,
-                          ),
-                        ),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: DataTable(
-                            headingRowColor: WidgetStateProperty.all(
-                              theme.colorScheme.primaryContainer
-                                  .withOpacity(0.5),
-                            ),
-                            headingTextStyle:
-                                theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                            dataRowMinHeight: 60,
-                            dataRowMaxHeight: 80,
-                            columnSpacing: 24,
-                            horizontalMargin: 16,
-                            columns: const [
-                              DataColumn(label: Text('Title')),
-                              DataColumn(label: Text('Subject')),
-                              DataColumn(label: Text('Due Date')),
-                              DataColumn(label: Text('Students')),
-                              DataColumn(label: Text('Status')),
-                              DataColumn(label: Text('Actions')),
-                            ],
-                            rows: _filteredHomework.map((homework) {
-                              final subjectColor =
-                                  _getSubjectColor(homework.subject);
-                              final status = _getStatus(homework.dueDate);
-                              final statusColor = _getStatusColor(status);
+                      itemCount: _filteredHomework.length,
+                      itemBuilder: (context, index) {
+                        final homework = _filteredHomework[index];
+                        final subjectColor = _getSubjectColor(homework.subject);
+                        final status = _getStatus(homework.dueDate);
+                        final statusColor = _getStatusColor(status);
 
-                              return DataRow(
-                                cells: [
-                                  // Title
-                                  DataCell(
-                                    SizedBox(
-                                      width: 200,
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            homework.title,
-                                            style: theme.textTheme.bodyMedium
-                                                ?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(
+                              color: theme.colorScheme.outlineVariant,
+                              width: 1,
+                            ),
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () => _showHomeworkDetails(context, homework),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Header Row
+                                  Row(
+                                    children: [
+                                      // Subject Badge
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: subjectColor.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          homework.subject,
+                                          style: theme.textTheme.labelMedium?.copyWith(
+                                            color: subjectColor,
+                                            fontWeight: FontWeight.bold,
                                           ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            homework.description,
-                                            style: theme.textTheme.bodySmall
-                                                ?.copyWith(
-                                              color: theme
-                                                  .colorScheme.onSurfaceVariant,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    onTap: () =>
-                                        _showHomeworkDetails(context, homework),
-                                  ),
-                                  // Subject
-                                  DataCell(
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: subjectColor.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        homework.subject,
-                                        style: theme.textTheme.labelMedium
-                                            ?.copyWith(
-                                          color: subjectColor,
-                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                  // Due Date
-                                  DataCell(
-                                    Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          DateFormat('MMM dd, yyyy')
-                                              .format(homework.dueDate),
-                                          style: theme.textTheme.bodyMedium,
-                                        ),
-                                        Text(
-                                          DateFormat('hh:mm a')
-                                              .format(homework.dueDate),
-                                          style: theme.textTheme.bodySmall
-                                              ?.copyWith(
-                                            color: theme
-                                                .colorScheme.onSurfaceVariant,
+                                      const SizedBox(width: 8),
+                                      // Priority Badge
+                                      if (homework.priority case final priority?)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  // Students
-                                  DataCell(
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: theme
-                                            .colorScheme.primaryContainer
-                                            .withOpacity(0.5),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.people,
-                                            size: 16,
-                                            color: theme.colorScheme.primary,
+                                          decoration: BoxDecoration(
+                                            color: homework.priority == 'high'
+                                                ? Colors.red.withOpacity(0.1)
+                                                : homework.priority == 'medium'
+                                                    ? Colors.orange.withOpacity(0.1)
+                                                    : Colors.blue.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(6),
                                           ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '${homework.assignedStudents.length}',
-                                            style: theme.textTheme.labelMedium
-                                                ?.copyWith(
-                                              color: theme.colorScheme.primary,
+                                          child: Text(
+                                            priority.toUpperCase(),
+                                            style: theme.textTheme.labelSmall?.copyWith(
+                                              color: homework.priority == 'high'
+                                                  ? Colors.red
+                                                  : homework.priority == 'medium'
+                                                      ? Colors.orange
+                                                      : Colors.blue,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                        ],
+                                        ),
+                                      const Spacer(),
+                                      // Status Badge
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: statusColor.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: statusColor.withOpacity(0.3),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          status,
+                                          style: theme.textTheme.labelSmall?.copyWith(
+                                            color: statusColor,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                  // Status
-                                  DataCell(
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: statusColor.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: statusColor.withOpacity(0.3),
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        status,
-                                        style: theme.textTheme.labelSmall
-                                            ?.copyWith(
-                                          color: statusColor,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                                  const SizedBox(height: 12),
+
+                                  // Title and Description
+                                  Text(
+                                    homework.title,
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
                                     ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  // Actions
-                                  DataCell(
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.edit_outlined),
-                                          iconSize: 20,
-                                          onPressed: () =>
-                                              _showEditHomeworkDialog(
-                                                  context, homework),
-                                          tooltip: 'Edit',
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    homework.description,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 12),
+
+                                  // Info Row
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today,
+                                        size: 16,
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        DateFormat('MMM dd, yyyy - hh:mm a').format(homework.dueDate),
+                                        style: theme.textTheme.bodySmall?.copyWith(
+                                          color: theme.colorScheme.onSurfaceVariant,
                                         ),
-                                        IconButton(
-                                          icon:
-                                              const Icon(Icons.delete_outline),
-                                          iconSize: 20,
-                                          color: theme.colorScheme.error,
-                                          onPressed: () =>
-                                              _showDeleteConfirmation(
-                                                  context, homework),
-                                          tooltip: 'Delete',
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Icon(
+                                        Icons.class_,
+                                        size: 16,
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${homework.classId} - ${homework.section}',
+                                        style: theme.textTheme.bodySmall?.copyWith(
+                                          color: theme.colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+
+                                  // Bottom Row - Students and Actions
+                                  Row(
+                                    children: [
+                                      // Students Count
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme.primaryContainer.withOpacity(0.5),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.people,
+                                              size: 16,
+                                              color: theme.colorScheme.primary,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${homework.assignedStudents.length} Students',
+                                              style: theme.textTheme.labelMedium?.copyWith(
+                                                color: theme.colorScheme.primary,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (homework.totalMarks != null) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.purple.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.grade,
+                                                size: 16,
+                                                color: Colors.purple,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${homework.totalMarks} Marks',
+                                                style: theme.textTheme.labelMedium?.copyWith(
+                                                  color: Colors.purple,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ],
-                                    ),
+                                      const Spacer(),
+                                      // Action Buttons
+                                      IconButton(
+                                        icon: const Icon(Icons.visibility_outlined),
+                                        iconSize: 20,
+                                        onPressed: () => Get.toNamed(
+                                          AppRoutes.homeworkSubmissions,
+                                          arguments: homework,
+                                        ),
+                                        tooltip: 'View Submissions',
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                      // IconButton(
+                                      //   icon: const Icon(Icons.edit_outlined),
+                                      //   iconSize: 20,
+                                      //   onPressed: () =>
+                                      //       _showEditHomeworkDialog(
+                                      //           context, homework),
+                                      //   tooltip: 'Edit',
+                                      //   color: theme.colorScheme.primary,
+                                      // ),
+                                      // IconButton(
+                                      //   icon: const Icon(Icons.delete_outline),
+                                      //   iconSize: 20,
+                                      //   color: theme.colorScheme.error,
+                                      //   onPressed: () =>
+                                      //       _showDeleteConfirmation(
+                                      //           context, homework),
+                                      //   tooltip: 'Delete',
+                                      // ),
+                                    ],
                                   ),
                                 ],
-                              );
-                            }).toList(),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ),
           ),
@@ -558,8 +602,7 @@ class _TeacherHomeworkManagementScreenState
             // Details
             Row(
               children: [
-                Icon(Icons.calendar_today,
-                    size: 20, color: theme.colorScheme.primary),
+                Icon(Icons.calendar_today, size: 20, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Due: ${DateFormat('EEEE, MMMM dd, yyyy - hh:mm a').format(homework.dueDate)}',

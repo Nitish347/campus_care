@@ -7,6 +7,9 @@ class ExamResult {
   final double totalMarks;
   final String? grade;
   final String? remarks;
+  final String status; // pending, submitted, graded
+  final bool isPresent; // attendance status for the exam
+  final String? teacherRemarks;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -19,6 +22,9 @@ class ExamResult {
     required this.totalMarks,
     this.grade,
     this.remarks,
+    this.status = 'pending',
+    this.isPresent = true,
+    this.teacherRemarks,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -33,8 +39,10 @@ class ExamResult {
       totalMarks: (json['totalMarks'] ?? 0).toDouble(),
       grade: json['grade'],
       remarks: json['remarks'],
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+      createdAt:
+          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+      updatedAt:
+          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
     );
   }
 
@@ -48,6 +56,9 @@ class ExamResult {
       'totalMarks': totalMarks,
       'grade': grade,
       'remarks': remarks,
+      'status': status,
+      'isPresent': isPresent,
+      'teacherRemarks': teacherRemarks,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -78,6 +89,9 @@ class ExamResult {
     double? totalMarks,
     String? grade,
     String? remarks,
+    String? status,
+    bool? isPresent,
+    String? teacherRemarks,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -90,9 +104,11 @@ class ExamResult {
       totalMarks: totalMarks ?? this.totalMarks,
       grade: grade ?? this.grade,
       remarks: remarks ?? this.remarks,
+      status: status ?? this.status,
+      isPresent: isPresent ?? this.isPresent,
+      teacherRemarks: teacherRemarks ?? this.teacherRemarks,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }
-

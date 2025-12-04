@@ -1,3 +1,6 @@
+import 'package:campus_care/widgets/buttons/primary_button.dart';
+import 'package:campus_care/widgets/common/summary_card.dart';
+import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -107,20 +110,7 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             // Header
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    theme.colorScheme.primaryContainer,
-                    theme.colorScheme.secondaryContainer,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
+            Column(
                 children: [
                   Icon(
                     Icons.assignment_outlined,
@@ -139,6 +129,9 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
                   ),
                 ],
               ),
+            SizedBox(height: 10,),
+            ClassSectionDropDown(
+              padding: 0,
             ),
 
             const SizedBox(height: 24),
@@ -210,8 +203,24 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
               suffixIcon: const Icon(Icons.calendar_today),
               onTap: _selectDueDate,
             ),
+            const SizedBox(height: 16),
+            CommonFormField(
+              label: 'Total Marks',
+              hint: 'Enter total marks',
+              controller: _titleController,
+              required: true,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a title';
+                }
+                return null;
+              },
+            ),
+
 
             const SizedBox(height: 32),
+
+
 
             // Save Button
             SizedBox(

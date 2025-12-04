@@ -40,6 +40,9 @@ import 'package:campus_care/screens/admin/medical/add_medical_record_screen.dart
 import 'package:campus_care/screens/admin/academic/add_class_screen.dart';
 import 'package:campus_care/screens/admin/academic/add_timetable_screen.dart';
 import 'package:campus_care/screens/student/payment/payment_screen.dart';
+import 'package:campus_care/screens/teacher/homework/homework_submissions_screen.dart';
+import 'package:campus_care/screens/teacher/homework/student_homework_detail_screen.dart';
+import 'package:campus_care/screens/teacher/marks/exam_management_screen.dart';
 
 class AppRoutes {
   // Auth Routes
@@ -98,6 +101,12 @@ class AppRoutes {
   static const String addMedicalRecord = '/admin/medical/add';
   static const String addClass = '/admin/classes/add';
   static const String addTimetable = '/admin/timetable/add';
+
+  // Teacher Homework & Exam Routes
+  static const String homeworkSubmissions = '/teacher/homework/submissions';
+  static const String studentHomeworkDetail =
+      '/teacher/homework/student-detail';
+  static const String examManagement = '/teacher/exams';
 
   static List<GetPage> getPages = [
     GetPage(name: login, page: () => const LoginScreen()),
@@ -172,5 +181,24 @@ class AppRoutes {
     GetPage(name: addMedicalRecord, page: () => const AddMedicalRecordScreen()),
     GetPage(name: addClass, page: () => const AddClassScreen()),
     GetPage(name: addTimetable, page: () => const AddTimetableScreen()),
+
+    // Teacher Homework & Exam Pages
+    GetPage(
+        name: homeworkSubmissions,
+        page: () {
+          final homework = Get.arguments;
+          return HomeworkSubmissionsScreen(homework: homework);
+        }),
+    GetPage(
+        name: studentHomeworkDetail,
+        page: () {
+          final args = Get.arguments as Map<String, dynamic>;
+          return StudentHomeworkDetailScreen(
+            homework: args['homework'],
+            student: args['student'],
+            submission: args['submission'],
+          );
+        }),
+    GetPage(name: examManagement, page: () => const ExamManagementScreen()),
   ];
 }

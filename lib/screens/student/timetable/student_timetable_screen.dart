@@ -449,13 +449,13 @@ class _StudentTimetableScreenState extends State<StudentTimetableScreen>
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Card(
-                          elevation: 0,
+                          elevation: 2,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(
-                              color: theme.colorScheme.outlineVariant,
-                              width: 1,
-                            ),
+                            // side: BorderSide(
+                            //   color: theme.colorScheme.outlineVariant,
+                            //   width: 1,
+                            // ),
                           ),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(16),
