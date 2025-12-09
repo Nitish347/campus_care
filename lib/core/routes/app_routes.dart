@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import 'package:campus_care/screens/auth/login_screen.dart';
+import 'package:campus_care/screens/splash_screen.dart';
 import 'package:campus_care/screens/admin/admin_dashboard.dart';
 import 'package:campus_care/screens/admin/student_management/student_list_screen.dart';
 import 'package:campus_care/screens/admin/student_management/add_student_screen.dart';
@@ -43,13 +44,22 @@ import 'package:campus_care/screens/student/payment/payment_screen.dart';
 import 'package:campus_care/screens/teacher/homework/homework_submissions_screen.dart';
 import 'package:campus_care/screens/teacher/homework/student_homework_detail_screen.dart';
 import 'package:campus_care/screens/teacher/marks/exam_management_screen.dart';
+import 'package:campus_care/screens/super_admin/super_admin_dashboard.dart';
+import 'package:campus_care/screens/super_admin/institute_management_screen.dart';
+import 'package:campus_care/screens/super_admin/institute_detail_screen.dart';
+import 'package:campus_care/screens/super_admin/add_edit_institute_screen.dart';
+import 'package:campus_care/core/middleware/auth_middleware.dart';
+import 'package:campus_care/core/middleware/super_admin_middleware.dart';
+import 'package:campus_care/core/middleware/school_admin_middleware.dart';
 
 class AppRoutes {
   // Auth Routes
+  static const String splash = '/splash';
   static const String login = '/login';
 
   // Admin Routes
   static const String adminDashboard = '/admin/dashboard';
+
   static const String studentList = '/admin/students';
   static const String addStudent = '/admin/students/add';
   static const String classManagement = '/admin/classes';
@@ -108,16 +118,47 @@ class AppRoutes {
       '/teacher/homework/student-detail';
   static const String examManagement = '/teacher/exams';
 
+  // Super Admin Routes
+  static const String superAdminDashboard = '/super-admin/dashboard';
+  static const String instituteManagement = '/super-admin/institutes';
+  static const String instituteDetail = '/super-admin/institute-detail';
+  static const String addEditInstitute = '/super-admin/add-edit-institute';
+
   static List<GetPage> getPages = [
+    GetPage(name: splash, page: () => const SplashScreen()),
     GetPage(name: login, page: () => const LoginScreen()),
 
-    // Admin Pages
-    GetPage(name: adminDashboard, page: () => const AdminDashboard()),
-    GetPage(name: studentList, page: () => const StudentListScreen()),
-    GetPage(name: addStudent, page: () => const AddStudentScreen()),
-    GetPage(name: classManagement, page: () => const ClassManagementScreen()),
-    GetPage(name: timetable, page: () => const TimetableScreen()),
-    GetPage(name: examScheduler, page: () => const ExamSchedulerScreen()),
+    // Admin Pages (Protected by SchoolAdminMiddleware)
+    GetPage(
+      name: adminDashboard,
+      page: () => const AdminDashboard(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: studentList,
+      page: () => const StudentListScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: addStudent,
+      page: () => const AddStudentScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: classManagement,
+      page: () => const ClassManagementScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: timetable,
+      page: () => const TimetableScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: examScheduler,
+      page: () => const ExamSchedulerScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
     GetPage(name: feeManagement, page: () => const FeeManagementScreen()),
     GetPage(name: medicalDashboard, page: () => const MedicalDashboardScreen()),
     GetPage(name: noticeManagement, page: () => const NoticeManagementScreen()),
@@ -193,12 +234,37 @@ class AppRoutes {
         name: studentHomeworkDetail,
         page: () {
           final args = Get.arguments as Map<String, dynamic>;
+          final homework = args['homework'];
+          final submission = args['submission'];
+          final student = args['student'];
           return StudentHomeworkDetailScreen(
-            homework: args['homework'],
-            student: args['student'],
-            submission: args['submission'],
+            homework: homework,
+            submission: submission,
+            student: student,
           );
         }),
     GetPage(name: examManagement, page: () => const ExamManagementScreen()),
+
+    // Super Admin Pages (Protected by SuperAdminMiddleware)
+    GetPage(
+      name: superAdminDashboard,
+      page: () => const SuperAdminDashboard(),
+      middlewares: [SuperAdminMiddleware()],
+    ),
+    GetPage(
+      name: instituteManagement,
+      page: () => const InstituteManagementScreen(),
+      middlewares: [SuperAdminMiddleware()],
+    ),
+    GetPage(
+      name: instituteDetail,
+      page: () => const InstituteDetailScreen(),
+      middlewares: [SuperAdminMiddleware()],
+    ),
+    GetPage(
+      name: addEditInstitute,
+      page: () => const AddEditInstituteScreen(),
+      middlewares: [SuperAdminMiddleware()],
+    ),
   ];
 }

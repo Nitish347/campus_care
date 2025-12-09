@@ -5,6 +5,12 @@ import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/services/storage_service.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/controllers/theme_controller.dart';
+import 'package:campus_care/services/institute_context_service.dart';
+import 'package:campus_care/controllers/institute_controller.dart';
+
+import 'controllers/admin/admin_auth_controller.dart';
+import 'controllers/teacher/teacher_auth_controller.dart';
+import 'controllers/student/student_auth_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,11 +35,16 @@ class SchoolStreamApp extends StatelessWidget {
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: themeController.themeMode,
-          initialRoute: AppRoutes.login,
+          initialRoute: AppRoutes.splash,
           getPages: AppRoutes.getPages,
           initialBinding: BindingsBuilder(() {
+            Get.put(AdminAuthController());
+            Get.put(TeacherAuthController());
+            Get.put(StudentAuthController());
             Get.put(AuthController());
             Get.put(ThemeController());
+            Get.put(InstituteContextService());
+            Get.put(InstituteController());
           }),
         );
       },

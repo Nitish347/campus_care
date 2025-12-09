@@ -4,13 +4,15 @@ import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/utils/validators.dart';
 import 'package:campus_care/widgets/buttons/primary_button.dart';
 
+import '../../controllers/admin/admin_auth_controller.dart';
+
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     // Find the controller registered in initialBinding (main.dart)
-    final authController = Get.find<AuthController>();
+    final authController = Get.find<AdminAuthController>();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     final isWeb = size.width > 800;
@@ -163,26 +165,26 @@ class LoginScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 12),
-                            Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
+                            Column(
                               children: [
-                                Expanded(
+                                // Super Admin button (full width)
+                                SizedBox(
+                                  width: double.infinity,
                                   child: OutlinedButton.icon(
-                                    onPressed: authController.loginAsAdmin,
-                                    icon: Icon(
-                                      Icons.admin_panel_settings,
-                                      color: theme.colorScheme.primary,
+                                    onPressed: authController.loginAsSuperAdmin,
+                                    icon: const Icon(
+                                      Icons.shield,
+                                      color: Colors.purple,
                                     ),
-                                    label: Text(
-                                      'Admin',
+                                    label: const Text(
+                                      'Super Admin',
                                       style: TextStyle(
-                                        color: theme.colorScheme.primary,
+                                        color: Colors.purple,
                                       ),
                                     ),
                                     style: OutlinedButton.styleFrom(
-                                      side: BorderSide(
-                                        color: theme.colorScheme.primary,
+                                      side: const BorderSide(
+                                        color: Colors.purple,
                                       ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
@@ -190,52 +192,87 @@ class LoginScreen extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: authController.loginAsTeacher,
-                                    icon: Icon(
-                                      Icons.person,
-                                      color: theme.colorScheme.secondary,
-                                    ),
-                                    label: Text(
-                                      'Teacher',
-                                      style: TextStyle(
-                                        color: theme.colorScheme.secondary,
+                                const SizedBox(height: 12),
+                                // Admin, Teacher, Student buttons in a row
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed: authController.loginAsAdmin,
+                                        icon: Icon(
+                                          Icons.admin_panel_settings,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                        label: Text(
+                                          'Admin',
+                                          style: TextStyle(
+                                            color: theme.colorScheme.primary,
+                                          ),
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          side: BorderSide(
+                                            color: theme.colorScheme.primary,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                    style: OutlinedButton.styleFrom(
-                                      side: BorderSide(
-                                        color: theme.colorScheme.secondary,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: authController.loginAsStudent,
-                                    icon: Icon(
-                                      Icons.school,
-                                      color: theme.colorScheme.tertiary,
-                                    ),
-                                    label: Text(
-                                      'Student',
-                                      style: TextStyle(
-                                        color: theme.colorScheme.tertiary,
-                                      ),
-                                    ),
-                                    style: OutlinedButton.styleFrom(
-                                      side: BorderSide(
-                                        color: theme.colorScheme.tertiary,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed:
+                                            authController.loginAsTeacher,
+                                        icon: Icon(
+                                          Icons.person,
+                                          color: theme.colorScheme.secondary,
+                                        ),
+                                        label: Text(
+                                          'Teacher',
+                                          style: TextStyle(
+                                            color: theme.colorScheme.secondary,
+                                          ),
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          side: BorderSide(
+                                            color: theme.colorScheme.secondary,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed:
+                                            authController.loginAsStudent,
+                                        icon: Icon(
+                                          Icons.school,
+                                          color: theme.colorScheme.tertiary,
+                                        ),
+                                        label: Text(
+                                          'Student',
+                                          style: TextStyle(
+                                            color: theme.colorScheme.tertiary,
+                                          ),
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          side: BorderSide(
+                                            color: theme.colorScheme.tertiary,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

@@ -66,89 +66,88 @@ class _MarksEntryScreenState extends State<MarksEntryScreen> {
       body: Column(
         children: [
           // Filters
-          ResponsivePadding(
-            child: InfoCard(
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomDropdown<String>(
-                          value: _selectedClass,
-                          labelText: 'Class',
-                          items: ['class_001', 'class_002', 'class_003']
-                              .map((cls) => DropdownMenuItem(
-                                    value: cls,
-                                    child: Text(cls.replaceAll('_', ' ').toUpperCase()),
-                                  ))
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedClass = value;
-                            });
-                          },
-                        ),
+          InfoCard(
+            padding: EdgeInsets.all(0),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomDropdown<String>(
+                        value: _selectedClass,
+                        labelText: 'khk',
+                        items: ['class_001', 'class_002', 'class_003']
+                            .map((cls) => DropdownMenuItem(
+                                  value: cls,
+                                  child: Text(cls.replaceAll('_', ' ').toUpperCase()),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedClass = value;
+                          });
+                        },
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: CustomDropdown<String>(
-                          value: _selectedSection,
-                          labelText: 'Section',
-                          items: ['A', 'B', 'C']
-                              .map((sec) => DropdownMenuItem(
-                                    value: sec,
-                                    child: Text(sec),
-                                  ))
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedSection = value;
-                            });
-                          },
-                        ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: CustomDropdown<String>(
+                        value: _selectedSection,
+                        labelText: 'Section',
+                        items: ['A', 'B', 'C']
+                            .map((sec) => DropdownMenuItem(
+                                  value: sec,
+                                  child: Text(sec),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedSection = value;
+                          });
+                        },
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomDropdown<String>(
-                          value: _selectedSubject,
-                          labelText: 'Subject',
-                          items: _subjects.map((sub) => DropdownMenuItem(
-                            value: sub,
-                            child: Text(sub),
-                          )).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedSubject = value;
-                            });
-                          },
-                        ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomDropdown<String>(
+                        value: _selectedSubject,
+                        labelText: 'Subject',
+                        items: _subjects.map((sub) => DropdownMenuItem(
+                          value: sub,
+                          child: Text(sub),
+                        )).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedSubject = value;
+                          });
+                        },
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: CustomDropdown<String>(
-                          value: _selectedExamType,
-                          labelText: 'Exam Type',
-                          items: ['Mid-Term', 'Final', 'Quiz', 'Assignment']
-                              .map((type) => DropdownMenuItem(
-                                    value: type,
-                                    child: Text(type),
-                                  ))
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedExamType = value;
-                            });
-                          },
-                        ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: CustomDropdown<String>(
+                        value: _selectedExamType,
+                        labelText: 'Exam Type',
+                        items: ['Mid-Term', 'Final', 'Quiz', 'Assignment']
+                            .map((type) => DropdownMenuItem(
+                                  value: type,
+                                  child: Text(type),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedExamType = value;
+                          });
+                        },
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
 

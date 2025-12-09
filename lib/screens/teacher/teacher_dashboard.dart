@@ -193,7 +193,7 @@ class TeacherDashboard extends StatelessWidget {
                   title: 'Mark Attendance',
                   subtitle: 'Take attendance',
                   onTap: () =>
-                      Get.toNamed(AppRoutes.teacherAttendanceManagement),
+                      Get.toNamed(AppRoutes.attendance),
                   iconColor: theme.colorScheme.secondary,
                 ),
                 DashboardCard(

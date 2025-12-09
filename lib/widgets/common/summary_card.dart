@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 
 class SummaryCard extends StatelessWidget {
   final Widget child;
-  const SummaryCard({super.key, required this.child});
+  final double? padding;
+  const SummaryCard({super.key, required this.child, this.padding});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
+      margin:  EdgeInsets.symmetric(horizontal: padding ?? 16),
+      padding:  EdgeInsets.all(  20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [

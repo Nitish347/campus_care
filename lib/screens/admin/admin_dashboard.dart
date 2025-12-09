@@ -2,13 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
+import 'package:campus_care/widgets/cards/stat_card.dart';
+import 'package:campus_care/widgets/cards/dashboard_card.dart';
+import 'package:campus_care/widgets/responsive/responsive_grid.dart';
+import 'package:campus_care/widgets/responsive/responsive_padding.dart';
+import 'package:campus_care/widgets/common/section_header.dart';
+import 'package:campus_care/widgets/common/institute_context_indicator.dart';
+
+import '../../controllers/admin/admin_auth_controller.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final authController = Get.find<AuthController>();
+    final authController = Get.find<AdminAuthController>();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 1200;
@@ -27,6 +35,8 @@ class AdminDashboard extends StatelessWidget {
           ],
         ),
         actions: [
+          // Institute Context Indicator (shows when super admin is managing an institute)
+          const InstituteContextIndicator(),
           IconButton(
             onPressed: () {
               // TODO: Implement notifications
@@ -253,7 +263,6 @@ class AdminDashboard extends StatelessWidget {
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: Colors.grey[600],
-          letterSpacing: 0.5,
         ),
       ),
     );
@@ -264,19 +273,22 @@ class AdminDashboard extends StatelessWidget {
     required IconData icon,
     required String title,
     bool isSelected = false,
-    required VoidCallback onTap,
+    VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      child: Material(
-        borderRadius: BorderRadius.circular(12),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      decoration: BoxDecoration(
         color: isSelected
             ? theme.colorScheme.primaryContainer
             : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Material(
+        color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           onTap: onTap,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -313,61 +325,54 @@ class AdminDashboard extends StatelessWidget {
   Widget _buildMainContent(
       BuildContext context, bool isDesktop, bool isTablet) {
     final theme = Theme.of(context);
-    final crossAxisCount = isDesktop ? 4 : (isTablet ? 3 : 2);
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Welcome Header
-          Obx(() => Text(
-                'Welcome back, ${Get.find<AuthController>().currentUser?.name ?? 'Admin'}! 👋',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              )),
-
-          Text(
-            'Here\'s what\'s happening at your school today.',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+    return SingleChildScrollView(
+      child: ResponsivePadding(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Welcome Header
+            Obx(() => Text(
+                  'Welcome back, ${Get.find<AdminAuthController>().currentUser?.name ?? 'Admin'}! 👋',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                )),
+            const SizedBox(height: 8),
+            Text(
+              'Here\'s what\'s happening at your school today',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
 
-          const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
-          // Quick Stats Cards
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.5,
+            // Quick Stats
+            SectionHeader(title: 'Quick Stats'),
+            const SizedBox(height: 12),
+            ResponsiveGrid(
+              childAspectRatio: 1.1,
               children: [
-                _buildStatCard(
-                  context,
+                StatCard(
                   icon: Icons.people_outlined,
                   title: 'Total Students',
                   value: '1,234',
                   color: theme.colorScheme.primary,
                 ),
-                _buildStatCard(
-                  context,
+                StatCard(
                   icon: Icons.person_outlined,
                   title: 'Total Teachers',
                   value: '89',
                   color: theme.colorScheme.secondary,
                 ),
-                _buildStatCard(
-                  context,
+                StatCard(
                   icon: Icons.class_outlined,
                   title: 'Total Classes',
                   value: '24',
-                  color: theme.colorScheme.tertiary,
+                  color: Colors.purple,
                 ),
-                _buildStatCard(
-                  context,
+                StatCard(
                   icon: Icons.event_outlined,
                   title: 'Today\'s Events',
                   value: '5',
@@ -375,54 +380,77 @@ class AdminDashboard extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildStatCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-  }) {
-    final theme = Theme.of(context);
+            const SizedBox(height: 24),
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+            // Quick Access
+            SectionHeader(title: 'Quick Access'),
+            const SizedBox(height: 12),
+            ResponsiveGrid(
+              childAspectRatio: 0.95,
+              children: [
+                DashboardCard(
+                  icon: Icons.people_outlined,
+                  title: 'Student Management',
+                  subtitle: 'Manage students',
+                  onTap: () => Get.toNamed(AppRoutes.studentList),
+                  iconColor: theme.colorScheme.primary,
+                ),
+                DashboardCard(
+                  icon: Icons.person_outlined,
+                  title: 'Teacher Management',
+                  subtitle: 'Manage teachers',
+                  onTap: () => Get.toNamed(AppRoutes.teacherList),
+                  iconColor: theme.colorScheme.secondary,
+                ),
+                DashboardCard(
+                  icon: Icons.class_outlined,
+                  title: 'Classes & Subjects',
+                  subtitle: 'Manage classes',
+                  onTap: () => Get.toNamed(AppRoutes.classManagement),
+                  iconColor: Colors.purple,
+                ),
+                DashboardCard(
+                  icon: Icons.schedule_outlined,
+                  title: 'Timetable',
+                  subtitle: 'View schedule',
+                  onTap: () => Get.toNamed(AppRoutes.timetable),
+                  iconColor: Colors.orange,
+                ),
+                DashboardCard(
+                  icon: Icons.quiz_outlined,
+                  title: 'Examinations',
+                  subtitle: 'Manage exams',
+                  onTap: () => Get.toNamed(AppRoutes.examScheduler),
+                  iconColor: Colors.red,
+                ),
+                DashboardCard(
+                  icon: Icons.payment_outlined,
+                  title: 'Fee Management',
+                  subtitle: 'Manage fees',
+                  onTap: () => Get.toNamed(AppRoutes.feeManagement),
+                  iconColor: Colors.green,
+                ),
+                DashboardCard(
+                  icon: Icons.medical_services_outlined,
+                  title: 'Medical Records',
+                  subtitle: 'Health records',
+                  onTap: () => Get.toNamed(AppRoutes.medicalDashboard),
+                  iconColor: Colors.pink,
+                ),
+                DashboardCard(
+                  icon: Icons.announcement_outlined,
+                  title: 'Notices & Events',
+                  subtitle: 'Announcements',
+                  onTap: () => Get.toNamed(AppRoutes.noticeManagement),
+                  iconColor: Colors.teal,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+          ],
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            color: color,
-            size: 28,
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
       ),
     );
   }

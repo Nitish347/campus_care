@@ -1,193 +1,47 @@
 import 'package:campus_care/models/user.dart';
 import 'package:campus_care/services/storage_service.dart';
 import 'package:campus_care/core/constants/app_constants.dart';
-import 'package:campus_care/services/dummy_data_service.dart';
+import 'package:campus_care/services/api/auth_api_service.dart';
+import 'package:campus_care/core/api_exception.dart';
 
 class AuthService {
-  // Sample users for demonstration
-  static final List<Map<String, dynamic>> _sampleUsers = [
-    {
-      'id': 'admin_001',
-      'email': 'admin@schoolstream.com',
-      'password': 'admin123',
-      'name': 'School Administrator',
-      'role': AppConstants.roleAdmin,
-      'phone': '+1234567890',
-      'createdAt':
-          DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
-      'updatedAt': DateTime.now().toIso8601String(),
-      'isActive': true,
-    },
-    {
-      'id': 'teacher_001',
-      'email': 'teacher@schoolstream.com',
-      'password': 'teacher123',
-      'name': 'Sarah Johnson',
-      'role': AppConstants.roleTeacher,
-      'phone': '+1234567891',
-      'createdAt':
-          DateTime.now().subtract(const Duration(days: 25)).toIso8601String(),
-      'updatedAt': DateTime.now().toIso8601String(),
-      'isActive': true,
-    },
-    {
-      'id': 'teacher_002',
-      'email': 'math.teacher@schoolstream.com',
-      'password': 'teacher123',
-      'name': 'Michael Brown',
-      'role': AppConstants.roleTeacher,
-      'phone': '+1234567892',
-      'createdAt':
-          DateTime.now().subtract(const Duration(days: 20)).toIso8601String(),
-      'updatedAt': DateTime.now().toIso8601String(),
-      'isActive': true,
-    },
-    {
-      'id': 'student_001',
-      'email': 'student1@schoolstream.com',
-      'password': 'student123',
-      'name': 'Emma Wilson',
-      'role': AppConstants.roleStudent,
-      'phone': '+1234567001',
-      'createdAt':
-          DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
-      'updatedAt': DateTime.now().toIso8601String(),
-      'isActive': true,
-    },
-    {
-      'id': 'student_002',
-      'email': 'student2@schoolstream.com',
-      'password': 'student123',
-      'name': 'Liam Johnson',
-      'role': AppConstants.roleStudent,
-      'phone': '+1234567002',
-      'createdAt':
-          DateTime.now().subtract(const Duration(days: 28)).toIso8601String(),
-      'updatedAt': DateTime.now().toIso8601String(),
-      'isActive': true,
-    },
-  ];
+  static final AuthApiService _authApiService = AuthApiService();
 
-  static Future<void> initializeSampleData() async {
-    // Initialize sample users if not already present
-    if (!StorageService.hasData('users')) {
-      await StorageService.saveData('users', _sampleUsers);
-    }
-
-    // Initialize dummy data
-    await _initializeDummyData();
-  }
-
-  static Future<void> _initializeDummyData() async {
-    // Initialize homework data
-    if (!StorageService.hasData(AppConstants.keyHomework)) {
-      await StorageService.saveData(
-        AppConstants.keyHomework,
-        DummyDataService.getSampleHomework(),
-      );
-    }
-    
-    // Initialize attendance data
-    if (!StorageService.hasData(AppConstants.keyAttendance)) {
-      await StorageService.saveData(
-        AppConstants.keyAttendance,
-        DummyDataService.getSampleAttendance(),
-      );
-    }
-    
-    // Initialize fee data
-    if (!StorageService.hasData(AppConstants.keyFees)) {
-      await StorageService.saveData(
-        AppConstants.keyFees,
-        DummyDataService.getSampleFees(),
-      );
-    }
-    
-    // Initialize notices
-    if (!StorageService.hasData(AppConstants.keyNotices)) {
-      await StorageService.saveData(
-        AppConstants.keyNotices,
-        DummyDataService.getSampleNotices(),
-      );
-    }
-    
-    // Initialize classes
-    if (!StorageService.hasData(AppConstants.keyClasses)) {
-      await StorageService.saveData(
-        AppConstants.keyClasses,
-        DummyDataService.getSampleClasses(),
-      );
-    }
-    
-    // Initialize subjects
-    if (!StorageService.hasData(AppConstants.keySubjects)) {
-      await StorageService.saveData(
-        AppConstants.keySubjects,
-        DummyDataService.getSampleSubjects(),
-      );
-    }
-    
-    // Initialize exams
-    if (!StorageService.hasData(AppConstants.keyExams)) {
-      await StorageService.saveData(
-        AppConstants.keyExams,
-        DummyDataService.getSampleExams(),
-      );
-    }
-    
-    // Initialize medical records
-    if (!StorageService.hasData(AppConstants.keyMedicalRecords)) {
-      await StorageService.saveData(
-        AppConstants.keyMedicalRecords,
-        DummyDataService.getSampleMedicalRecords(),
-      );
-    }
-    
-    // Initialize messages
-    if (!StorageService.hasData(AppConstants.keyMessages)) {
-      await StorageService.saveData(
-        AppConstants.keyMessages,
-        DummyDataService.getSampleChats(),
-      );
-    }
-  }
-
-  static Future<User?> login(String email, String password) async {
+  /// Login with email, password, and role
+  static Future<Map<String, dynamic>?> login(String email, String password, String role) async {
     try {
-      await initializeSampleData();
-
-      // Get all users from storage
-      final users = StorageService.getData('users');
-
-      // Find user by email and password
-      final userData = users.firstWhere(
-        (user) => user['email'] == email && user['password'] == password,
-        orElse: () => {},
+      final result = await _authApiService.login(
+        email: email,
+        password: password,
+        role: role,
       );
 
-      if (userData.isNotEmpty) {
-        final user = User.fromJson(userData);
+      final userData = result['user'];
+      if (userData != null) {
+        // final user = User.fromJson(userData);
 
         // Store login state
         await StorageService.setLoggedIn(true);
         await StorageService.setCurrentUser(userData);
-        await StorageService.setUserRole(user.role);
+        await StorageService.setUserRole(userData['role']);
 
-        return user;
+        return userData;
       }
 
       return null;
+    } on ApiException catch (e) {
+      throw Exception(e.message);
     } catch (e) {
       throw Exception('Login failed: $e');
     }
   }
 
+  /// Logout - clear all stored data
   static Future<void> logout() async {
-    await StorageService.setLoggedIn(false);
-    await StorageService.clearData(AppConstants.keyCurrentUser);
-    await StorageService.clearData(AppConstants.keyUserRole);
+    await _authApiService.logout();
   }
 
+  /// Get current logged-in user
   static User? getCurrentUser() {
     final userData = StorageService.currentUser;
     if (userData != null) {
@@ -196,65 +50,103 @@ class AuthService {
     return null;
   }
 
+
+  /// Check if user is logged in
   static bool get isLoggedIn => StorageService.isLoggedIn;
 
+  /// Get current user role
   static String? get userRole => StorageService.userRole;
 
-  static Future<bool> changePassword(
-      String oldPassword, String newPassword) async {
+  /// Check if user is authenticated (has valid token)
+  static bool get isAuthenticated => _authApiService.isAuthenticated();
+
+  /// Register a new student
+  static Future<Map<String, dynamic>> registerStudent(
+    Map<String, dynamic> studentData,
+  ) async {
     try {
-      final currentUser = getCurrentUser();
-      if (currentUser == null) return false;
-
-      // Get all users from storage
-      final users = StorageService.getData('users');
-
-      // Find and verify current user's password
-      final userIndex =
-          users.indexWhere((user) => user['id'] == currentUser.id);
-      if (userIndex == -1 || users[userIndex]['password'] != oldPassword) {
-        return false;
-      }
-
-      // Update password
-      users[userIndex]['password'] = newPassword;
-      users[userIndex]['updatedAt'] = DateTime.now().toIso8601String();
-
-      // Save back to storage
-      await StorageService.saveData('users', users);
-
-      return true;
+      return await _authApiService.registerStudent(
+        studentData: studentData,
+      );
+    } on ApiException catch (e) {
+      throw Exception(e.message);
     } catch (e) {
-      return false;
+      throw Exception('Registration failed: $e');
     }
   }
 
-  static Future<bool> updateProfile(Map<String, dynamic> profileData) async {
+  /// Register a new teacher
+  static Future<Map<String, dynamic>> registerTeacher(
+    Map<String, dynamic> teacherData,
+  ) async {
     try {
-      final currentUser = getCurrentUser();
-      if (currentUser == null) return false;
-
-      // Get all users from storage
-      final users = StorageService.getData('users');
-
-      // Find current user
-      final userIndex =
-          users.indexWhere((user) => user['id'] == currentUser.id);
-      if (userIndex == -1) return false;
-
-      // Update profile data
-      users[userIndex].addAll(profileData);
-      users[userIndex]['updatedAt'] = DateTime.now().toIso8601String();
-
-      // Save back to storage
-      await StorageService.saveData('users', users);
-
-      // Update current user in storage
-      await StorageService.setCurrentUser(users[userIndex]);
-
-      return true;
+      return await _authApiService.registerTeacher(
+        teacherData: teacherData,
+      );
+    } on ApiException catch (e) {
+      throw Exception(e.message);
     } catch (e) {
-      return false;
+      throw Exception('Registration failed: $e');
     }
+  }
+
+  /// Register a new admin
+  static Future<Map<String, dynamic>> registerAdmin(
+    Map<String, dynamic> adminData,
+  ) async {
+    try {
+      return await _authApiService.registerAdmin(
+        adminData: adminData,
+      );
+    } on ApiException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
+      throw Exception('Registration failed: $e');
+    }
+  }
+
+  /// Verify OTP
+  static Future<Map<String, dynamic>> verifyOTP(
+    String email,
+    String otp,
+  ) async {
+    try {
+      return await _authApiService.verifyOTP(
+        email: email,
+        otp: otp,
+      );
+    } on ApiException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
+      throw Exception('OTP verification failed: $e');
+    }
+  }
+
+  /// Resend OTP
+  static Future<void> resendOTP(String email) async {
+    try {
+      await _authApiService.resendOTP(email: email);
+    } on ApiException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
+      throw Exception('Failed to resend OTP: $e');
+    }
+  }
+
+  /// Change password (kept for compatibility, may need backend endpoint)
+  static Future<bool> changePassword(
+    String oldPassword,
+    String newPassword,
+  ) async {
+    // TODO: Implement change password API endpoint on backend
+    // For now, return false as this functionality needs backend support
+    return false;
+  }
+
+  /// Update profile (kept for compatibility, may need backend endpoint)
+  static Future<bool> updateProfile(Map<String, dynamic> profileData) async {
+    // TODO: Implement update profile API endpoint on backend
+    // For now, return false as this functionality needs backend support
+    return false;
   }
 }

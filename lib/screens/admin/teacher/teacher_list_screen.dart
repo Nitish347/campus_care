@@ -40,28 +40,67 @@ class TeacherListScreen extends GetView<TeacherController> {
       ),
       body: Column(
         children: [
-          // Search Bar
-          ResponsivePadding(
-            child: CustomTextField(
-              hintText: 'Search teachers...',
-              prefixIcon: const Icon(Icons.search),
-              onChanged: controller.searchTeachers,
+          // Search Bar and Stats
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.3),
+              border: Border(
+                bottom: BorderSide(
+                  color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                ),
+              ),
             ),
-          ),
-
-          // Teacher Count
-          ResponsivePadding(
-            child: Obx(() => Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Total Teachers: ${controller.filteredTeachers.length}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+            child: ResponsivePadding(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: CustomTextField(
+                      hintText: 'Search teachers by name, ID, or department...',
+                      prefixIcon: const Icon(Icons.search),
+                      onChanged: controller.searchTeachers,
                     ),
-                  ],
-                )),
+                  ),
+                  const SizedBox(width: 16),
+                  Obx(() => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.secondaryContainer
+                              .withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.person,
+                              size: 20,
+                              color: theme.colorScheme.secondary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${controller.filteredTeachers.length}',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.secondary,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'teachers',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                ],
+              ),
+            ),
           ),
 
           // Teacher List
@@ -97,36 +136,160 @@ class TeacherListScreen extends GetView<TeacherController> {
       itemBuilder: (context, index) {
         final teacher = teachers[index];
         return InfoCard(
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: theme.colorScheme.secondaryContainer,
-              child: Text(
-                teacher.name.substring(0, 1).toUpperCase(),
-                style: TextStyle(
-                  color: theme.colorScheme.onSecondaryContainer,
-                  fontWeight: FontWeight.bold,
-                ),
+          margin: const EdgeInsets.only(bottom: 12),
+          child: InkWell(
+            onTap: () => _showTeacherDetails(context, teacher),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: theme.colorScheme.secondaryContainer,
+                        child: Text(
+                          teacher.name.substring(0, 1).toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: theme.colorScheme.onSecondaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              teacher.name,
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.badge_outlined,
+                                  size: 16,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  teacher.teacherId,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildActions(context, teacher),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(
+                    height: 1,
+                    color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoItem(
+                          context,
+                          Icons.business_outlined,
+                          'Department',
+                          teacher.department,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildInfoItem(
+                          context,
+                          Icons.school_outlined,
+                          'Qualification',
+                          teacher.qualification,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoItem(
+                          context,
+                          Icons.email_outlined,
+                          'Email',
+                          teacher.email,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildInfoItem(
+                          context,
+                          Icons.phone_outlined,
+                          'Phone',
+                          teacher.phone,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-            title: Text(
-              teacher.name,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 4),
-                Text('ID: ${teacher.teacherId}'),
-                Text('Dept: ${teacher.department}'),
-                Text('Email: ${teacher.email}'),
-              ],
-            ),
-            trailing: _buildActions(context, teacher),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildInfoItem(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+  ) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 16,
+          color: theme.colorScheme.secondary,
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -137,52 +300,204 @@ class TeacherListScreen extends GetView<TeacherController> {
       child: Card(
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+            width: 1,
+          ),
         ),
-        child: SizedBox(
-          width: double.infinity,
-          child: DataTable(
-            headingRowColor: WidgetStateProperty.all(
-              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
             ),
-            columns: const [
-              DataColumn(label: Text('Name')),
-              DataColumn(label: Text('Teacher ID')),
-              DataColumn(label: Text('Department')),
-              DataColumn(label: Text('Email')),
-              DataColumn(label: Text('Phone')),
-              DataColumn(label: Text('Actions')),
-            ],
-            rows: teachers.map((teacher) {
-              return DataRow(
-                cells: [
-                  DataCell(Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundColor: theme.colorScheme.secondaryContainer,
+            child: DataTable(
+              headingRowHeight: 56,
+              dataRowMinHeight: 64,
+              dataRowMaxHeight: 80,
+              headingRowColor: WidgetStateProperty.all(
+                theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.3),
+              ),
+              columns: [
+                DataColumn(
+                  label: Text(
+                    'Teacher',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Teacher ID',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Department',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Email',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Phone',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Actions',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+              rows: teachers.asMap().entries.map((entry) {
+                final index = entry.key;
+                final teacher = entry.value;
+                final isEven = index % 2 == 0;
+                return DataRow(
+                  color: WidgetStateProperty.all(
+                    isEven
+                        ? theme.colorScheme.surface
+                        : theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.1),
+                  ),
+                  cells: [
+                    DataCell(
+                      InkWell(
+                        onTap: () => _showTeacherDetails(context, teacher),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundColor:
+                                  theme.colorScheme.secondaryContainer,
+                              child: Text(
+                                teacher.name.substring(0, 1).toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: theme.colorScheme.onSecondaryContainer,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    teacher.name,
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    teacher.qualification,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        teacher.teacherId,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
+                    DataCell(
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.secondaryContainer
+                              .withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         child: Text(
-                          teacher.name.substring(0, 1).toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: theme.colorScheme.onSecondaryContainer,
-                            fontWeight: FontWeight.bold,
+                          teacher.department,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.secondary,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Text(teacher.name),
-                    ],
-                  )),
-                  DataCell(Text(teacher.teacherId)),
-                  DataCell(Text(teacher.department)),
-                  DataCell(Text(teacher.email)),
-                  DataCell(Text(teacher.phone)),
-                  DataCell(_buildActions(context, teacher)),
-                ],
-              );
-            }).toList(),
+                    ),
+                    DataCell(
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.email_outlined,
+                            size: 16,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              teacher.email,
+                              style: theme.textTheme.bodyMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    DataCell(
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.phone_outlined,
+                            size: 16,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            teacher.phone,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    DataCell(_buildActions(context, teacher)),
+                  ],
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),
@@ -236,50 +551,159 @@ class TeacherListScreen extends GetView<TeacherController> {
   }
 
   void _showTeacherDetails(BuildContext context, Teacher teacher) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Teacher Details'),
-        content: SingleChildScrollView(
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 600),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailRow('Name', teacher.name),
-              _buildDetailRow('Teacher ID', teacher.teacherId),
-              _buildDetailRow('Email', teacher.email),
-              _buildDetailRow('Phone', teacher.phone),
-              _buildDetailRow('Department', teacher.department),
-              _buildDetailRow('Qualification', teacher.qualification),
-              _buildDetailRow('Join Date', teacher.joinDate.toString().split(' ')[0]),
+              // Header
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer
+                      .withValues(alpha: 0.3),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 32,
+                      backgroundColor: theme.colorScheme.secondary,
+                      child: Text(
+                        teacher.name.substring(0, 1).toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 24,
+                          color: theme.colorScheme.onSecondary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            teacher.name,
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            teacher.teacherId,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              // Content
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildDetailRow(Icons.person, 'Name', teacher.name),
+                      _buildDetailRow(
+                          Icons.badge, 'Teacher ID', teacher.teacherId),
+                      _buildDetailRow(
+                          Icons.business, 'Department', teacher.department),
+                      _buildDetailRow(
+                          Icons.school, 'Qualification', teacher.qualification),
+                      _buildDetailRow(Icons.email, 'Email', teacher.email),
+                      _buildDetailRow(Icons.phone, 'Phone', teacher.phone),
+                      _buildDetailRow(Icons.calendar_today, 'Join Date',
+                          teacher.joinDate.toString().split(' ')[0]),
+                    ],
+                  ),
+                ),
+              ),
+              // Actions
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Close'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Get.snackbar('Info', 'Edit ${teacher.name}');
+                      },
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Text('Edit'),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(IconData icon, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              '$label:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
+          Icon(icon, size: 20, color: Colors.grey[600]),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(value),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -297,12 +721,12 @@ class TeacherListScreen extends GetView<TeacherController> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () {
               Navigator.pop(context);
               Get.snackbar('Info', 'Delete functionality coming soon');
             },
-            style: ElevatedButton.styleFrom(
+            style: FilledButton.styleFrom(
               backgroundColor: Colors.red,
             ),
             child: const Text('Delete'),

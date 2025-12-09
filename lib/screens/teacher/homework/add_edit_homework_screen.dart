@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:campus_care/models/homework_model.dart';
-import 'package:campus_care/widgets/common/common_form_field.dart';
+import 'package:campus_care/widgets/inputs/custom_text_field.dart';
+import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 
 class AddEditHomeworkScreen extends StatefulWidget {
   final HomeWorkModel? homework;
@@ -111,25 +112,27 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
           children: [
             // Header
             Column(
-                children: [
-                  Icon(
-                    Icons.assignment_outlined,
-                    size: 48,
-                    color: theme.colorScheme.primary,
+              children: [
+                Icon(
+                  Icons.assignment_outlined,
+                  size: 48,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _isEditing
+                      ? 'Update Homework Details'
+                      : 'Create New Homework',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _isEditing
-                        ? 'Update Homework Details'
-                        : 'Create New Homework',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            SizedBox(height: 10,),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            SizedBox(
+              height: 10,
+            ),
             ClassSectionDropDown(
               padding: 0,
             ),
@@ -137,11 +140,11 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
             const SizedBox(height: 24),
 
             // Title
-            CommonFormField(
-              label: 'Title',
-              hint: 'Enter homework title',
+            CustomTextField(
+              labelText: 'Title *',
+              hintText: 'Enter homework title',
               controller: _titleController,
-              required: true,
+              prefixIcon: const Icon(Icons.title),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter a title';
@@ -153,12 +156,12 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
             const SizedBox(height: 16),
 
             // Description
-            CommonFormField(
-              label: 'Description',
-              hint: 'Enter homework description',
+            CustomTextField(
+              labelText: 'Description *',
+              hintText: 'Enter homework description',
               controller: _descriptionController,
               maxLines: 4,
-              required: true,
+              prefixIcon: const Icon(Icons.description),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter a description';
@@ -170,11 +173,16 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
             const SizedBox(height: 16),
 
             // Subject
-            CommonDropdownField(
-              label: 'Subject',
+            CustomDropdown<String>(
+              labelText: 'Subject *',
               value: _selectedSubject,
-              items: _subjects,
-              required: true,
+              prefixIcon: const Icon(Icons.book),
+              items: _subjects
+                  .map((subject) => DropdownMenuItem(
+                        value: subject,
+                        child: Text(subject),
+                      ))
+                  .toList(),
               onChanged: (value) {
                 setState(() {
                   _selectedSubject = value;
@@ -191,36 +199,32 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
             const SizedBox(height: 16),
 
             // Due Date
-            CommonFormField(
-              label: 'Due Date',
-              hint: 'Select due date and time',
+            CustomTextField(
+              labelText: 'Due Date *',
+              hintText: 'Select due date and time',
               controller: TextEditingController(
                 text: DateFormat('EEEE, MMMM dd, yyyy - hh:mm a')
                     .format(_dueDate),
               ),
               readOnly: true,
-              required: true,
-              suffixIcon: const Icon(Icons.calendar_today),
+              prefixIcon: const Icon(Icons.calendar_today),
               onTap: _selectDueDate,
             ),
             const SizedBox(height: 16),
-            CommonFormField(
-              label: 'Total Marks',
-              hint: 'Enter total marks',
-              controller: _titleController,
-              required: true,
+            CustomTextField(
+              labelText: 'Total Marks *',
+              hintText: 'Enter total marks',
+              keyboardType: TextInputType.number,
+              prefixIcon: const Icon(Icons.grade),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter a title';
+                  return 'Please enter total marks';
                 }
                 return null;
               },
             ),
 
-
             const SizedBox(height: 32),
-
-
 
             // Save Button
             SizedBox(

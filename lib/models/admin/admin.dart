@@ -7,6 +7,8 @@ class Admin {
   final String? avatar;
   final String role; // e.g., 'Super Admin', 'Editor', 'Viewer'
   final List<String> permissions;
+  final String? instituteId; // Links admin to specific institute
+  final bool isSuperAdmin; // True for Campus Care super admins
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isActive;
@@ -20,6 +22,8 @@ class Admin {
     this.avatar,
     required this.role,
     this.permissions = const [],
+    this.instituteId,
+    this.isSuperAdmin = false,
     required this.createdAt,
     required this.updatedAt,
     this.isActive = true,
@@ -35,8 +39,12 @@ class Admin {
       avatar: json['avatar'],
       role: json['role'] ?? 'Admin',
       permissions: List<String>.from(json['permissions'] ?? []),
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+      instituteId: json['instituteId'],
+      isSuperAdmin: json['isSuperAdmin'] ?? false,
+      createdAt:
+          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+      updatedAt:
+          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
       isActive: json['isActive'] ?? true,
     );
   }
@@ -51,6 +59,8 @@ class Admin {
       'avatar': avatar,
       'role': role,
       'permissions': permissions,
+      'instituteId': instituteId,
+      'isSuperAdmin': isSuperAdmin,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'isActive': isActive,
@@ -66,6 +76,8 @@ class Admin {
     String? avatar,
     String? role,
     List<String>? permissions,
+    String? instituteId,
+    bool? isSuperAdmin,
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isActive,
@@ -79,6 +91,8 @@ class Admin {
       avatar: avatar ?? this.avatar,
       role: role ?? this.role,
       permissions: permissions ?? this.permissions,
+      instituteId: instituteId ?? this.instituteId,
+      isSuperAdmin: isSuperAdmin ?? this.isSuperAdmin,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isActive: isActive ?? this.isActive,

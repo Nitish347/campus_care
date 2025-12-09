@@ -1,14 +1,15 @@
+import 'package:campus_care/models/admin/admin.dart';
+import 'package:campus_care/services/storage_service.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
 import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
-import 'package:campus_care/models/user.dart';
 import 'package:campus_care/services/auth_service.dart';
 
-class AuthController extends GetxController {
+class AdminAuthController extends GetxController {
   final _isLoading = false.obs;
-  final _currentUser = Rxn<User>();
+  final _currentUser = Rxn<Admin>();
   final _isLoggedIn = false.obs;
 
   // Form controllers
@@ -18,7 +19,7 @@ class AuthController extends GetxController {
 
   // Getters
   bool get isLoading => _isLoading.value;
-  User? get currentUser => _currentUser.value;
+  Admin? get currentUser => _currentUser.value;
   bool get isLoggedIn => _isLoggedIn.value;
   String? get userRole => currentUser?.role;
   bool get isSuperAdmin => currentUser?.role == AppConstants.roleSuperAdmin;
@@ -45,7 +46,7 @@ class AuthController extends GetxController {
   void checkLoginStatus() {
     _isLoggedIn.value = AuthService.isLoggedIn;
     if (_isLoggedIn.value) {
-      _currentUser.value = AuthService.getCurrentUser();
+      _currentUser.value = Admin.fromJson(StorageService.currentUser??{});
       if (_currentUser.value != null) {
         _navigateToRoleDashboard();
       }
@@ -59,7 +60,7 @@ class AuthController extends GetxController {
       _isLoading.value = true;
 
       // Determine role based on email or default to student
-      String role = AppConstants.roleSuperAdmin;
+      String role = AppConstants.roleAdmin;
       final email = emailController.text.trim().toLowerCase();
 
       final user = await AuthService.login(
@@ -69,7 +70,7 @@ class AuthController extends GetxController {
       );
 
       if (user != null) {
-        // _currentUser.value = user;
+        _currentUser.value = Admin.fromJson(user);
         _isLoggedIn.value = true;
 
         // Clear form
@@ -81,8 +82,7 @@ class AuthController extends GetxController {
 
         Get.snackbar(
           'Success',
-          '',
-          // 'Welcome back, ${user.name}!',
+          'Welcome back, ${_currentUser.value?.name ??""}!',
           backgroundColor: Colors.green,
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
@@ -161,7 +161,7 @@ class AuthController extends GetxController {
       _isLoading.value = true;
 
       final success =
-          await AuthService.changePassword(oldPassword, newPassword);
+      await AuthService.changePassword(oldPassword, newPassword);
 
       if (success) {
         Get.snackbar(
@@ -200,7 +200,7 @@ class AuthController extends GetxController {
       final success = await AuthService.updateProfile(profileData);
 
       if (success) {
-        _currentUser.value = AuthService.getCurrentUser();
+        // _currentUser.value = AuthService.getCurrentUser();
 
         Get.snackbar(
           'Success',
