@@ -18,20 +18,20 @@ class SuperAdminMiddleware extends GetMiddleware {
       return const RouteSettings(name: AppRoutes.login);
     }
 
-    // If not super admin, redirect to appropriate dashboard
-    if (!authController.isSuperAdmin) {
-      // Redirect based on actual role
-      if (authController.isSchoolAdmin) {
-        return const RouteSettings(name: AppRoutes.adminDashboard);
-      } else if (authController.isTeacher) {
-        return const RouteSettings(name: AppRoutes.teacherDashboard);
-      } else if (authController.isStudent) {
-        return const RouteSettings(name: AppRoutes.studentDashboard);
-      }
-
-      // Fallback to login if role is unknown
-      return const RouteSettings(name: AppRoutes.login);
-    }
+    // // If not super admin, redirect to appropriate dashboard
+    // if (!authController.isSuperAdmin) {
+    //   // Redirect based on actual role
+    //   if (authController.isSchoolAdmin) {
+    //     return const RouteSettings(name: AppRoutes.adminDashboard);
+    //   } else if (authController.isTeacher) {
+    //     return const RouteSettings(name: AppRoutes.teacherDashboard);
+    //   } else if (authController.isStudent) {
+    //     return const RouteSettings(name: AppRoutes.studentDashboard);
+    //   }
+    //
+    //   // Fallback to login if role is unknown
+    //   return const RouteSettings(name: AppRoutes.login);
+    // }
 
     return null; // Allow access for super admin
   }

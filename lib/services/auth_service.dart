@@ -4,6 +4,10 @@ import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/services/api/auth_api_service.dart';
 import 'package:campus_care/core/api_exception.dart';
 
+import '../models/admin/admin.dart';
+import '../models/student/student.dart';
+import '../models/teacher/teacher.dart';
+
 class AuthService {
   static final AuthApiService _authApiService = AuthApiService();
 
@@ -42,14 +46,28 @@ class AuthService {
   }
 
   /// Get current logged-in user
-  static User? getCurrentUser() {
+  static dynamic getCurrentUser() {
     final userData = StorageService.currentUser;
-    if (userData != null) {
-      return User.fromJson(userData);
+    final userRole = StorageService.userRole;
+
+    if (userRole != null && userData != null) {
+      switch (userRole) {
+        case AppConstants.roleStudent:
+          return Student.fromJson(userData);
+
+        case AppConstants.roleTeacher:
+          return Teacher.fromJson(userData);
+
+        case AppConstants.roleAdmin:
+        case AppConstants.roleSuperAdmin:
+          return Admin.fromJson(userData);
+
+        default:
+          break;
+      }
     }
     return null;
   }
-
 
   /// Check if user is logged in
   static bool get isLoggedIn => StorageService.isLoggedIn;

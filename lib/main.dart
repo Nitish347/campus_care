@@ -35,6 +35,7 @@ class SchoolStreamApp extends StatelessWidget {
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: themeController.themeMode,
+          defaultTransition: Transition.cupertino,
           initialRoute: AppRoutes.splash,
           getPages: AppRoutes.getPages,
           initialBinding: BindingsBuilder(() {

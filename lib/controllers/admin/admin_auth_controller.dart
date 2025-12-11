@@ -31,9 +31,9 @@ class AdminAuthController extends GetxController {
   void onInit() {
     super.onInit();
     // Defer navigation check until GetMaterialApp is fully initialized
-    Future.microtask(() {
-      checkLoginStatus();
-    });
+    // Future.microtask(() {
+    //   checkLoginStatus();
+    // });
   }
 
   @override

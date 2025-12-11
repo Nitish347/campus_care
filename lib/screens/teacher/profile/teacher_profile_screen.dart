@@ -54,7 +54,7 @@ class TeacherProfileScreen extends StatelessWidget {
                           context,
                           Icons.email_rounded,
                           'Email',
-                          authController.currentUser?.email ??
+                          authController.currentTeacher?.email ??
                               'teacher@example.com'),
                       _buildInfoRow(context, Icons.phone_rounded, 'Phone',
                           '+1 234 567 8900'),
@@ -156,7 +156,7 @@ class TeacherProfileScreen extends StatelessWidget {
                   radius: 60,
                   backgroundColor: Colors.white,
                   child: Text(
-                    authController.currentUser?.name
+                    authController.currentTeacher?.name
                             .substring(0, 1)
                             .toUpperCase() ??
                         'T',
@@ -171,7 +171,7 @@ class TeacherProfileScreen extends StatelessWidget {
 
               // Name
               Text(
-                authController.currentUser?.name ?? 'Teacher Name',
+                authController.currentTeacher?.name ?? 'Teacher Name',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -196,7 +196,7 @@ class TeacherProfileScreen extends StatelessWidget {
                         color: Colors.white, size: 16),
                     const SizedBox(width: 8),
                     Text(
-                      authController.currentUser?.email ??
+                      authController.currentTeacher?.email ??
                           'teacher@example.com',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: Colors.white,

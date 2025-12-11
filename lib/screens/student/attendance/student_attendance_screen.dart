@@ -1,3 +1,4 @@
+import 'package:campus_care/models/student/student.dart';
 import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -46,7 +47,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen>
     });
 
     try {
-      final currentUser = AuthService.getCurrentUser();
+      Student? currentUser = AuthService.getCurrentUser();
       if (currentUser == null) {
         setState(() {
           _isLoading = false;

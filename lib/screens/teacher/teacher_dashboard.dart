@@ -53,7 +53,7 @@ class TeacherDashboard extends StatelessWidget {
                 icon: CircleAvatar(
                   backgroundColor: theme.colorScheme.primary,
                   child: Text(
-                    authController.currentUser?.name
+                    authController.currentTeacher?.name
                             .substring(0, 1)
                             .toUpperCase() ??
                         'T',
@@ -107,7 +107,7 @@ class TeacherDashboard extends StatelessWidget {
           children: [
             // Welcome Section
             Obx(() => Text(
-                  'Welcome, ${authController.currentUser?.name ?? 'Teacher'}! 👋',
+                  'Welcome, ${authController.currentTeacher?.name ?? 'Teacher'}! 👋',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

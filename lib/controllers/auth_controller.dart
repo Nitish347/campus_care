@@ -1,3 +1,6 @@
+import 'package:campus_care/models/admin/admin.dart';
+import 'package:campus_care/models/student/student.dart';
+import 'package:campus_care/models/teacher/teacher.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
@@ -8,7 +11,10 @@ import 'package:campus_care/services/auth_service.dart';
 
 class AuthController extends GetxController {
   final _isLoading = false.obs;
-  final _currentUser = Rxn<User>();
+  final _currentStudent = Rxn<Student>();
+  final _currentTeacher = Rxn<Teacher>();
+  final _currentAdmin = Rxn<Admin>();
+  final _currentRole = "".obs;
   final _isLoggedIn = false.obs;
 
   // Form controllers
@@ -18,13 +24,11 @@ class AuthController extends GetxController {
 
   // Getters
   bool get isLoading => _isLoading.value;
-  User? get currentUser => _currentUser.value;
+  Student? get currentStudent => _currentStudent.value;
+  Teacher? get currentTeacher => _currentTeacher.value;
+  Admin? get currentAdmin => _currentAdmin.value;
   bool get isLoggedIn => _isLoggedIn.value;
-  String? get userRole => currentUser?.role;
-  bool get isSuperAdmin => currentUser?.role == AppConstants.roleSuperAdmin;
-  bool get isSchoolAdmin => currentUser?.role == AppConstants.roleAdmin;
-  bool get isTeacher => currentUser?.role == AppConstants.roleTeacher;
-  bool get isStudent => currentUser?.role == AppConstants.roleStudent;
+  String? get currentRole => _currentRole?.value;
 
   @override
   void onInit() {
@@ -45,10 +49,12 @@ class AuthController extends GetxController {
   void checkLoginStatus() {
     _isLoggedIn.value = AuthService.isLoggedIn;
     if (_isLoggedIn.value) {
-      _currentUser.value = AuthService.getCurrentUser();
-      if (_currentUser.value != null) {
+      _currentRole.value = AuthService.userRole ?? "";
+      if (_currentRole.value.isNotEmpty) {
         _navigateToRoleDashboard();
       }
+    }else{
+      Get.offAllNamed(AppRoutes.login);
     }
   }
 
@@ -110,13 +116,43 @@ class AuthController extends GetxController {
   }
 
   void _navigateToRoleDashboard() {
-    if (_currentUser.value?.role == AppConstants.roleSuperAdmin) {
+    final data = AuthService.getCurrentUser();
+    if (data == null) {
+
+      Get.snackbar(
+        'Error',
+        'Failed to retrieve user data.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+      Get.offAllNamed(AppRoutes.login);
+      return;
+    }
+    switch (_currentRole.value) {
+      case AppConstants.roleStudent:
+        _currentStudent.value = data;
+
+        break;
+      case AppConstants.roleTeacher:
+        _currentTeacher.value = data;
+
+        break;
+      case AppConstants.roleAdmin:
+      case AppConstants.roleSuperAdmin:
+        _currentAdmin.value = data;
+        break;
+      default:
+        break;
+    }
+
+    if (_currentRole.value == AppConstants.roleSuperAdmin) {
       Get.offAllNamed(AppRoutes.superAdminDashboard);
-    } else if (_currentUser.value?.role == AppConstants.roleAdmin) {
+    } else if (_currentRole.value == AppConstants.roleAdmin) {
       Get.offAllNamed(AppRoutes.adminDashboard);
-    } else if (_currentUser.value?.role == AppConstants.roleTeacher) {
+    } else if (_currentRole.value == AppConstants.roleTeacher) {
       Get.offAllNamed(AppRoutes.teacherDashboard);
-    } else if (_currentUser.value?.role == AppConstants.roleStudent) {
+    } else if (_currentRole.value == AppConstants.roleStudent) {
       Get.offAllNamed(AppRoutes.studentDashboard);
     }
   }
@@ -127,7 +163,9 @@ class AuthController extends GetxController {
 
       await AuthService.logout();
 
-      _currentUser.value = null;
+      _currentStudent.value = null;
+      _currentTeacher.value = null;
+      _currentAdmin.value = null;
       _isLoggedIn.value = false;
 
       // Clear form controllers
@@ -160,8 +198,7 @@ class AuthController extends GetxController {
     try {
       _isLoading.value = true;
 
-      final success =
-          await AuthService.changePassword(oldPassword, newPassword);
+      final success = await AuthService.changePassword(oldPassword, newPassword);
 
       if (success) {
         Get.snackbar(
@@ -193,43 +230,43 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<void> updateProfile(Map<String, dynamic> profileData) async {
-    try {
-      _isLoading.value = true;
-
-      final success = await AuthService.updateProfile(profileData);
-
-      if (success) {
-        _currentUser.value = AuthService.getCurrentUser();
-
-        Get.snackbar(
-          'Success',
-          'Profile updated successfully.',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
-      } else {
-        Get.snackbar(
-          'Error',
-          'Failed to update profile.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
-        );
-      }
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'An error occurred while updating profile.',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
-    } finally {
-      _isLoading.value = false;
-    }
-  }
+  // Future<void> updateProfile(Map<String, dynamic> profileData) async {
+  //   try {
+  //     _isLoading.value = true;
+  //
+  //     final success = await AuthService.updateProfile(profileData);
+  //
+  //     if (success) {
+  //       _currentUser.value = AuthService.getCurrentUser();
+  //
+  //       Get.snackbar(
+  //         'Success',
+  //         'Profile updated successfully.',
+  //         backgroundColor: Colors.green,
+  //         colorText: Colors.white,
+  //         snackPosition: SnackPosition.TOP,
+  //       );
+  //     } else {
+  //       Get.snackbar(
+  //         'Error',
+  //         'Failed to update profile.',
+  //         backgroundColor: Colors.red,
+  //         colorText: Colors.white,
+  //         snackPosition: SnackPosition.TOP,
+  //       );
+  //     }
+  //   } catch (e) {
+  //     Get.snackbar(
+  //       'Error',
+  //       'An error occurred while updating profile.',
+  //       backgroundColor: Colors.red,
+  //       colorText: Colors.white,
+  //       snackPosition: SnackPosition.TOP,
+  //     );
+  //   } finally {
+  //     _isLoading.value = false;
+  //   }
+  // }
 
   // Demo login methods for quick testing
   void loginAsSuperAdmin() {
