@@ -1,109 +1,62 @@
 import 'package:campus_care/models/admin/admin.dart';
-import 'package:campus_care/services/storage_service.dart';
-import 'package:campus_care/core/constants/app_constants.dart';
+import 'package:campus_care/services/api/admin_api_service.dart';
 
 class AdminService {
-  static final List<Map<String, dynamic>> _sampleAdmins = [
-    {
-      'id': 'admin_001',
-      'adminId': 'ADM2024001',
-      'name': 'Principal Anderson',
-      'email': 'principal@school.com',
-      'phone': '+1234567999',
-      'role': 'Super Admin',
-      'permissions': ['all'],
-      'createdAt': DateTime.now().subtract(const Duration(days: 2000)).toIso8601String(),
-      'updatedAt': DateTime.now().toIso8601String(),
-      'isActive': true,
-    },
-    {
-      'id': 'admin_002',
-      'adminId': 'ADM2024002',
-      'name': 'Vice Principal Smith',
-      'email': 'vp.smith@school.com',
-      'phone': '+1234567998',
-      'role': 'Admin',
-      'permissions': ['manage_students', 'manage_teachers', 'view_reports'],
-      'createdAt': DateTime.now().subtract(const Duration(days: 1800)).toIso8601String(),
-      'updatedAt': DateTime.now().toIso8601String(),
-      'isActive': true,
-    },
-  ];
+  static final AdminApiService _apiService = AdminApiService();
 
-  static Future<void> initializeSampleData() async {
-    if (!StorageService.hasData(AppConstants.keyAdmins)) {
-      await StorageService.saveData(AppConstants.keyAdmins, _sampleAdmins);
+  static Future<List<Admin>> getAllAdmins() async {
+    try {
+      final List<dynamic> data = await _apiService.getAllAdmins();
+      return data.map((json) => Admin.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to load admins: $e');
     }
   }
 
-  static Future<List<Admin>> getAllAdmins() async {
-    await initializeSampleData();
-    final adminsData = StorageService.getData(AppConstants.keyAdmins);
-    return adminsData.map((data) => Admin.fromJson(data)).toList();
-  }
-
   static Future<Admin?> getAdminById(String id) async {
-    final admins = await getAllAdmins();
     try {
-      return admins.firstWhere((admin) => admin.id == id);
+      final data = await _apiService.getAdminById(id);
+      return Admin.fromJson(data);
     } catch (e) {
       return null;
     }
   }
 
   static Future<String> addAdmin(Admin admin) async {
-    await initializeSampleData();
-    final adminsData = StorageService.getData(AppConstants.keyAdmins);
-
-    String id = admin.id;
-    if (id.isEmpty) {
-      id = 'admin_${DateTime.now().millisecondsSinceEpoch}';
+    try {
+      final response = await _apiService.createAdmin(admin.toJson());
+      return response['_id'] ?? '';
+    } catch (e) {
+      throw Exception('Failed to create admin: $e');
     }
-
-    final newAdmin = admin.copyWith(
-      id: id,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-
-    adminsData.add(newAdmin.toJson());
-    await StorageService.saveData(AppConstants.keyAdmins, adminsData);
-    return id;
   }
 
   static Future<bool> updateAdmin(Admin admin) async {
     try {
-      final adminsData = StorageService.getData(AppConstants.keyAdmins);
-      final index = adminsData.indexWhere((data) => data['id'] == admin.id);
-
-      if (index != -1) {
-        final updatedAdmin = admin.copyWith(updatedAt: DateTime.now());
-        adminsData[index] = updatedAdmin.toJson();
-        await StorageService.saveData(AppConstants.keyAdmins, adminsData);
-        return true;
-      }
-      return false;
+      await _apiService.updateAdmin(admin.id, admin.toJson());
+      return true;
     } catch (e) {
       return false;
     }
   }
 
-  static Future<String> generateAdminId() async {
-    final admins = await getAllAdmins();
-    final year = DateTime.now().year;
-    int maxNumber = 0;
+  static Future<void> deleteAdmin(String id) async {
+    await _apiService.deleteAdmin(id);
+  }
 
-    for (final admin in admins) {
-      final adminId = admin.adminId;
-      if (adminId.startsWith('ADM$year')) {
-        final numberStr = adminId.substring(7);
-        final number = int.tryParse(numberStr) ?? 0;
-        if (number > maxNumber) {
-          maxNumber = number;
-        }
-      }
+  static Future<Map<String, dynamic>> getDashboardStats() async {
+    try {
+      return await _apiService.getDashboardStats();
+    } catch (e) {
+      throw Exception('Failed to load dashboard stats: $e');
     }
+  }
 
-    return 'ADM$year${(maxNumber + 1).toString().padLeft(3, '0')}';
+  static Future<List<dynamic>> getAllTeachers() async {
+    return await _apiService.getAllTeachers();
+  }
+
+  static Future<List<dynamic>> getAllStudents() async {
+    return await _apiService.getAllStudents();
   }
 }

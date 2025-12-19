@@ -40,6 +40,7 @@ class AppConstants {
   static const String studentsEndpoint = '/students';
   static const String teachersEndpoint = '/teachers';
   static const String adminsEndpoint = '/admin';
+  static const String adminEndpoint = '/admin';
   static const String classesEndpoint = '/classes';
   static const String subjectsEndpoint = '/subjects';
   static const String attendanceEndpoint = '/attendance';

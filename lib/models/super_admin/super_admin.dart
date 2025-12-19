@@ -1,27 +1,21 @@
-class Teacher {
+class SuperAdmin {
   final String id;
   final String firstName;
   final String lastName;
   final String email;
   final String? phone;
-  final String? department;
-  final DateTime? hireDate;
-  final String institute; // Institute ID reference
   final bool isEmailVerified;
   final String? otp;
   final DateTime? otpExpiry;
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  Teacher({
+  SuperAdmin({
     required this.id,
     required this.firstName,
     required this.lastName,
     required this.email,
     this.phone,
-    this.department,
-    this.hireDate,
-    required this.institute,
     this.isEmailVerified = false,
     this.otp,
     this.otpExpiry,
@@ -31,17 +25,13 @@ class Teacher {
 
   String get fullName => '$firstName $lastName';
 
-  factory Teacher.fromJson(Map<String, dynamic> json) {
-    return Teacher(
+  factory SuperAdmin.fromJson(Map<String, dynamic> json) {
+    return SuperAdmin(
       id: json['_id'] ?? json['id'] ?? '',
       firstName: json['firstName'] ?? '',
       lastName: json['lastName'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'],
-      department: json['department'],
-      hireDate:
-          json['hireDate'] != null ? DateTime.parse(json['hireDate']) : null,
-      institute: json['institute'] ?? '',
       isEmailVerified: json['isEmailVerified'] ?? false,
       otp: json['otp'],
       otpExpiry:
@@ -60,9 +50,6 @@ class Teacher {
       'lastName': lastName,
       'email': email,
       'phone': phone,
-      'department': department,
-      'hireDate': hireDate?.toIso8601String(),
-      'institute': institute,
       'isEmailVerified': isEmailVerified,
       'otp': otp,
       'otpExpiry': otpExpiry?.toIso8601String(),
@@ -71,30 +58,24 @@ class Teacher {
     };
   }
 
-  Teacher copyWith({
+  SuperAdmin copyWith({
     String? id,
     String? firstName,
     String? lastName,
     String? email,
     String? phone,
-    String? department,
-    DateTime? hireDate,
-    String? institute,
     bool? isEmailVerified,
     String? otp,
     DateTime? otpExpiry,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return Teacher(
+    return SuperAdmin(
       id: id ?? this.id,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       email: email ?? this.email,
       phone: phone ?? this.phone,
-      department: department ?? this.department,
-      hireDate: hireDate ?? this.hireDate,
-      institute: institute ?? this.institute,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       otp: otp ?? this.otp,
       otpExpiry: otpExpiry ?? this.otpExpiry,

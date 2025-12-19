@@ -493,11 +493,11 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    teacher.name,
+                                    teacher.fullName,
                                     style: const TextStyle(fontWeight: FontWeight.w600),
                                   ),
                                   Text(
-                                    teacher.teacherId,
+                                    teacher.id,
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: theme.colorScheme.onSurfaceVariant,

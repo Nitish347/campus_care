@@ -15,16 +15,39 @@ class AdminController extends GetxController {
     }
     return _admins.where((admin) {
       final query = _searchQuery.value.toLowerCase();
-      return admin.name.toLowerCase().contains(query) ||
-          admin.adminId.toLowerCase().contains(query) ||
-          admin.role.toLowerCase().contains(query);
+      return admin.fullName.toLowerCase().contains(query) ||
+          admin.email.toLowerCase().contains(query) ||
+          (admin.instituteName.toLowerCase().contains(query));
     }).toList();
   }
+
+  final _dashboardStats = <String, dynamic>{}.obs;
+  Map<String, dynamic> get dashboardStats => _dashboardStats;
 
   @override
   void onInit() {
     super.onInit();
     loadAdmins();
+    fetchDashboardStats();
+  }
+
+  Future<void> fetchDashboardStats() async {
+    try {
+      final stats = await AdminService.getDashboardStats();
+      _dashboardStats.value = stats;
+    } catch (e) {
+      // Fail silently or log error
+      print('Error fetching dashboard stats: $e');
+    }
+  }
+  Future<Admin?> getAdminById(String id) async {
+    try {
+      final admin = await AdminService.getAdminById(id);
+      return admin;
+    } catch (e) {
+      // Fail silently or log error
+      print('Error fetching dashboard stats: $e');
+    }
   }
 
   Future<void> loadAdmins() async {

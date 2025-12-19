@@ -101,7 +101,7 @@ class AdminListScreen extends GetView<AdminController> {
             leading: CircleAvatar(
               backgroundColor: theme.colorScheme.tertiaryContainer,
               child: Text(
-                admin.name.substring(0, 1).toUpperCase(),
+                admin.fullName.substring(0, 1).toUpperCase(),
                 style: TextStyle(
                   color: theme.colorScheme.onTertiaryContainer,
                   fontWeight: FontWeight.bold,
@@ -109,7 +109,7 @@ class AdminListScreen extends GetView<AdminController> {
               ),
             ),
             title: Text(
-              admin.name,
+              admin.fullName,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -118,9 +118,9 @@ class AdminListScreen extends GetView<AdminController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 4),
-                Text('ID: ${admin.adminId}'),
-                Text('Role: ${admin.role}'),
+                Text('Institute: ${admin.instituteName}'),
                 Text('Email: ${admin.email}'),
+                if (admin.phone != null) Text('Phone: ${admin.phone}'),
               ],
             ),
             trailing: _buildActions(context, admin),
@@ -138,7 +138,8 @@ class AdminListScreen extends GetView<AdminController> {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
+          side: BorderSide(
+              color: theme.colorScheme.outline.withValues(alpha: 0.2)),
         ),
         child: SizedBox(
           width: double.infinity,
@@ -148,8 +149,7 @@ class AdminListScreen extends GetView<AdminController> {
             ),
             columns: const [
               DataColumn(label: Text('Name')),
-              DataColumn(label: Text('Admin ID')),
-              DataColumn(label: Text('Role')),
+              DataColumn(label: Text('Institute')),
               DataColumn(label: Text('Email')),
               DataColumn(label: Text('Phone')),
               DataColumn(label: Text('Actions')),
@@ -163,7 +163,7 @@ class AdminListScreen extends GetView<AdminController> {
                         radius: 16,
                         backgroundColor: theme.colorScheme.tertiaryContainer,
                         child: Text(
-                          admin.name.substring(0, 1).toUpperCase(),
+                          admin.fullName.substring(0, 1).toUpperCase(),
                           style: TextStyle(
                             fontSize: 12,
                             color: theme.colorScheme.onTertiaryContainer,
@@ -172,13 +172,12 @@ class AdminListScreen extends GetView<AdminController> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(admin.name),
+                      Text(admin.fullName),
                     ],
                   )),
-                  DataCell(Text(admin.adminId)),
-                  DataCell(Text(admin.role)),
+                  DataCell(Text(admin.instituteName)),
                   DataCell(Text(admin.email)),
-                  DataCell(Text(admin.phone)),
+                  DataCell(Text(admin.phone ?? 'N/A')),
                   DataCell(_buildActions(context, admin)),
                 ],
               );
@@ -227,7 +226,7 @@ class AdminListScreen extends GetView<AdminController> {
         if (value == 'view') {
           _showAdminDetails(context, admin);
         } else if (value == 'edit') {
-          Get.snackbar('Info', 'Edit ${admin.name}');
+          Get.snackbar('Info', 'Edit ${admin.fullName}');
         } else if (value == 'delete') {
           _showDeleteDialog(context, admin);
         }
@@ -245,11 +244,14 @@ class AdminListScreen extends GetView<AdminController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailRow('Name', admin.name),
-              _buildDetailRow('Admin ID', admin.adminId),
+              _buildDetailRow('Name', admin.fullName),
+              _buildDetailRow('First Name', admin.firstName),
+              _buildDetailRow('Last Name', admin.lastName),
+              _buildDetailRow('Institute', admin.instituteName),
               _buildDetailRow('Email', admin.email),
-              _buildDetailRow('Phone', admin.phone),
-              _buildDetailRow('Role', admin.role),
+              _buildDetailRow('Phone', admin.phone ?? 'N/A'),
+              if (admin.city != null) _buildDetailRow('City', admin.city!),
+              if (admin.state != null) _buildDetailRow('State', admin.state!),
             ],
           ),
         ),
@@ -289,7 +291,7 @@ class AdminListScreen extends GetView<AdminController> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Admin'),
-        content: Text('Are you sure you want to delete ${admin.name}?'),
+        content: Text('Are you sure you want to delete ${admin.fullName}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

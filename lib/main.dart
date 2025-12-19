@@ -1,3 +1,6 @@
+import 'package:campus_care/controllers/admin_controller.dart';
+import 'package:campus_care/controllers/student_controller.dart';
+import 'package:campus_care/controllers/teacher_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/theme.dart';
@@ -39,10 +42,13 @@ class SchoolStreamApp extends StatelessWidget {
           initialRoute: AppRoutes.splash,
           getPages: AppRoutes.getPages,
           initialBinding: BindingsBuilder(() {
-            Get.put(AdminAuthController());
-            Get.put(TeacherAuthController());
-            Get.put(StudentAuthController());
             Get.put(AuthController());
+            Get.put(AdminController());
+            Get.put(TeacherController());
+            Get.put(StudentController());
+            // Get.put(TeacherAuthController());
+            // Get.put(StudentAuthController());
+
             Get.put(ThemeController());
             Get.put(InstituteContextService());
             Get.put(InstituteController());

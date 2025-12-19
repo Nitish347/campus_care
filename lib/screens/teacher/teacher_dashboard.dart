@@ -53,7 +53,7 @@ class TeacherDashboard extends StatelessWidget {
                 icon: CircleAvatar(
                   backgroundColor: theme.colorScheme.primary,
                   child: Text(
-                    authController.currentTeacher?.name
+                    authController.currentTeacher?.fullName
                             .substring(0, 1)
                             .toUpperCase() ??
                         'T',
@@ -107,7 +107,7 @@ class TeacherDashboard extends StatelessWidget {
           children: [
             // Welcome Section
             Obx(() => Text(
-                  'Welcome, ${authController.currentTeacher?.name ?? 'Teacher'}! 👋',
+                  'Welcome, ${authController.currentTeacher?.fullName ?? 'Teacher'}! 👋',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -192,8 +192,7 @@ class TeacherDashboard extends StatelessWidget {
                   icon: Icons.checklist_outlined,
                   title: 'Mark Attendance',
                   subtitle: 'Take attendance',
-                  onTap: () =>
-                      Get.toNamed(AppRoutes.attendance),
+                  onTap: () => Get.toNamed(AppRoutes.attendance),
                   iconColor: theme.colorScheme.secondary,
                 ),
                 DashboardCard(

@@ -151,7 +151,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                         radius: 28,
                         backgroundColor: theme.colorScheme.secondaryContainer,
                         child: Text(
-                          teacher.name.substring(0, 1).toUpperCase(),
+                          teacher.fullName.substring(0, 1).toUpperCase(),
                           style: TextStyle(
                             fontSize: 20,
                             color: theme.colorScheme.onSecondaryContainer,
@@ -165,7 +165,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              teacher.name,
+                              teacher.fullName,
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -180,7 +180,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  teacher.teacherId,
+                                  teacher.id,
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
@@ -206,7 +206,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                           context,
                           Icons.business_outlined,
                           'Department',
-                          teacher.department,
+                          teacher.department??"",
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -215,7 +215,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                           context,
                           Icons.school_outlined,
                           'Qualification',
-                          teacher.qualification,
+                          teacher.department ?? "",
                         ),
                       ),
                     ],
@@ -237,7 +237,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                           context,
                           Icons.phone_outlined,
                           'Phone',
-                          teacher.phone,
+                          teacher.phone??"",
                         ),
                       ),
                     ],
@@ -398,7 +398,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                               backgroundColor:
                                   theme.colorScheme.secondaryContainer,
                               child: Text(
-                                teacher.name.substring(0, 1).toUpperCase(),
+                                teacher.fullName.substring(0, 1).toUpperCase(),
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: theme.colorScheme.onSecondaryContainer,
@@ -413,14 +413,14 @@ class TeacherListScreen extends GetView<TeacherController> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    teacher.name,
+                                    teacher.fullName,
                                     style: theme.textTheme.bodyLarge?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    teacher.qualification,
+                                    teacher.department ?? "",
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: theme.colorScheme.onSurfaceVariant,
                                     ),
@@ -434,7 +434,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                     ),
                     DataCell(
                       Text(
-                        teacher.teacherId,
+                        teacher.id,
                         style: theme.textTheme.bodyMedium,
                       ),
                     ),
@@ -450,7 +450,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          teacher.department,
+                          teacher.department??"",
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: theme.colorScheme.secondary,
@@ -487,7 +487,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            teacher.phone,
+                            teacher.phone??"",
                             style: theme.textTheme.bodyMedium,
                           ),
                         ],
@@ -542,7 +542,7 @@ class TeacherListScreen extends GetView<TeacherController> {
         if (value == 'view') {
           _showTeacherDetails(context, teacher);
         } else if (value == 'edit') {
-          Get.snackbar('Info', 'Edit ${teacher.name}');
+          Get.snackbar('Info', 'Edit ${teacher.fullName}');
         } else if (value == 'delete') {
           _showDeleteDialog(context, teacher);
         }
@@ -580,7 +580,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                       radius: 32,
                       backgroundColor: theme.colorScheme.secondary,
                       child: Text(
-                        teacher.name.substring(0, 1).toUpperCase(),
+                        teacher.fullName.substring(0, 1).toUpperCase(),
                         style: TextStyle(
                           fontSize: 24,
                           color: theme.colorScheme.onSecondary,
@@ -594,14 +594,14 @@ class TeacherListScreen extends GetView<TeacherController> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            teacher.name,
+                            teacher.fullName,
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            teacher.teacherId,
+                            teacher.id,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -623,17 +623,17 @@ class TeacherListScreen extends GetView<TeacherController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildDetailRow(Icons.person, 'Name', teacher.name),
+                      _buildDetailRow(Icons.person, 'Name', teacher.fullName),
                       _buildDetailRow(
-                          Icons.badge, 'Teacher ID', teacher.teacherId),
+                          Icons.badge, 'Teacher ID', teacher.id),
                       _buildDetailRow(
-                          Icons.business, 'Department', teacher.department),
+                          Icons.business, 'Department', teacher.department ??""),
                       _buildDetailRow(
-                          Icons.school, 'Qualification', teacher.qualification),
+                          Icons.school, 'Qualification', teacher.department ?? ""),
                       _buildDetailRow(Icons.email, 'Email', teacher.email),
-                      _buildDetailRow(Icons.phone, 'Phone', teacher.phone),
+                      _buildDetailRow(Icons.phone, 'Phone', teacher.phone ??""),
                       _buildDetailRow(Icons.calendar_today, 'Join Date',
-                          teacher.joinDate.toString().split(' ')[0]),
+                          teacher.hireDate.toString().split(' ')[0]),
                     ],
                   ),
                 ),
@@ -659,7 +659,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                     FilledButton.icon(
                       onPressed: () {
                         Navigator.pop(context);
-                        Get.snackbar('Info', 'Edit ${teacher.name}');
+                        Get.snackbar('Info', 'Edit ${teacher.fullName}');
                       },
                       icon: const Icon(Icons.edit, size: 18),
                       label: const Text('Edit'),
@@ -715,7 +715,7 @@ class TeacherListScreen extends GetView<TeacherController> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Teacher'),
-        content: Text('Are you sure you want to delete ${teacher.name}?'),
+        content: Text('Are you sure you want to delete ${teacher.fullName}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -736,3 +736,4 @@ class TeacherListScreen extends GetView<TeacherController> {
     );
   }
 }
+

@@ -12,7 +12,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Find the controller registered in initialBinding (main.dart)
-    final authController = Get.find<AdminAuthController>();
+    final authController = Get.find<AuthController>();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     final isWeb = size.width > 800;

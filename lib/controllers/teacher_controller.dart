@@ -15,9 +15,12 @@ class TeacherController extends GetxController {
     }
     return _teachers.where((teacher) {
       final query = _searchQuery.value.toLowerCase();
-      return teacher.name.toLowerCase().contains(query) ||
-          teacher.teacherId.toLowerCase().contains(query) ||
-          teacher.department.toLowerCase().contains(query);
+      return teacher.fullName.toLowerCase().contains(query)
+      // ||
+          // teacher.teacherId.toLowerCase().contains(query) ||
+          // teacher.department.toLowerCase().contains(query)
+
+      ;
     }).toList();
   }
 

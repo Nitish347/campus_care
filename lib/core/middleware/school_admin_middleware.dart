@@ -14,39 +14,18 @@ class SchoolAdminMiddleware extends GetMiddleware {
 
   @override
   RouteSettings? redirect(String? route) {
-    final authController = Get.find<AdminAuthController>();
+    final authController = Get.find<AuthController>();
 
     // If not logged in, redirect to login
     if (!authController.isLoggedIn) {
       return const RouteSettings(name: AppRoutes.login);
     }
 
-    // // If super admin with institute context, allow access to admin routes
-    // if (authController.isSuperAdmin) {
-    //   try {
-    //     final contextService = Get.find<InstituteContextService>();
-    //     if (contextService.isInInstituteContext) {
-    //       return null; // Allow access
-    //     }
-    //   } catch (e) {
-    //     // Context service not initialized yet
-    //   }
-    //   // Super admin without context should go to super admin dashboard
-    //   return const RouteSettings(name: AppRoutes.superAdminDashboard);
-    // }
+    // AdminAuthController is now specific to Admin users only
+    // All logged in users via AdminAuthController are admins
+    // If you need separate auth for teachers/students,
+    // create separate TeacherAuthController and StudentAuthController
 
-    // If not school admin, redirect to appropriate dashboard
-    if (!authController.isSchoolAdmin) {
-      if (authController.isTeacher) {
-        return const RouteSettings(name: AppRoutes.teacherDashboard);
-      } else if (authController.isStudent) {
-        return const RouteSettings(name: AppRoutes.studentDashboard);
-      }
-
-      // Fallback to login if role is unknown
-      return const RouteSettings(name: AppRoutes.login);
-    }
-
-    return null; // Allow access for school admin
+    return null; // Allow access for logged in admin
   }
 }

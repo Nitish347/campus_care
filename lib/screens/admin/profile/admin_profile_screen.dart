@@ -5,8 +5,8 @@ import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 
-class TeacherProfileScreen extends StatelessWidget {
-  const TeacherProfileScreen({super.key});
+class AdminProfileScreen extends StatelessWidget {
+  const AdminProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -48,18 +48,17 @@ class TeacherProfileScreen extends StatelessWidget {
                     Icons.person_rounded,
                     Colors.blue,
                     [
-                      _buildInfoRow(context, Icons.badge_rounded, 'Teacher ID',
-                          'TCH-2024-001'),
                       _buildInfoRow(
                           context,
                           Icons.email_rounded,
                           'Email',
-                          authController.currentTeacher?.email ??
-                              'teacher@example.com'),
+                          authController.currentAdmin?.email ??
+                              ''),
+                      _buildInfoRow(context, Icons.format_underline_outlined, 'Website',
+                          authController.currentAdmin?.website??""),
                       _buildInfoRow(context, Icons.phone_rounded, 'Phone',
-                          '+1 234 567 8900'),
-                      _buildInfoRow(context, Icons.location_on_rounded,
-                          'Address', '123 Main Street, City'),
+                          authController.currentAdmin?.phone??""),
+
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -67,18 +66,19 @@ class TeacherProfileScreen extends StatelessWidget {
                   // Professional Information
                   _buildSectionCard(
                     context,
-                    'Professional Information',
-                    Icons.work_rounded,
+                    'Address',
+                    Icons.location_on,
                     Colors.purple,
                     [
-                      _buildInfoRow(context, Icons.school_rounded, 'Department',
-                          'Mathematics'),
-                      _buildInfoRow(context, Icons.class_rounded, 'Classes',
-                          '5A, 5B, 6A'),
-                      _buildInfoRow(context, Icons.calendar_today_rounded,
-                          'Joining Date', 'Sep 01, 2020'),
-                      _buildInfoRow(context, Icons.stars_rounded, 'Experience',
-                          '5 Years'),
+                      _buildInfoRow(context, Icons.location_on, 'City',
+                          authController.currentAdmin?.city??""),
+                      _buildInfoRow(context, Icons.location_on, 'State',
+                          authController.currentAdmin?.state??""),
+                      _buildInfoRow(context, Icons.location_on,
+                          'Pin Code',  authController.currentAdmin?.pincode??""),
+                      _buildInfoRow(context, Icons.location_on_rounded,
+                          'Address', authController.currentAdmin?.address??""),
+
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -155,23 +155,23 @@ class TeacherProfileScreen extends StatelessWidget {
                 child: CircleAvatar(
                   radius: 60,
                   backgroundColor: Colors.white,
-                  child: Text(
-                    authController.currentTeacher?.fullName
-                            .substring(0, 1)
-                            .toUpperCase() ??
-                        'T',
-                    style: theme.textTheme.displayLarge?.copyWith(
-                      color: const Color(0xFF4F46E5),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  // child: Text(
+                  //   authController.currentAdmin?.instituteName
+                  //           .substring(0, 1)
+                  //           .toUpperCase() ??
+                  //       'T',
+                  //   style: theme.textTheme.displayLarge?.copyWith(
+                  //     color: const Color(0xFF4F46E5),
+                  //     fontWeight: FontWeight.bold,
+                  //   ),
+                  // ),
                 ),
               ),
               const SizedBox(height: 20),
 
               // Name
               Text(
-                authController.currentTeacher?.fullName ?? 'Teacher Name',
+                authController.currentAdmin?.instituteName ?? 'Institute Name',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -196,7 +196,7 @@ class TeacherProfileScreen extends StatelessWidget {
                         color: Colors.white, size: 16),
                     const SizedBox(width: 8),
                     Text(
-                      authController.currentTeacher?.email ??
+                      authController.currentAdmin?.email ??
                           'teacher@example.com',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: Colors.white,

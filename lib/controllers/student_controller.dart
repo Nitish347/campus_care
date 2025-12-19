@@ -15,8 +15,13 @@ class StudentController extends GetxController {
   String? get selectedSection => _selectedSection.value;
 
   // Get available classes
-  List<String> get availableClasses {
-    final classes = _students.map((s) => s.classId).toSet().toList();
+  List<String>? get availableClasses {
+    final classes = _students
+        .map((s) => s.class_)
+        .where((c) => c != null)
+        .cast<String>()
+        .toSet()
+        .toList();
     classes.sort();
     return classes;
   }
@@ -25,8 +30,10 @@ class StudentController extends GetxController {
   List<String> get availableSections {
     if (_selectedClass.value == null) return [];
     final sections = _students
-        .where((s) => s.classId == _selectedClass.value)
+        .where((s) => s.class_ == _selectedClass.value)
         .map((s) => s.section)
+        .where((s) => s != null)
+        .cast<String>()
         .toSet()
         .toList();
     sections.sort();
@@ -40,7 +47,7 @@ class StudentController extends GetxController {
     // Filter by class and section
     if (_selectedClass.value != null && _selectedSection.value != null) {
       filtered = filtered.where((student) {
-        return student.classId == _selectedClass.value &&
+        return student.class_ == _selectedClass.value &&
             student.section == _selectedSection.value;
       }).toList();
     }
@@ -49,8 +56,8 @@ class StudentController extends GetxController {
     if (_searchQuery.value.isNotEmpty) {
       final query = _searchQuery.value.toLowerCase();
       filtered = filtered.where((student) {
-        return student.name.toLowerCase().contains(query) ||
-            student.studentId.toLowerCase().contains(query) ||
+        return student.fullName.toLowerCase().contains(query) ||
+            student.enrollmentNumber.toLowerCase().contains(query) ||
             student.email.toLowerCase().contains(query);
       }).toList();
     }

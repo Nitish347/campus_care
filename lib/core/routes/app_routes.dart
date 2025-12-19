@@ -1,3 +1,4 @@
+import 'package:campus_care/screens/admin/profile/admin_profile_screen.dart';
 import 'package:get/get.dart';
 
 import 'package:campus_care/screens/auth/login_screen.dart';
@@ -59,6 +60,7 @@ class AppRoutes {
 
   // Admin Routes
   static const String adminDashboard = '/admin/dashboard';
+  static const String adminProfile = '/admin/profile';
 
   static const String studentList = '/admin/students';
   static const String addStudent = '/admin/students/add';
@@ -132,6 +134,10 @@ class AppRoutes {
     GetPage(
       name: adminDashboard,
       page: () => const AdminDashboard(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),  GetPage(
+      name: adminProfile,
+      page: () => const AdminProfileScreen(),
       middlewares: [SchoolAdminMiddleware()],
     ),
     GetPage(

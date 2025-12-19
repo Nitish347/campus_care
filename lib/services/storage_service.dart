@@ -23,7 +23,7 @@ class StorageService {
     await prefs.setString(AppConstants.keyCurrentUser, jsonEncode(user));
   }
 
-  static Map<String, dynamic>? get currentUser {
+  static Future<Map<String, dynamic>?> get currentUser async  {
     final userData = prefs.getString(AppConstants.keyCurrentUser);
     if (userData != null) {
       try {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
@@ -9,14 +10,16 @@ import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
 import 'package:campus_care/widgets/common/institute_context_indicator.dart';
 
+import '../../controllers/admin_controller.dart';
 import '../../controllers/admin/admin_auth_controller.dart';
+import '../../controllers/theme_controller.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final authController = Get.find<AdminAuthController>();
+    final authController = Get.find<AuthController>();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 1200;
@@ -31,11 +34,22 @@ class AdminDashboard extends StatelessWidget {
               color: theme.colorScheme.primary,
             ),
             const SizedBox(width: 8),
-            const Text('School Stream Admin'),
+            const Text('Campus Care Admin'),
           ],
         ),
         actions: [
           // Institute Context Indicator (shows when super admin is managing an institute)
+          GetBuilder<ThemeController>(
+            builder: (themeController) => IconButton(
+              icon: Icon(
+                theme.brightness == Brightness.dark
+                    ? Icons.light_mode
+                    : Icons.dark_mode,
+              ),
+              onPressed: () => themeController.toggleTheme(),
+              tooltip: 'Toggle theme',
+            ),
+          ),
           const InstituteContextIndicator(),
           IconButton(
             onPressed: () {
@@ -48,7 +62,7 @@ class AdminDashboard extends StatelessWidget {
                 icon: CircleAvatar(
                   backgroundColor: theme.colorScheme.primary,
                   child: Text(
-                    authController.currentUser?.name
+                    authController.currentAdmin?.fullName
                             .substring(0, 1)
                             .toUpperCase() ??
                         'A',
@@ -68,7 +82,7 @@ class AdminDashboard extends StatelessWidget {
                       ],
                     ),
                     onTap: () {
-                      // TODO: Navigate to profile
+                      Get.toNamed(AppRoutes.adminProfile);
                     },
                   ),
                   PopupMenuItem(
@@ -333,7 +347,7 @@ class AdminDashboard extends StatelessWidget {
           children: [
             // Welcome Header
             Obx(() => Text(
-                  'Welcome back, ${Get.find<AdminAuthController>().currentUser?.name ?? 'Admin'}! 👋',
+                  'Welcome back, ${Get.find<AuthController>().currentAdmin?.fullName ?? 'Admin'}! 👋',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -351,35 +365,38 @@ class AdminDashboard extends StatelessWidget {
             // Quick Stats
             SectionHeader(title: 'Quick Stats'),
             const SizedBox(height: 12),
-            ResponsiveGrid(
-              childAspectRatio: 1.1,
-              children: [
-                StatCard(
-                  icon: Icons.people_outlined,
-                  title: 'Total Students',
-                  value: '1,234',
-                  color: theme.colorScheme.primary,
-                ),
-                StatCard(
-                  icon: Icons.person_outlined,
-                  title: 'Total Teachers',
-                  value: '89',
-                  color: theme.colorScheme.secondary,
-                ),
-                StatCard(
-                  icon: Icons.class_outlined,
-                  title: 'Total Classes',
-                  value: '24',
-                  color: Colors.purple,
-                ),
-                StatCard(
-                  icon: Icons.event_outlined,
-                  title: 'Today\'s Events',
-                  value: '5',
-                  color: Colors.orange,
-                ),
-              ],
-            ),
+            Obx(() {
+              final stats = Get.find<AdminController>().dashboardStats;
+              return ResponsiveGrid(
+                childAspectRatio: kIsWeb ? 1.6 : 1.1,
+                children: [
+                  StatCard(
+                    icon: Icons.people_outlined,
+                    title: 'Total Students',
+                    value: stats['students']?.toString() ?? '0',
+                    color: theme.colorScheme.primary,
+                  ),
+                  StatCard(
+                    icon: Icons.person_outlined,
+                    title: 'Total Teachers',
+                    value: stats['teachers']?.toString() ?? '0',
+                    color: theme.colorScheme.secondary,
+                  ),
+                  StatCard(
+                    icon: Icons.class_outlined,
+                    title: 'Total Classes',
+                    value: '24', // TODO: Implement Class stats API
+                    color: Colors.purple,
+                  ),
+                  StatCard(
+                    icon: Icons.event_outlined,
+                    title: 'Today\'s Events',
+                    value: '0', // TODO: Implement Events stats API
+                    color: Colors.orange,
+                  ),
+                ],
+              );
+            }),
 
             const SizedBox(height: 24),
 
@@ -387,7 +404,7 @@ class AdminDashboard extends StatelessWidget {
             SectionHeader(title: 'Quick Access'),
             const SizedBox(height: 12),
             ResponsiveGrid(
-              childAspectRatio: 0.95,
+              childAspectRatio: kIsWeb ? 1.1 : 0.95,
               children: [
                 DashboardCard(
                   icon: Icons.people_outlined,

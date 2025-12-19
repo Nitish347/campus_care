@@ -51,150 +51,150 @@ class StudentProfileScreen extends StatelessWidget {
             ),
 
             // Profile Content
-            SliverToBoxAdapter(
-              child: ResponsivePadding(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 24),
-
-                    // Quick Stats Cards with Enhanced Design
-                    _buildQuickStatsRow(context, student),
-                    const SizedBox(height: 24),
-
-                    // Personal Information
-                    _buildModernSectionCard(
-                      context,
-                      'Personal Information',
-                      Icons.person_rounded,
-                      Colors.blue,
-                      [
-                        buildModernInfoRow(context, Icons.badge_rounded,
-                            'Student ID', student?.studentId ?? 'STU-2024-001'),
-                        buildModernInfoRow(
-                            context,
-                            Icons.cake_rounded,
-                            'Date of Birth',
-                            student != null
-                                ? DateFormat('MMM dd, yyyy')
-                                    .format(student.dateOfBirth)
-                                : 'Jan 15, 2005'),
-                        buildModernInfoRow(context, Icons.wc_rounded, 'Gender',
-                            student?.gender ?? 'Male'),
-                        buildModernInfoRow(context, Icons.bloodtype_rounded,
-                            'Blood Group', student?.bloodGroup ?? 'O+'),
-                        buildModernInfoRow(
-                            context,
-                            Icons.location_on_rounded,
-                            'Address',
-                            student?.address ?? '123 Main Street, City',
-                            maxLines: 2),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Contact Information
-                    _buildModernSectionCard(
-                      context,
-                      'Contact Information',
-                      Icons.contact_phone_rounded,
-                      Colors.green,
-                      [
-                        buildModernInfoRow(context, Icons.email_rounded,
-                            'Email', student?.email ?? 'student@example.com'),
-                        buildModernInfoRow(context, Icons.phone_rounded,
-                            'Phone', student?.phone ?? '+1 234 567 8900'),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Academic Information
-                    _buildModernSectionCard(
-                      context,
-                      'Academic Information',
-                      Icons.school_rounded,
-                      Colors.purple,
-                      [
-                        buildModernInfoRow(context, Icons.class_rounded,
-                            'Class', student?.classId ?? 'Grade 10'),
-                        buildModernInfoRow(context, Icons.group_rounded,
-                            'Section', student?.section ?? 'A'),
-                        buildModernInfoRow(
-                            context,
-                            Icons.calendar_today_rounded,
-                            'Admission Date',
-                            student != null
-                                ? DateFormat('MMM dd, yyyy')
-                                    .format(student.admissionDate)
-                                : 'Sep 01, 2023'),
-                        buildEnhancedStatusChip(
-                            context, student?.isActive ?? true),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Guardian Information
-                    _buildModernSectionCard(
-                      context,
-                      'Guardian Information',
-                      Icons.family_restroom_rounded,
-                      Colors.orange,
-                      [
-                        buildModernInfoRow(
-                            context,
-                            Icons.person_outline_rounded,
-                            'Name',
-                            student?.guardianName ?? 'John Doe'),
-                        buildModernInfoRow(
-                            context,
-                            Icons.phone_outlined,
-                            'Phone',
-                            student?.guardianPhone ?? '+1 234 567 8901'),
-                        buildModernInfoRow(
-                            context,
-                            Icons.email_outlined,
-                            'Email',
-                            student?.guardianEmail ?? 'guardian@example.com'),
-                        if (student?.guardianRelation != null || true)
-                          buildModernInfoRow(
-                              context,
-                              Icons.connect_without_contact_rounded,
-                              'Relation',
-                              student?.guardianRelation ?? 'Father'),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Medical Information
-                    if (student?.medicalInfo != null || true)
-                      _buildModernSectionCard(
-                        context,
-                        'Medical Information',
-                        Icons.medical_information_rounded,
-                        Colors.red,
-                        [
-                          buildModernInfoRow(
-                              context,
-                              Icons.info_outline_rounded,
-                              'Details',
-                              student?.medicalInfo ??
-                                  'No known allergies. Regular checkups recommended.',
-                              maxLines: 3),
-                        ],
-                      ),
-                    const SizedBox(height: 16),
-
-                    // Documents
-                    if (student?.documents.isNotEmpty ?? false)
-                      _buildModernDocumentsCard(context, student!.documents),
-                    const SizedBox(height: 24),
-
-                    // Action Buttons with Modern Design
-                    _buildModernActionButtons(context, authController),
-                    const SizedBox(height: 32),
-                  ],
-                ),
-              ),
-            ),
+            // SliverToBoxAdapter(
+            //   child: ResponsivePadding(
+            //     child: Column(
+            //       children: [
+            //         const SizedBox(height: 24),
+            //
+            //         // Quick Stats Cards with Enhanced Design
+            //         _buildQuickStatsRow(context, student),
+            //         const SizedBox(height: 24),
+            //
+            //         // Personal Information
+            //         _buildModernSectionCard(
+            //           context,
+            //           'Personal Information',
+            //           Icons.person_rounded,
+            //           Colors.blue,
+            //           [
+            //             buildModernInfoRow(context, Icons.badge_rounded,
+            //                 'Student ID', student?.studentId ?? 'STU-2024-001'),
+            //             buildModernInfoRow(
+            //                 context,
+            //                 Icons.cake_rounded,
+            //                 'Date of Birth',
+            //                 student != null
+            //                     ? DateFormat('MMM dd, yyyy')
+            //                         .format(student.dateOfBirth)
+            //                     : 'Jan 15, 2005'),
+            //             buildModernInfoRow(context, Icons.wc_rounded, 'Gender',
+            //                 student?.gender ?? 'Male'),
+            //             buildModernInfoRow(context, Icons.bloodtype_rounded,
+            //                 'Blood Group', student?.bloodGroup ?? 'O+'),
+            //             buildModernInfoRow(
+            //                 context,
+            //                 Icons.location_on_rounded,
+            //                 'Address',
+            //                 student?.address ?? '123 Main Street, City',
+            //                 maxLines: 2),
+            //           ],
+            //         ),
+            //         const SizedBox(height: 16),
+            //
+            //         // Contact Information
+            //         _buildModernSectionCard(
+            //           context,
+            //           'Contact Information',
+            //           Icons.contact_phone_rounded,
+            //           Colors.green,
+            //           [
+            //             buildModernInfoRow(context, Icons.email_rounded,
+            //                 'Email', student?.email ?? 'student@example.com'),
+            //             buildModernInfoRow(context, Icons.phone_rounded,
+            //                 'Phone', student?.phone ?? '+1 234 567 8900'),
+            //           ],
+            //         ),
+            //         const SizedBox(height: 16),
+            //
+            //         // Academic Information
+            //         _buildModernSectionCard(
+            //           context,
+            //           'Academic Information',
+            //           Icons.school_rounded,
+            //           Colors.purple,
+            //           [
+            //             buildModernInfoRow(context, Icons.class_rounded,
+            //                 'Class', student?.classId ?? 'Grade 10'),
+            //             buildModernInfoRow(context, Icons.group_rounded,
+            //                 'Section', student?.section ?? 'A'),
+            //             buildModernInfoRow(
+            //                 context,
+            //                 Icons.calendar_today_rounded,
+            //                 'Admission Date',
+            //                 student != null
+            //                     ? DateFormat('MMM dd, yyyy')
+            //                         .format(student.createdAt)
+            //                     : 'Sep 01, 2023'),
+            //             buildEnhancedStatusChip(
+            //                 context, student?.isActive ?? true),
+            //           ],
+            //         ),
+            //         const SizedBox(height: 16),
+            //
+            //         // Guardian Information
+            //         _buildModernSectionCard(
+            //           context,
+            //           'Guardian Information',
+            //           Icons.family_restroom_rounded,
+            //           Colors.orange,
+            //           [
+            //             buildModernInfoRow(
+            //                 context,
+            //                 Icons.person_outline_rounded,
+            //                 'Name',
+            //                 student?.guardianName ?? 'John Doe'),
+            //             buildModernInfoRow(
+            //                 context,
+            //                 Icons.phone_outlined,
+            //                 'Phone',
+            //                 student?.guardianPhone ?? '+1 234 567 8901'),
+            //             buildModernInfoRow(
+            //                 context,
+            //                 Icons.email_outlined,
+            //                 'Email',
+            //                 student?.guardianEmail ?? 'guardian@example.com'),
+            //             if (student?.guardianRelation != null || true)
+            //               buildModernInfoRow(
+            //                   context,
+            //                   Icons.connect_without_contact_rounded,
+            //                   'Relation',
+            //                   student?.guardianRelation ?? 'Father'),
+            //           ],
+            //         ),
+            //         const SizedBox(height: 16),
+            //
+            //         // Medical Information
+            //         if (student?.medicalInfo != null || true)
+            //           _buildModernSectionCard(
+            //             context,
+            //             'Medical Information',
+            //             Icons.medical_information_rounded,
+            //             Colors.red,
+            //             [
+            //               buildModernInfoRow(
+            //                   context,
+            //                   Icons.info_outline_rounded,
+            //                   'Details',
+            //                   student?.medicalInfo ??
+            //                       'No known allergies. Regular checkups recommended.',
+            //                   maxLines: 3),
+            //             ],
+            //           ),
+            //         const SizedBox(height: 16),
+            //
+            //         // Documents
+            //         if (student?.documents.isNotEmpty ?? false)
+            //           _buildModernDocumentsCard(context, student!.documents),
+            //         const SizedBox(height: 24),
+            //
+            //         // Action Buttons with Modern Design
+            //         _buildModernActionButtons(context, authController),
+            //         const SizedBox(height: 32),
+            //       ],
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),
@@ -262,63 +262,63 @@ class StudentProfileScreen extends StatelessWidget {
               const SizedBox(height: 40),
 
               // Profile Avatar with Enhanced Shadow
-              Hero(
-                tag: 'profile_avatar',
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 30,
-                        spreadRadius: 5,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
-                      width: 4,
-                    ),
-                  ),
-                  child: CircleAvatar(
-                    radius: 65,
-                    backgroundColor: Colors.white,
-                    backgroundImage: student?.avatar != null
-                        ? NetworkImage(student!.avatar!)
-                        : null,
-                    child: student?.avatar == null
-                        ? Text(
-                            student?.name.substring(0, 1).toUpperCase() ?? 'S',
-                            style: theme.textTheme.displayLarge?.copyWith(
-                              color: const Color(0xFF4F46E5),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        : null,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Name with Shadow
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  student?.name ?? 'Student Name',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black.withOpacity(0.5),
-                        offset: const Offset(0, 2),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+              // Hero(
+              //   tag: 'profile_avatar',
+              //   child: Container(
+              //     decoration: BoxDecoration(
+              //       shape: BoxShape.circle,
+              //       boxShadow: [
+              //         BoxShadow(
+              //           color: Colors.black.withOpacity(0.3),
+              //           blurRadius: 30,
+              //           spreadRadius: 5,
+              //           offset: const Offset(0, 10),
+              //         ),
+              //       ],
+              //       border: Border.all(
+              //         color: Colors.white.withOpacity(0.3),
+              //         width: 4,
+              //       ),
+              //     ),
+              //     child: CircleAvatar(
+              //       radius: 65,
+              //       backgroundColor: Colors.white,
+              //       backgroundImage: student?.avatar != null
+              //           ? NetworkImage(student!.avatar!)
+              //           : null,
+              //       child: student?.avatar == null
+              //           ? Text(
+              //               student?.name.substring(0, 1).toUpperCase() ?? 'S',
+              //               style: theme.textTheme.displayLarge?.copyWith(
+              //                 color: const Color(0xFF4F46E5),
+              //                 fontWeight: FontWeight.bold,
+              //               ),
+              //             )
+              //           : null,
+              //     ),
+              //   ),
+              // ),
+              // const SizedBox(height: 20),
+              //
+              // // Name with Shadow
+              // Container(
+              //   padding: const EdgeInsets.symmetric(horizontal: 24),
+              //   child: Text(
+              //     student?.name ?? 'Student Name',
+              //     style: theme.textTheme.headlineMedium?.copyWith(
+              //       fontWeight: FontWeight.bold,
+              //       color: Colors.white,
+              //       shadows: [
+              //         Shadow(
+              //           color: Colors.black.withOpacity(0.5),
+              //           offset: const Offset(0, 2),
+              //           blurRadius: 4,
+              //         ),
+              //       ],
+              //     ),
+              //     textAlign: TextAlign.center,
+              //   ),
+              // ),
               const SizedBox(height: 8),
 
               // Email Badge with Glassmorphism
@@ -373,7 +373,7 @@ class StudentProfileScreen extends StatelessWidget {
             'Days Since\nAdmission',
             student != null
                 ? DateTime.now()
-                    .difference(student.admissionDate)
+                    .difference(student.createdAt)
                     .inDays
                     .toString()
                 : '450',
@@ -381,25 +381,25 @@ class StudentProfileScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Expanded(
-          child: _buildEnhancedStatCard(
-            context,
-            Icons.description_rounded,
-            'Documents',
-            (student?.documents.length ?? 5).toString(),
-            Colors.green,
-          ),
-        ),
+        // Expanded(
+        //   child: _buildEnhancedStatCard(
+        //     context,
+        //     Icons.description_rounded,
+        //     'Documents',
+        //     (student?.documents.length ?? 5).toString(),
+        //     Colors.green,
+        //   ),
+        // ),
         const SizedBox(width: 12),
-        Expanded(
-          child: _buildEnhancedStatCard(
-            context,
-            Icons.check_circle_rounded,
-            'Status',
-            student?.isActive ?? true ? 'Active' : 'Inactive',
-            Colors.purple,
-          ),
-        ),
+        // Expanded(
+        //   child: _buildEnhancedStatCard(
+        //     context,
+        //     Icons.check_circle_rounded,
+        //     'Status',
+        //     student?.isActive ?? true ? 'Active' : 'Inactive',
+        //     Colors.purple,
+        //   ),
+        // ),
       ],
     );
   }
@@ -934,3 +934,4 @@ class StudentProfileScreen extends StatelessWidget {
     );
   }
 }
+

@@ -51,7 +51,7 @@ class _StudentNotificationsScreenState
         (s) => s.email == currentUser.email,
         orElse: () => students.first,
       );
-      _studentClassId = student.classId;
+      _studentClassId = student.class_;
       _studentSection = student.section;
 
       // Load all notices

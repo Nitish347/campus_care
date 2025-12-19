@@ -31,7 +31,7 @@ class TimetableController extends GetxController {
   Future<void> _loadAvailableClasses() async {
     try {
       final students = await StudentService.getAllStudents();
-      final classes = students.map((s) => s.classId).toSet().toList();
+      final classes = students.map((s) => s.class_??"").toSet().toList();
       classes.sort();
       _availableClasses.value = classes;
     } catch (e) {
@@ -47,8 +47,8 @@ class TimetableController extends GetxController {
     try {
       final students = await StudentService.getAllStudents();
       final sections = students
-          .where((s) => s.classId == _selectedClass.value)
-          .map((s) => s.section)
+          .where((s) => s.class_ == _selectedClass.value)
+          .map((s) => s.section??"")
           .toSet()
           .toList();
       sections.sort();

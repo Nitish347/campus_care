@@ -196,7 +196,7 @@ class StudentListScreen extends GetView<StudentController> {
                         radius: 28,
                         backgroundColor: theme.colorScheme.primaryContainer,
                         child: Text(
-                          student.name.substring(0, 1).toUpperCase(),
+                          student.fullName.substring(0, 1).toUpperCase(),
                           style: TextStyle(
                             fontSize: 20,
                             color: theme.colorScheme.onPrimaryContainer,
@@ -210,7 +210,7 @@ class StudentListScreen extends GetView<StudentController> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              student.name,
+                              student.fullName,
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -225,7 +225,7 @@ class StudentListScreen extends GetView<StudentController> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  student.studentId,
+                                  student.id,
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
@@ -260,7 +260,7 @@ class StudentListScreen extends GetView<StudentController> {
                           context,
                           Icons.phone_outlined,
                           'Phone',
-                          student.phone,
+                          student.phone??"",
                         ),
                       ),
                     ],
@@ -273,7 +273,7 @@ class StudentListScreen extends GetView<StudentController> {
                           context,
                           Icons.class_outlined,
                           'Class',
-                          '${student.classId} - ${student.section}',
+                          '${student.class_} - ${student.section}',
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -282,7 +282,7 @@ class StudentListScreen extends GetView<StudentController> {
                           context,
                           Icons.person_outline,
                           'Guardian',
-                          student.guardianName,
+                          "",
                         ),
                       ),
                     ],
@@ -443,7 +443,7 @@ class StudentListScreen extends GetView<StudentController> {
                               backgroundColor:
                                   theme.colorScheme.primaryContainer,
                               child: Text(
-                                student.name.substring(0, 1).toUpperCase(),
+                                student.fullName.substring(0, 1).toUpperCase(),
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: theme.colorScheme.onPrimaryContainer,
@@ -458,14 +458,14 @@ class StudentListScreen extends GetView<StudentController> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    student.name,
+                                    student.fullName,
                                     style: theme.textTheme.bodyLarge?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    student.guardianName,
+                                   "",
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: theme.colorScheme.onSurfaceVariant,
                                     ),
@@ -479,7 +479,7 @@ class StudentListScreen extends GetView<StudentController> {
                     ),
                     DataCell(
                       Text(
-                        student.studentId,
+                        student.id,
                         style: theme.textTheme.bodyMedium,
                       ),
                     ),
@@ -512,7 +512,7 @@ class StudentListScreen extends GetView<StudentController> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            student.phone,
+                            student.phone??"",
                             style: theme.textTheme.bodyMedium,
                           ),
                         ],
@@ -531,7 +531,7 @@ class StudentListScreen extends GetView<StudentController> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          '${student.classId} - ${student.section}',
+                          '${student.class_} - ${student.section}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: theme.colorScheme.primary,
@@ -588,7 +588,7 @@ class StudentListScreen extends GetView<StudentController> {
         if (value == 'view') {
           _showStudentDetails(context, student);
         } else if (value == 'edit') {
-          Get.snackbar('Info', 'Edit ${student.name}');
+          Get.snackbar('Info', 'Edit ${student.fullName}');
         } else if (value == 'delete') {
           _showDeleteDialog(context, student);
         }
@@ -626,7 +626,7 @@ class StudentListScreen extends GetView<StudentController> {
                       radius: 32,
                       backgroundColor: theme.colorScheme.primary,
                       child: Text(
-                        student.name.substring(0, 1).toUpperCase(),
+                        student.fullName.substring(0, 1).toUpperCase(),
                         style: TextStyle(
                           fontSize: 24,
                           color: theme.colorScheme.onPrimary,
@@ -640,14 +640,14 @@ class StudentListScreen extends GetView<StudentController> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            student.name,
+                            student.fullName,
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            student.studentId,
+                            student.enrollmentNumber,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -674,12 +674,12 @@ class StudentListScreen extends GetView<StudentController> {
                         'Personal Information',
                         [
                           _buildDetailRow(
-                              context, Icons.person, 'Name', student.name),
+                              context, Icons.person, 'Name', student.fullName),
                           _buildDetailRow(
                             context,
                             Icons.badge,
                             'Student ID',
-                            student.studentId,
+                            student.enrollmentNumber,
                           ),
                           _buildDetailRow(
                             context,
@@ -691,26 +691,26 @@ class StudentListScreen extends GetView<StudentController> {
                             context,
                             Icons.phone,
                             'Phone',
-                            student.phone,
+                            student.phone??"",
                           ),
-                          _buildDetailRow(
-                            context,
-                            Icons.cake,
-                            'Date of Birth',
-                            '${student.dateOfBirth.day}/${student.dateOfBirth.month}/${student.dateOfBirth.year}',
-                          ),
-                          _buildDetailRow(
-                            context,
-                            Icons.wc,
-                            'Gender',
-                            student.gender,
-                          ),
-                          _buildDetailRow(
-                            context,
-                            Icons.bloodtype,
-                            'Blood Group',
-                            student.bloodGroup,
-                          ),
+                          // _buildDetailRow(
+                          //   context,
+                          //   Icons.cake,
+                          //   'Date of Birth',
+                          //   '${student.dateOfBirth.day}/${student.dateOfBirth.month}/${student.dateOfBirth.year}',
+                          // ),
+                          // _buildDetailRow(
+                          //   context,
+                          //   Icons.wc,
+                          //   'Gender',
+                          //   student.gender,
+                          // ),
+                          // _buildDetailRow(
+                          //   context,
+                          //   Icons.bloodtype,
+                          //   'Blood Group',
+                          //   student.bloodGroup,
+                          // ),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -722,14 +722,14 @@ class StudentListScreen extends GetView<StudentController> {
                             context,
                             Icons.class_,
                             'Class',
-                            '${student.classId} - ${student.section}',
+                            '${student.class_} - ${student.section}',
                           ),
-                          _buildDetailRow(
-                            context,
-                            Icons.calendar_today,
-                            'Admission Date',
-                            '${student.admissionDate.day}/${student.admissionDate.month}/${student.admissionDate.year}',
-                          ),
+                          // _buildDetailRow(
+                          //   context,
+                          //   Icons.calendar_today,
+                          //   'Admission Date',
+                          //   '${student.admissionDate.day}/${student.admissionDate.month}/${student.admissionDate.year}',
+                          // ),
                         ],
                       ),
                       const SizedBox(height: 24),
@@ -737,34 +737,36 @@ class StudentListScreen extends GetView<StudentController> {
                         context,
                         'Guardian Information',
                         [
-                          _buildDetailRow(
-                            context,
-                            Icons.person_outline,
-                            'Guardian Name',
-                            student.guardianName,
-                          ),
-                          _buildDetailRow(
-                            context,
-                            Icons.phone,
-                            'Guardian Phone',
-                            student.guardianPhone,
-                          ),
+                          // _buildDetailRow(
+                          //   context,
+                          //   Icons.person_outline,
+                          //   'Guardian Name',
+                          //   student.guardianName,
+                          // ),
+                          // _buildDetailRow(
+                          //   context,
+                          //   Icons.phone,
+                          //   'Guardian Phone',
+                          //   student.guardianPhone,
+                          // ),
                           _buildDetailRow(
                             context,
                             Icons.email,
                             'Guardian Email',
-                            student.guardianEmail,
+                            student.email,
                           ),
-                          if (student.guardianRelation != null)
-                            _buildDetailRow(
-                              context,
-                              Icons.family_restroom,
-                              'Relation',
-                              student.guardianRelation!,
-                            ),
+                          // if (student.guardianRelation != null)
+                          //   _buildDetailRow(
+                          //     context,
+                          //     Icons.family_restroom,
+                          //     'Relation',
+                          //     student.guardianRelation!,
+                          //   ),
                         ],
                       ),
-                      if (student.address.isNotEmpty) ...[
+                      // if (student.address.isNotEmpty)
+                        ...
+                      [
                         const SizedBox(height: 24),
                         _buildDetailSection(
                           context,
@@ -774,7 +776,7 @@ class StudentListScreen extends GetView<StudentController> {
                               context,
                               Icons.location_on,
                               'Address',
-                              student.address,
+                              "",
                             ),
                           ],
                         ),
@@ -804,7 +806,7 @@ class StudentListScreen extends GetView<StudentController> {
                     ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pop(context);
-                        Get.snackbar('Info', 'Edit ${student.name}');
+                        Get.snackbar('Info', 'Edit ${student.fullName}');
                       },
                       icon: const Icon(Icons.edit, size: 18),
                       label: const Text('Edit'),
@@ -897,7 +899,7 @@ class StudentListScreen extends GetView<StudentController> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Student'),
-        content: Text('Are you sure you want to delete ${student.name}?'),
+        content: Text('Are you sure you want to delete ${student.fullName}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -918,3 +920,4 @@ class StudentListScreen extends GetView<StudentController> {
     );
   }
 }
+

@@ -1,153 +1,124 @@
 class Student {
   final String id;
-  final String studentId;
-  final String name;
+  final String firstName;
+  final String lastName;
   final String email;
-  final String phone;
-  final String? avatar;
-  final DateTime dateOfBirth;
-  final String gender;
-  final String address;
-  final String classId;
-  final String section;
-  final DateTime admissionDate;
-  final String guardianName;
-  final String guardianPhone;
-  final String guardianEmail;
-  final String? guardianRelation;
-  final String bloodGroup;
-  final String? medicalInfo;
-  final List<String> documents;
+  final String? phone;
+  final String enrollmentNumber;
+  final String? class_;
+  final String? section;
+  final DateTime? dateOfBirth;
+  final String institute; // Institute ID reference
+  final String? teacher; // Teacher ID reference (optional)
+  final bool isEmailVerified;
+  final String? otp;
+  final DateTime? otpExpiry;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final bool isActive;
 
   Student({
     required this.id,
-    required this.studentId,
-    required this.name,
+    required this.firstName,
+    required this.lastName,
     required this.email,
-    required this.phone,
-    this.avatar,
-    required this.dateOfBirth,
-    required this.gender,
-    required this.address,
-    required this.classId,
-    required this.section,
-    required this.admissionDate,
-    required this.guardianName,
-    required this.guardianPhone,
-    required this.guardianEmail,
-    this.guardianRelation,
-    required this.bloodGroup,
-    this.medicalInfo,
-    this.documents = const [],
+    this.phone,
+    required this.enrollmentNumber,
+    this.class_,
+    this.section,
+    this.dateOfBirth,
+    required this.institute,
+    this.teacher,
+    this.isEmailVerified = false,
+    this.otp,
+    this.otpExpiry,
     required this.createdAt,
     required this.updatedAt,
-    this.isActive = true,
   });
+
+  String get fullName => '$firstName $lastName';
 
   factory Student.fromJson(Map<String, dynamic> json) {
     return Student(
-      id: json['id'] ?? '',
-      studentId: json['studentId'] ?? '',
-      name: json['name'] ?? '',
+      id: json['_id'] ?? json['id'] ?? '',
+      firstName: json['firstName'] ?? '',
+      lastName: json['lastName'] ?? '',
       email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      avatar: json['avatar'],
-      dateOfBirth: DateTime.parse(json['dateOfBirth'] ?? DateTime.now().toIso8601String()),
-      gender: json['gender'] ?? '',
-      address: json['address'] ?? '',
-      classId: json['classId'] ?? '',
-      section: json['section'] ?? '',
-      admissionDate: DateTime.parse(json['admissionDate'] ?? DateTime.now().toIso8601String()),
-      guardianName: json['guardianName'] ?? '',
-      guardianPhone: json['guardianPhone'] ?? '',
-      guardianEmail: json['guardianEmail'] ?? '',
-      guardianRelation: json['guardianRelation'],
-      bloodGroup: json['bloodGroup'] ?? '',
-      medicalInfo: json['medicalInfo'],
-      documents: List<String>.from(json['documents'] ?? []),
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
-      isActive: json['isActive'] ?? true,
+      phone: json['phone'],
+      enrollmentNumber: json['enrollmentNumber'] ?? '',
+      class_: json['class'],
+      section: json['section'],
+      dateOfBirth: json['dateOfBirth'] != null
+          ? DateTime.parse(json['dateOfBirth'])
+          : null,
+      institute: json['institute'] ?? '',
+      teacher: json['teacher'],
+      isEmailVerified: json['isEmailVerified'] ?? false,
+      otp: json['otp'],
+      otpExpiry:
+          json['otpExpiry'] != null ? DateTime.parse(json['otpExpiry']) : null,
+      createdAt:
+          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+      updatedAt:
+          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'studentId': studentId,
-      'name': name,
+      '_id': id,
+      'firstName': firstName,
+      'lastName': lastName,
       'email': email,
       'phone': phone,
-      'avatar': avatar,
-      'dateOfBirth': dateOfBirth.toIso8601String(),
-      'gender': gender,
-      'address': address,
-      'classId': classId,
+      'enrollmentNumber': enrollmentNumber,
+      'class': class_,
       'section': section,
-      'admissionDate': admissionDate.toIso8601String(),
-      'guardianName': guardianName,
-      'guardianPhone': guardianPhone,
-      'guardianEmail': guardianEmail,
-      'guardianRelation': guardianRelation,
-      'bloodGroup': bloodGroup,
-      'medicalInfo': medicalInfo,
-      'documents': documents,
+      'dateOfBirth': dateOfBirth?.toIso8601String(),
+      'institute': institute,
+      'teacher': teacher,
+      'isEmailVerified': isEmailVerified,
+      'otp': otp,
+      'otpExpiry': otpExpiry?.toIso8601String(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
-      'isActive': isActive,
     };
   }
 
   Student copyWith({
     String? id,
-    String? studentId,
-    String? name,
+    String? firstName,
+    String? lastName,
     String? email,
     String? phone,
-    String? avatar,
-    DateTime? dateOfBirth,
-    String? gender,
-    String? address,
-    String? classId,
+    String? enrollmentNumber,
+    String? class_,
     String? section,
-    DateTime? admissionDate,
-    String? guardianName,
-    String? guardianPhone,
-    String? guardianEmail,
-    String? guardianRelation,
-    String? bloodGroup,
-    String? medicalInfo,
-    List<String>? documents,
+    DateTime? dateOfBirth,
+    String? institute,
+    String? teacher,
+    bool? isEmailVerified,
+    String? otp,
+    DateTime? otpExpiry,
     DateTime? createdAt,
     DateTime? updatedAt,
-    bool? isActive,
   }) {
     return Student(
       id: id ?? this.id,
-      studentId: studentId ?? this.studentId,
-      name: name ?? this.name,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
       email: email ?? this.email,
       phone: phone ?? this.phone,
-      avatar: avatar ?? this.avatar,
-      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
-      gender: gender ?? this.gender,
-      address: address ?? this.address,
-      classId: classId ?? this.classId,
+      enrollmentNumber: enrollmentNumber ?? this.enrollmentNumber,
+      class_: class_ ?? this.class_,
       section: section ?? this.section,
-      admissionDate: admissionDate ?? this.admissionDate,
-      guardianName: guardianName ?? this.guardianName,
-      guardianPhone: guardianPhone ?? this.guardianPhone,
-      guardianEmail: guardianEmail ?? this.guardianEmail,
-      guardianRelation: guardianRelation ?? this.guardianRelation,
-      bloodGroup: bloodGroup ?? this.bloodGroup,
-      medicalInfo: medicalInfo ?? this.medicalInfo,
-      documents: documents ?? this.documents,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      institute: institute ?? this.institute,
+      teacher: teacher ?? this.teacher,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+      otp: otp ?? this.otp,
+      otpExpiry: otpExpiry ?? this.otpExpiry,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      isActive: isActive ?? this.isActive,
     );
   }
 }

@@ -83,7 +83,7 @@ class AuthController extends GetxController {
         passwordController.clear();
 
         // Navigate to appropriate dashboard
-        _navigateToRoleDashboard();
+       _navigateToRoleDashboard();
 
         Get.snackbar(
           'Success',
@@ -115,8 +115,9 @@ class AuthController extends GetxController {
     }
   }
 
-  void _navigateToRoleDashboard() {
-    final data = AuthService.getCurrentUser();
+  void _navigateToRoleDashboard() async{
+    final data = await AuthService.getCurrentUser();
+
     if (data == null) {
 
       Get.snackbar(

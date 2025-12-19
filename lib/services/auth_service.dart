@@ -1,18 +1,19 @@
-import 'package:campus_care/models/user.dart';
+import 'dart:developer';
+
+import 'package:campus_care/services/admin_service.dart';
 import 'package:campus_care/services/storage_service.dart';
 import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/services/api/auth_api_service.dart';
 import 'package:campus_care/core/api_exception.dart';
-
-import '../models/admin/admin.dart';
-import '../models/student/student.dart';
-import '../models/teacher/teacher.dart';
+import 'package:campus_care/services/student_service.dart';
+import 'package:campus_care/services/teacher_service.dart';
 
 class AuthService {
   static final AuthApiService _authApiService = AuthApiService();
 
   /// Login with email, password, and role
-  static Future<Map<String, dynamic>?> login(String email, String password, String role) async {
+  static Future<Map<String, dynamic>?> login(
+      String email, String password, String role) async {
     try {
       final result = await _authApiService.login(
         email: email,
@@ -46,21 +47,25 @@ class AuthService {
   }
 
   /// Get current logged-in user
-  static dynamic getCurrentUser() {
-    final userData = StorageService.currentUser;
+  static dynamic getCurrentUser() async {
+    final userData = await StorageService.currentUser;
     final userRole = StorageService.userRole;
 
     if (userRole != null && userData != null) {
       switch (userRole) {
         case AppConstants.roleStudent:
-          return Student.fromJson(userData);
+          var data = await StudentService.getStudentById(userData['id']!);
+          return data!;
 
         case AppConstants.roleTeacher:
-          return Teacher.fromJson(userData);
+          var data = await TeacherService.getTeacherById(userData['id']!);
+          return data!;
 
         case AppConstants.roleAdmin:
         case AppConstants.roleSuperAdmin:
-          return Admin.fromJson(userData);
+          var data = await AdminService.getAdminById(userData['id']!);
+          log(userData['id']!);
+          return data!;
 
         default:
           break;
