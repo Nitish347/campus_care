@@ -135,7 +135,8 @@ class AppRoutes {
       name: adminDashboard,
       page: () => const AdminDashboard(),
       middlewares: [SchoolAdminMiddleware()],
-    ),  GetPage(
+    ),
+    GetPage(
       name: adminProfile,
       page: () => const AdminProfileScreen(),
       middlewares: [SchoolAdminMiddleware()],
@@ -152,7 +153,7 @@ class AppRoutes {
     ),
     GetPage(
       name: classManagement,
-      page: () => const ClassManagementScreen(),
+      page: () => ClassManagementScreen(),
       middlewares: [SchoolAdminMiddleware()],
     ),
     GetPage(

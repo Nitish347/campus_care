@@ -1,4 +1,5 @@
 import 'package:campus_care/controllers/admin_controller.dart';
+import 'package:campus_care/controllers/class_controller.dart';
 import 'package:campus_care/controllers/student_controller.dart';
 import 'package:campus_care/controllers/teacher_controller.dart';
 import 'package:flutter/material.dart';
@@ -46,6 +47,7 @@ class SchoolStreamApp extends StatelessWidget {
             Get.put(AdminController());
             Get.put(TeacherController());
             Get.put(StudentController());
+            Get.put(ClassController());
             // Get.put(TeacherAuthController());
             // Get.put(StudentAuthController());
 

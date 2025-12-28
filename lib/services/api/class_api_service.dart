@@ -76,4 +76,18 @@ class ClassApiService {
   Future<void> deleteClass(String id) async {
     await _apiClient.delete('${AppConstants.classesEndpoint}/$id');
   }
+
+  /// Add section to class
+  Future<Map<String, dynamic>> addSection(String id, String section) async {
+    final response = await _apiClient.patch(
+      '${AppConstants.classesEndpoint}/$id/sections',
+      body: {'section': section},
+    );
+
+    if (response['success'] == true && response['data'] != null) {
+      return response['data'] as Map<String, dynamic>;
+    }
+
+    throw Exception('Failed to add section');
+  }
 }

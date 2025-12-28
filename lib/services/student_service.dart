@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:campus_care/models/student/student.dart';
 import 'package:campus_care/services/api/student_api_service.dart';
 
@@ -54,6 +56,7 @@ class StudentService {
       final response = await _apiService.createStudent(student.toJson());
       return response['_id'] ?? '';
     } catch (e) {
+      log(e.toString());
       throw Exception('Failed to create student: $e');
     }
   }

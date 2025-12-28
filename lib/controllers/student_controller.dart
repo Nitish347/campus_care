@@ -14,31 +14,31 @@ class StudentController extends GetxController {
   String? get selectedClass => _selectedClass.value;
   String? get selectedSection => _selectedSection.value;
 
-  // Get available classes
-  List<String>? get availableClasses {
-    final classes = _students
-        .map((s) => s.class_)
-        .where((c) => c != null)
-        .cast<String>()
-        .toSet()
-        .toList();
-    classes.sort();
-    return classes;
-  }
+  // // Get available classes
+  // List<String>? get availableClasses {
+  //   final classes = _students
+  //       .map((s) => s.class_)
+  //       .where((c) => c != null)
+  //       .cast<String>()
+  //       .toSet()
+  //       .toList();
+  //   classes.sort();
+  //   return classes;
+  // }
 
-  // Get available sections for selected class
-  List<String> get availableSections {
-    if (_selectedClass.value == null) return [];
-    final sections = _students
-        .where((s) => s.class_ == _selectedClass.value)
-        .map((s) => s.section)
-        .where((s) => s != null)
-        .cast<String>()
-        .toSet()
-        .toList();
-    sections.sort();
-    return sections;
-  }
+  // // Get available sections for selected class
+  // List<String> get availableSections {
+  //   if (_selectedClass.value == null) return [];
+  //   final sections = _students
+  //       .where((s) => s.class_ == _selectedClass.value)
+  //       .map((s) => s.section)
+  //       .where((s) => s != null)
+  //       .cast<String>()
+  //       .toSet()
+  //       .toList();
+  //   sections.sort();
+  //   return sections;
+  // }
 
   // Get filtered students by class and section
   List<Student> get filteredStudents {

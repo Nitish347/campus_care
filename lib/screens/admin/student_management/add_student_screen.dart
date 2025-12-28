@@ -1,7 +1,9 @@
+import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:campus_care/core/routes/app_routes.dart';
+import 'package:campus_care/models/student/student.dart';
+import 'package:campus_care/controllers/student_controller.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 import 'package:campus_care/widgets/buttons/primary_button.dart';
@@ -18,13 +20,18 @@ class AddStudentScreen extends StatefulWidget {
 class _AddStudentScreenState extends State<AddStudentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _enrollmentController = TextEditingController();
+  final _rollNumberController = TextEditingController();
   final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   final _phoneController = TextEditingController();
   final _guardianNameController = TextEditingController();
   final _guardianPhoneController = TextEditingController();
   final _guardianEmailController = TextEditingController();
   final _addressController = TextEditingController();
-  
+
+  final StudentController _studentController = Get.find<StudentController>();
+
   String? _selectedClass;
   String? _selectedSection;
   String? _selectedGender;
@@ -34,7 +41,10 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _enrollmentController.dispose();
+    _rollNumberController.dispose();
     _emailController.dispose();
+    _passwordController.dispose();
     _phoneController.dispose();
     _guardianNameController.dispose();
     _guardianPhoneController.dispose();
@@ -46,15 +56,13 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   Future<void> _selectDate(BuildContext context, bool isBirthDate) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: isBirthDate 
+      initialDate: isBirthDate
           ? (_dateOfBirth ?? DateTime(2010))
           : (_admissionDate ?? DateTime.now()),
-      firstDate: isBirthDate 
+      firstDate: isBirthDate
           ? DateTime(2000)
           : DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: isBirthDate 
-          ? DateTime.now()
-          : DateTime.now(),
+      lastDate: isBirthDate ? DateTime.now() : DateTime.now(),
     );
     if (picked != null) {
       setState(() {
@@ -69,14 +77,52 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
   Future<void> _saveStudent() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedClass == null || _selectedSection == null || _selectedGender == null || 
-        _dateOfBirth == null || _admissionDate == null) {
+    if (_selectedClass == null ||
+        _selectedSection == null ||
+        _selectedGender == null ||
+        _dateOfBirth == null ||
+        _admissionDate == null) {
       Get.snackbar('Error', 'Please fill all required fields');
       return;
     }
 
-    Get.snackbar('Success', 'Student added successfully');
-    Get.offNamed(AppRoutes.studentList);
+    // Split name
+    final nameParts = _nameController.text.trim().split(' ');
+    final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+    final lastName =
+        nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '-';
+
+    final guardian = Guardian(
+      name: _guardianNameController.text,
+      phone: _guardianPhoneController.text,
+      email: _guardianEmailController.text.isNotEmpty
+          ? _guardianEmailController.text
+          : null,
+      relation: 'Guardian', // Default or add field
+    );
+
+    final student = Student(
+      id: '', // Backend generates this
+      firstName: firstName,
+      lastName: lastName,
+      enrollmentNumber: _enrollmentController.text,
+      rollNumber: _rollNumberController.text,
+      email: _emailController.text,
+      password: _passwordController.text,
+      phone: _phoneController.text,
+      class_: _selectedClass,
+      section: _selectedSection,
+      gender: _selectedGender,
+      address: _addressController.text,
+      dateOfBirth: _dateOfBirth,
+      admissionDate: _admissionDate,
+      institute: '', // Backend handles this
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      guardian: guardian,
+    );
+
+    await _studentController.addStudent(student);
   }
 
   @override
@@ -110,6 +156,32 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter name';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  controller: _enrollmentController,
+                  labelText: 'Enrollment Number *',
+                  hintText: 'Enter enrollment number',
+                  prefixIcon: const Icon(Icons.confirmation_number),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter enrollment number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  controller: _rollNumberController,
+                  labelText: 'Roll Number *',
+                  hintText: 'Enter roll number',
+                  prefixIcon: const Icon(Icons.confirmation_number),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter roll number';
                     }
                     return null;
                   },
@@ -180,6 +252,23 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                 ),
                 const SizedBox(height: 16),
                 CustomTextField(
+                  controller: _passwordController,
+                  labelText: 'Password *',
+                  hintText: 'Enter password',
+                  obscureText: true,
+                  prefixIcon: const Icon(Icons.lock),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter password';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
                   controller: _phoneController,
                   labelText: 'Phone',
                   hintText: 'Enter phone number',
@@ -201,53 +290,11 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(
-                      child: CustomDropdown<String>(
-                        value: _selectedClass,
-                        labelText: 'Class *',
-                        items: ['class_001', 'class_002', 'class_003']
-                            .map((cls) => DropdownMenuItem(
-                                  value: cls,
-                                  child: Text(cls.replaceAll('_', ' ').toUpperCase()),
-                                ))
-                            .toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedClass = value;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null) {
-                            return 'Required';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: CustomDropdown<String>(
-                        value: _selectedSection,
-                        labelText: 'Section *',
-                        items: ['A', 'B', 'C']
-                            .map((sec) => DropdownMenuItem(
-                                  value: sec,
-                                  child: Text(sec),
-                                ))
-                            .toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedSection = value;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null) {
-                            return 'Required';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
+                    Expanded(child: ClassSectionDropDown(padding: 0,onChangedClass: (val){
+                      _selectedClass = val;
+                    }, onChangedSection: (val){
+                      _selectedSection = val;
+                    }))
                   ],
                 ),
                 const SizedBox(height: 16),

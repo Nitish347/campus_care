@@ -1,3 +1,4 @@
+import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -63,31 +64,11 @@ class StudentListScreen extends GetView<StudentController> {
     return Column(
       children: [
 
-       ResponsivePadding(child: Column(
-         children: [
-           CustomDropdown<String>(
-             // value: _selectedClass,
-             labelText: 'Class *',
-             items: ['class_001', 'class_002', 'class_003']
-                 .map((cls) => DropdownMenuItem(
-               value: cls,
-               child: Text(cls.replaceAll('_', ' ').toUpperCase()),
-             ))
-                 .toList(),
-             onChanged: (value) {
-
-             },
-             validator: (value) {
-               if (value == null) {
-                 return 'Required';
-               }
-               return null;
-             },
-           ),
-           SizedBox(height: 20,),
-           CustomDropdown(items: [],labelText: "Section",),
-         ],
-       )),
+     ClassSectionDropDown(onChangedClass: (val){
+       controller.selectClass(val);
+     }, onChangedSection: (val){
+       controller.selectSection(val);
+     }),
 
         // Search Bar and Stats
         Container(

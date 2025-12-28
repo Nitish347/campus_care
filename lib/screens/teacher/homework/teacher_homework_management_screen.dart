@@ -144,7 +144,7 @@ class _TeacherHomeworkManagementScreenState extends State<TeacherHomeworkManagem
       ),
       body: Column(
         children: [
-        ClassSectionDropDown(),
+        ClassSectionDropDown(onChangedClass: (String classId) {  }, onChangedSection: (String classId) {  },),
 
           // Summary Header
           SummaryCard(

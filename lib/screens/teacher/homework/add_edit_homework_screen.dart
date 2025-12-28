@@ -134,7 +134,7 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
               height: 10,
             ),
             ClassSectionDropDown(
-              padding: 0,
+              padding: 0, onChangedClass: (String classId) {  }, onChangedSection: (String classId) {  },
             ),
 
             const SizedBox(height: 24),
