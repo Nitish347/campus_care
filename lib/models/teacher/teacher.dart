@@ -3,7 +3,9 @@ class Teacher {
   final String firstName;
   final String lastName;
   final String email;
+  final String? password; // Optional, only used during creation
   final String? phone;
+  final String? address;
   final String? department;
   final DateTime? hireDate;
   final String institute; // Institute ID reference
@@ -18,7 +20,9 @@ class Teacher {
     required this.firstName,
     required this.lastName,
     required this.email,
+    this.password,
     this.phone,
+    this.address,
     this.department,
     this.hireDate,
     required this.institute,
@@ -37,7 +41,9 @@ class Teacher {
       firstName: json['firstName'] ?? '',
       lastName: json['lastName'] ?? '',
       email: json['email'] ?? '',
+      password: json['password'], // Usually not returned from backend
       phone: json['phone'],
+      address: json['address'],
       department: json['department'],
       hireDate:
           json['hireDate'] != null ? DateTime.parse(json['hireDate']) : null,
@@ -54,12 +60,12 @@ class Teacher {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
+    final json = <String, dynamic>{
       'firstName': firstName,
       'lastName': lastName,
       'email': email,
       'phone': phone,
+      'address': address,
       'department': department,
       'hireDate': hireDate?.toIso8601String(),
       'institute': institute,
@@ -69,6 +75,15 @@ class Teacher {
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
+    // Only include _id if it's not empty
+    if (id.isNotEmpty) {
+      json['_id'] = id;
+    }
+    // Only include password if it's set (for creation)
+    if (password != null) {
+      json['password'] = password!;
+    }
+    return json;
   }
 
   Teacher copyWith({
@@ -76,7 +91,9 @@ class Teacher {
     String? firstName,
     String? lastName,
     String? email,
+    String? password,
     String? phone,
+    String? address,
     String? department,
     DateTime? hireDate,
     String? institute,
@@ -91,7 +108,9 @@ class Teacher {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       email: email ?? this.email,
+      password: password ?? this.password,
       phone: phone ?? this.phone,
+      address: address ?? this.address,
       department: department ?? this.department,
       hireDate: hireDate ?? this.hireDate,
       institute: institute ?? this.institute,

@@ -16,11 +16,11 @@ class TeacherController extends GetxController {
     return _teachers.where((teacher) {
       final query = _searchQuery.value.toLowerCase();
       return teacher.fullName.toLowerCase().contains(query)
-      // ||
+          // ||
           // teacher.teacherId.toLowerCase().contains(query) ||
           // teacher.department.toLowerCase().contains(query)
 
-      ;
+          ;
     }).toList();
   }
 
@@ -51,12 +51,18 @@ class TeacherController extends GetxController {
       _isLoading.value = true;
       await TeacherService.addTeacher(teacher);
       await loadTeachers();
-      Get.back();
-      Get.snackbar('Success', 'Teacher added successfully');
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to add teacher');
-    } finally {
       _isLoading.value = false;
+      Get.back();
+      // Show snackbar after navigation completes
+      Future.delayed(const Duration(milliseconds: 300), () {
+        Get.snackbar('Success', 'Teacher added successfully');
+      });
+    } catch (e) {
+      _isLoading.value = false;
+      Future.delayed(const Duration(milliseconds: 300), () {
+        Get.snackbar('Error', 'Failed to add teacher: ${e.toString()}');
+      });
+
     }
   }
 }

@@ -30,6 +30,7 @@ class TeacherService {
       final response = await _apiService.createTeacher(teacher.toJson());
       return response['_id'] ?? '';
     } catch (e) {
+
       throw Exception('Failed to create teacher: $e');
     }
   }

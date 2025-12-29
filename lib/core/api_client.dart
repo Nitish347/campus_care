@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:campus_care/core/constants/app_constants.dart';
@@ -101,6 +102,7 @@ class ApiClient {
           throw TimeoutException();
         },
       );
+      log(response.body);
       return _handleResponse(response) as T;
     } on SocketException {
       throw NetworkException();

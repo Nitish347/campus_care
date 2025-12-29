@@ -13,6 +13,7 @@ import 'package:campus_care/screens/admin/fee/fee_management_screen.dart';
 import 'package:campus_care/screens/admin/medical/medical_dashboard_screen.dart';
 import 'package:campus_care/screens/admin/communication/notice_management_screen.dart';
 import 'package:campus_care/screens/admin/teacher/teacher_list_screen.dart';
+import 'package:campus_care/screens/admin/teacher_management/add_teacher_screen.dart';
 import 'package:campus_care/screens/admin/admin/admin_list_screen.dart';
 import 'package:campus_care/screens/teacher/teacher_dashboard.dart';
 import 'package:campus_care/screens/teacher/attendance/attendance_screen.dart';
@@ -170,8 +171,13 @@ class AppRoutes {
     GetPage(name: medicalDashboard, page: () => const MedicalDashboardScreen()),
     GetPage(name: noticeManagement, page: () => const NoticeManagementScreen()),
     GetPage(name: teacherList, page: () => const TeacherListScreen()),
+    GetPage(
+      name: addTeacher,
+      page: () => const AddTeacherScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
     GetPage(name: adminList, page: () => const AdminListScreen()),
-    // TODO: Add AddTeacherScreen and AddAdminScreen when created
+    // TODO: Add AddAdminScreen when created
 
     // Teacher Pages
     GetPage(name: teacherDashboard, page: () => const TeacherDashboard()),
