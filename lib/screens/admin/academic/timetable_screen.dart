@@ -1,3 +1,4 @@
+import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/timetable_controller.dart';
@@ -23,8 +24,20 @@ class TimetableScreen extends GetView<TimetableController> {
         title: const Text('School Timetable'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => controller.loadTimetables(),
+            tooltip: 'Refresh',
+          ),
+          IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () => Get.toNamed(AppRoutes.addTimetable),
+            onPressed: () async {
+              await Get.toNamed(AppRoutes.addTimetable);
+              // Refresh when returning from add screen
+              controller.loadTimetables(
+                classId: controller.selectedClass,
+                section: controller.selectedSection,
+              );
+            },
             tooltip: 'Add Timetable',
           ),
         ],
@@ -32,55 +45,13 @@ class TimetableScreen extends GetView<TimetableController> {
       body: Column(
         children: [
           // Class and Section Selection
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-                ),
-              ),
-            ),
-            child: ResponsivePadding(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Obx(() => CustomDropdown<String>(
-                      value: controller.selectedClass,
-                      labelText: 'Class',
-                      hintText: 'Select class',
-                      prefixIcon: const Icon(Icons.class_),
-                      items: controller.availableClasses
-                          .map((classId) => DropdownMenuItem(
-                                value: classId,
-                                child: Text(classId),
-                              ))
-                          .toList(),
-                      onChanged: (value) => controller.selectClass(value),
-                    )),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Obx(() => CustomDropdown<String>(
-                      value: controller.selectedSection,
-                      labelText: 'Section',
-                      hintText: 'Select section',
-                      prefixIcon: const Icon(Icons.group),
-                      enabled: controller.selectedClass != null,
-                      items: controller.availableSections
-                          .map((section) => DropdownMenuItem(
-                                value: section,
-                                child: Text('Section $section'),
-                              ))
-                          .toList(),
-                      onChanged: (value) => controller.selectSection(value),
-                    )),
-                  ),
-                ],
-              ),
-            ),
-          ),
+
+          ClassSectionDropDown(onChangedClass: (val) {
+            controller.selectClass(val);
+          }, onChangedSection: (val) {
+            controller.selectSection(val);
+          }),
+
           // Timetable View
           Expanded(
             child: Obx(() {
@@ -88,11 +59,13 @@ class TimetableScreen extends GetView<TimetableController> {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              if (controller.selectedClass == null || controller.selectedSection == null) {
+              if (controller.selectedClass == null ||
+                  controller.selectedSection == null) {
                 return const EmptyState(
                   icon: Icons.schedule,
                   title: 'Select Class and Section',
-                  message: 'Please select a class and section to view timetable',
+                  message:
+                      'Please select a class and section to view timetable',
                 );
               }
 
@@ -102,7 +75,14 @@ class TimetableScreen extends GetView<TimetableController> {
                   title: 'No timetable found',
                   message: 'Create a timetable for this class and section',
                   action: ElevatedButton.icon(
-                    onPressed: () => Get.toNamed(AppRoutes.addTimetable),
+                    onPressed: () async {
+                      await Get.toNamed(AppRoutes.addTimetable);
+                      // Refresh when returning
+                      controller.loadTimetables(
+                        classId: controller.selectedClass,
+                        section: controller.selectedSection,
+                      );
+                    },
                     icon: const Icon(Icons.add),
                     label: const Text('Create Timetable'),
                   ),
@@ -119,7 +99,14 @@ class TimetableScreen extends GetView<TimetableController> {
 
   Widget _buildTimetable(BuildContext context) {
     final theme = Theme.of(context);
-    final days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    final days = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday'
+    ];
     final timetable = controller.currentTimetable!;
 
     return DefaultTabController(
@@ -131,16 +118,18 @@ class TimetableScreen extends GetView<TimetableController> {
             labelColor: theme.colorScheme.primary,
             unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
             indicatorColor: theme.colorScheme.primary,
-            tabs: days.map((day) => Tab(
-              text: day,
-              icon: Icon(_getDayIcon(day)),
-            )).toList(),
+            tabs: days
+                .map((day) => Tab(
+                      text: day,
+                      icon: Icon(_getDayIcon(day)),
+                    ))
+                .toList(),
           ),
           Expanded(
             child: TabBarView(
               children: days.map((day) {
                 final daySchedule = timetable.weeklySchedule[day] ?? [];
-                
+
                 if (daySchedule.isEmpty) {
                   return EmptyState(
                     icon: Icons.event_busy,
@@ -164,14 +153,14 @@ class TimetableScreen extends GetView<TimetableController> {
     List<TimeTableItem> periods,
   ) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       child: ListView.builder(
         itemCount: periods.length,
         itemBuilder: (context, index) {
           final period = periods[index];
-          
+
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             elevation: 2,

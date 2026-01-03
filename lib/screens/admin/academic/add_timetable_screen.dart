@@ -11,6 +11,8 @@ import 'package:campus_care/widgets/buttons/primary_button.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
 
+import '../../../widgets/inputs/class_section_dropdown.dart';
+
 class AddTimetableScreen extends StatefulWidget {
   const AddTimetableScreen({super.key});
 
@@ -21,12 +23,12 @@ class AddTimetableScreen extends StatefulWidget {
 class _AddTimetableScreenState extends State<AddTimetableScreen> {
   final _formKey = GlobalKey<FormState>();
   final _controller = Get.put(TimetableController());
-  
+
   String? _selectedClass;
   String? _selectedSection;
   final Map<String, List<TimeTableItem>> _weeklySchedule = {};
   List<Teacher> _teachers = [];
-  
+
   final List<String> _days = [
     'Monday',
     'Tuesday',
@@ -35,8 +37,14 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
     'Friday',
     'Saturday'
   ];
-  
-  final List<String> _periodTypes = ['class', 'lab', 'break', 'lunch', 'sports'];
+
+  final List<String> _periodTypes = [
+    'class',
+    'lab',
+    'break',
+    'lunch',
+    'sports'
+  ];
   final List<String> _subjects = [
     'Mathematics',
     'Science',
@@ -134,14 +142,15 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
 
   Future<void> _saveTimetable() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_selectedClass == null || _selectedSection == null) {
       Get.snackbar('Error', 'Please select class and section');
       return;
     }
 
     // Check if at least one period is added
-    bool hasPeriods = _weeklySchedule.values.any((periods) => periods.isNotEmpty);
+    bool hasPeriods =
+        _weeklySchedule.values.any((periods) => periods.isNotEmpty);
     if (!hasPeriods) {
       Get.snackbar('Error', 'Please add at least one period');
       return;
@@ -171,7 +180,7 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Timetable'),
@@ -185,62 +194,28 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
               children: [
                 SectionHeader(title: 'Class & Section'),
                 const SizedBox(height: 16),
-                Obx(() => CustomDropdown<String>(
-                  value: _selectedClass,
-                  labelText: 'Class *',
-                  hintText: 'Select class',
-                  prefixIcon: const Icon(Icons.class_),
-                  items: _controller.availableClasses
-                      .map((classId) => DropdownMenuItem(
-                            value: classId,
-                            child: Text(classId),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedClass = value;
-                      _selectedSection = null;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null) return 'Please select class';
-                    return null;
-                  },
-                )),
-                const SizedBox(height: 16),
-                Obx(() => CustomDropdown<String>(
-                  value: _selectedSection,
-                  labelText: 'Section *',
-                  hintText: 'Select section',
-                  prefixIcon: const Icon(Icons.group),
-                  enabled: _selectedClass != null,
-                  items: _controller.availableSections
-                      .map((section) => DropdownMenuItem(
-                            value: section,
-                            child: Text('Section $section'),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedSection = value;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null) return 'Please select section';
-                    return null;
-                  },
-                )),
+                ClassSectionDropDown(onChangedClass: (value) {
+                  setState(() {
+                    _selectedClass = value;
+                    _selectedSection = null;
+                  });
+                }, onChangedSection: (value) {
+                  setState(() {
+                    _selectedSection = value;
+                  });
+                }),
+
                 const SizedBox(height: 32),
                 SectionHeader(
                   title: 'Weekly Schedule',
                   action: _weeklySchedule['Monday']!.isNotEmpty
                       ? Expanded(
-                        child: TextButton.icon(
+                          child: TextButton.icon(
                             onPressed: _autoFillAllDays,
                             icon: const Icon(Icons.copy_all),
-                            label:  Text('Auto Fill'),
+                            label: Text('Auto Fill'),
                           ),
-                      )
+                        )
                       : null,
                 ),
                 const SizedBox(height: 8),
@@ -248,7 +223,8 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                      color: theme.colorScheme.primaryContainer
+                          .withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -292,9 +268,10 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
     );
   }
 
-  Widget _buildDaySchedule(ThemeData theme, String day, {required bool isFirst}) {
+  Widget _buildDaySchedule(ThemeData theme, String day,
+      {required bool isFirst}) {
     final periods = _weeklySchedule[day] ?? [];
-    
+
     if (isFirst) {
       // Monday - Always expanded
       return Card(
@@ -321,7 +298,8 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(8),
@@ -435,7 +413,8 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(8),
@@ -488,22 +467,11 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
                     items: _teachers
                         .map((teacher) => DropdownMenuItem(
                               value: teacher.id,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    teacher.fullName,
-                                    style: const TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                  Text(
-                                    teacher.id,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                teacher.fullName,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ))
                         .toList(),
@@ -527,7 +495,8 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
                     labelText: 'Start Time *',
                     initialTime: _parseTime(period.startTime),
                     onTimeSelected: (time) {
-                      final timeString = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+                      final timeString =
+                          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
                       _updatePeriod(
                         day,
                         index,
@@ -543,7 +512,8 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
                     labelText: 'End Time *',
                     initialTime: _parseTime(period.endTime),
                     onTimeSelected: (time) {
-                      final timeString = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+                      final timeString =
+                          '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
                       _updatePeriod(
                         day,
                         index,
@@ -639,9 +609,10 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
     required TimeOfDay initialTime,
     required void Function(TimeOfDay) onTimeSelected,
   }) {
-    final timeString = '${initialTime.hour.toString().padLeft(2, '0')}:${initialTime.minute.toString().padLeft(2, '0')}';
+    final timeString =
+        '${initialTime.hour.toString().padLeft(2, '0')}:${initialTime.minute.toString().padLeft(2, '0')}';
     final controller = TextEditingController(text: timeString);
-    
+
     return CustomTextField(
       controller: controller,
       labelText: labelText,
@@ -667,7 +638,8 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
           },
         );
         if (picked != null) {
-          final timeString = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+          final timeString =
+              '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
           controller.text = timeString;
           onTimeSelected(picked);
         }

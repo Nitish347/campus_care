@@ -206,7 +206,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                           context,
                           Icons.business_outlined,
                           'Department',
-                          teacher.department??"",
+                          teacher.department ?? "",
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -237,7 +237,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                           context,
                           Icons.phone_outlined,
                           'Phone',
-                          teacher.phone??"",
+                          teacher.phone ?? "",
                         ),
                       ),
                     ],
@@ -450,7 +450,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          teacher.department??"",
+                          teacher.department ?? "",
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: theme.colorScheme.secondary,
@@ -487,7 +487,7 @@ class TeacherListScreen extends GetView<TeacherController> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            teacher.phone??"",
+                            teacher.phone ?? "",
                             style: theme.textTheme.bodyMedium,
                           ),
                         ],
@@ -551,162 +551,9 @@ class TeacherListScreen extends GetView<TeacherController> {
   }
 
   void _showTeacherDetails(BuildContext context, Teacher teacher) {
-    final theme = Theme.of(context);
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.secondaryContainer
-                      .withValues(alpha: 0.3),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 32,
-                      backgroundColor: theme.colorScheme.secondary,
-                      child: Text(
-                        teacher.fullName.substring(0, 1).toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 24,
-                          color: theme.colorScheme.onSecondary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            teacher.fullName,
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            teacher.id,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-              ),
-              // Content
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildDetailRow(Icons.person, 'Name', teacher.fullName),
-                      _buildDetailRow(
-                          Icons.badge, 'Teacher ID', teacher.id),
-                      _buildDetailRow(
-                          Icons.business, 'Department', teacher.department ??""),
-                      _buildDetailRow(
-                          Icons.school, 'Qualification', teacher.department ?? ""),
-                      _buildDetailRow(Icons.email, 'Email', teacher.email),
-                      _buildDetailRow(Icons.phone, 'Phone', teacher.phone ??""),
-                      _buildDetailRow(Icons.calendar_today, 'Join Date',
-                          teacher.hireDate.toString().split(' ')[0]),
-                    ],
-                  ),
-                ),
-              ),
-              // Actions
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                    ),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Close'),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Get.snackbar('Info', 'Edit ${teacher.fullName}');
-                      },
-                      icon: const Icon(Icons.edit, size: 18),
-                      label: const Text('Edit'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: Colors.grey[600]),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    Get.toNamed(
+      AppRoutes.teacherDetails,
+      arguments: {'teacher': teacher},
     );
   }
 
@@ -736,4 +583,3 @@ class TeacherListScreen extends GetView<TeacherController> {
     );
   }
 }
-

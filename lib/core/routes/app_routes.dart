@@ -13,6 +13,7 @@ import 'package:campus_care/screens/admin/fee/fee_management_screen.dart';
 import 'package:campus_care/screens/admin/medical/medical_dashboard_screen.dart';
 import 'package:campus_care/screens/admin/communication/notice_management_screen.dart';
 import 'package:campus_care/screens/admin/teacher/teacher_list_screen.dart';
+import 'package:campus_care/screens/admin/teacher/teacher_details_screen.dart';
 import 'package:campus_care/screens/admin/teacher_management/add_teacher_screen.dart';
 import 'package:campus_care/screens/admin/admin/admin_list_screen.dart';
 import 'package:campus_care/screens/teacher/teacher_dashboard.dart';
@@ -48,6 +49,7 @@ import 'package:campus_care/screens/teacher/homework/student_homework_detail_scr
 import 'package:campus_care/screens/teacher/marks/exam_management_screen.dart';
 import 'package:campus_care/screens/super_admin/super_admin_dashboard.dart';
 import 'package:campus_care/screens/super_admin/institute_management_screen.dart';
+import 'package:campus_care/models/teacher/teacher.dart';
 import 'package:campus_care/screens/super_admin/institute_detail_screen.dart';
 import 'package:campus_care/screens/super_admin/add_edit_institute_screen.dart';
 import 'package:campus_care/core/middleware/auth_middleware.dart';
@@ -73,6 +75,7 @@ class AppRoutes {
   // static const String medicalDashboard = '/admin/medical';
   static const String noticeManagement = '/admin/notices';
   static const String teacherList = '/admin/teachers';
+  static const String teacherDetails = '/admin/teachers/details';
   static const String addTeacher = '/admin/teachers/add';
   static const String adminList = '/admin/admins';
   static const String addAdmin = '/admin/admins/add';
@@ -171,6 +174,15 @@ class AppRoutes {
     GetPage(name: medicalDashboard, page: () => const MedicalDashboardScreen()),
     GetPage(name: noticeManagement, page: () => const NoticeManagementScreen()),
     GetPage(name: teacherList, page: () => const TeacherListScreen()),
+    GetPage(
+      name: teacherDetails,
+      page: () {
+        final args = Get.arguments as Map<String, dynamic>;
+        final teacher = args['teacher'] as Teacher;
+        return TeacherDetailsScreen(teacher: teacher);
+      },
+      middlewares: [SchoolAdminMiddleware()],
+    ),
     GetPage(
       name: addTeacher,
       page: () => const AddTeacherScreen(),

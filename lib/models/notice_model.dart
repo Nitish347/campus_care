@@ -25,7 +25,7 @@ class NoticeModel {
 
   factory NoticeModel.fromJson(Map<String, dynamic> json) {
     return NoticeModel(
-      id: json['id'] ?? '',
+      id: json['_id'] ?? json['id'] ?? '',
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       issuedBy: json['issuedBy'] ?? '',
@@ -35,7 +35,9 @@ class NoticeModel {
       targetSections: json['targetSections'] != null
           ? List<String>.from(json['targetSections'])
           : null,
-      issuedDate: DateTime.parse(json['issuedDate'] ?? DateTime.now().toIso8601String()),
+      issuedDate: json['issuedDate'] != null
+          ? DateTime.parse(json['issuedDate'])
+          : DateTime.now(),
       expiryDate: json['expiryDate'] != null
           ? DateTime.parse(json['expiryDate'])
           : null,
@@ -87,4 +89,3 @@ class NoticeModel {
     );
   }
 }
-

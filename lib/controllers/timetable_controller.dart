@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import 'package:campus_care/models/timetable_model.dart';
-import 'package:campus_care/services/storage_service.dart';
-import 'package:campus_care/core/constants/app_constants.dart';
+import 'package:campus_care/services/api/timetable_api_service.dart';
 import 'package:campus_care/services/student_service.dart';
 
 class TimetableController extends GetxController {
@@ -12,6 +11,8 @@ class TimetableController extends GetxController {
   final _currentTimetable = Rxn<TimeTableModel>();
   final _availableClasses = <String>[].obs;
   final _availableSections = <String>[].obs;
+
+  final TimetableApiService _apiService = TimetableApiService();
 
   bool get isLoading => _isLoading.value;
   List<TimeTableModel> get timetables => _timetables;
@@ -31,7 +32,7 @@ class TimetableController extends GetxController {
   Future<void> _loadAvailableClasses() async {
     try {
       final students = await StudentService.getAllStudents();
-      final classes = students.map((s) => s.class_??"").toSet().toList();
+      final classes = students.map((s) => s.class_ ?? "").toSet().toList();
       classes.sort();
       _availableClasses.value = classes;
     } catch (e) {
@@ -48,7 +49,7 @@ class TimetableController extends GetxController {
       final students = await StudentService.getAllStudents();
       final sections = students
           .where((s) => s.class_ == _selectedClass.value)
-          .map((s) => s.section??"")
+          .map((s) => s.section ?? "")
           .toSet()
           .toList();
       sections.sort();
@@ -58,13 +59,59 @@ class TimetableController extends GetxController {
     }
   }
 
-  Future<void> loadTimetables() async {
+  Future<void> loadTimetables({String? classId, String? section}) async {
     try {
       _isLoading.value = true;
-      final data = StorageService.getData(AppConstants.keyTimetables);
-      _timetables.value = data
-          .map((json) => TimeTableModel.fromJson(json))
-          .toList();
+      final data = await _apiService.getTimetables(
+        classId: classId,
+        section: section,
+      );
+
+      // Group timetable entries by class and section
+      final Map<String, Map<String, List<TimeTableItem>>> groupedByClass = {};
+
+      for (var entry in data) {
+        final classKey = '${entry['class'] ?? ''}_${entry['section'] ?? ''}';
+        final day = entry['dayOfWeek'] as String;
+
+        if (!groupedByClass.containsKey(classKey)) {
+          groupedByClass[classKey] = {};
+        }
+
+        if (!groupedByClass[classKey]!.containsKey(day)) {
+          groupedByClass[classKey]![day] = [];
+        }
+
+        // Extract teacherId - handle both string and object (populated) formats
+        String teacherId = '';
+        if (entry['teacherId'] is String) {
+          teacherId = entry['teacherId'];
+        } else if (entry['teacherId'] is Map) {
+          teacherId = entry['teacherId']['_id'] ?? '';
+        }
+
+        groupedByClass[classKey]![day]!.add(TimeTableItem(
+          period: 'P${groupedByClass[classKey]![day]!.length + 1}',
+          subject: entry['subject'] ?? '',
+          teacherId: teacherId,
+          room: entry['room'],
+          startTime: entry['startTime'] ?? '',
+          endTime: entry['endTime'] ?? '',
+          type: 'class',
+        ));
+      }
+
+      // Convert grouped data to TimeTableModel list
+      _timetables.value = groupedByClass.entries.map((entry) {
+        final parts = entry.key.split('_');
+        return TimeTableModel(
+          id: entry.key,
+          classId: parts[0],
+          section: parts[1],
+          weeklySchedule: entry.value,
+        );
+      }).toList();
+
       _updateCurrentTimetable();
     } catch (e) {
       Get.snackbar('Error', 'Failed to load timetables: $e');
@@ -76,19 +123,29 @@ class TimetableController extends GetxController {
   void selectClass(String? classId) {
     _selectedClass.value = classId;
     _selectedSection.value = null;
-    _loadAvailableSections();
-    _updateCurrentTimetable();
+    if (classId != null) {
+      _loadAvailableSections();
+      loadTimetables(classId: classId);
+    } else {
+      _availableSections.value = [];
+      _currentTimetable.value = null;
+    }
   }
 
   void selectSection(String? section) {
     _selectedSection.value = section;
-    _updateCurrentTimetable();
+    if (_selectedClass.value != null && section != null) {
+      loadTimetables(classId: _selectedClass.value, section: section);
+    } else {
+      _updateCurrentTimetable();
+    }
   }
 
   void resetSelection() {
     _selectedClass.value = null;
     _selectedSection.value = null;
     _currentTimetable.value = null;
+    loadTimetables();
   }
 
   void _updateCurrentTimetable() {
@@ -106,25 +163,38 @@ class TimetableController extends GetxController {
   Future<void> saveTimetable(TimeTableModel timetable) async {
     try {
       _isLoading.value = true;
-      
-      // Remove existing timetable for same class and section
-      _timetables.removeWhere(
-        (tt) =>
-            tt.classId == timetable.classId &&
-            tt.section == timetable.section,
-      );
-      
-      // Add new timetable
-      _timetables.add(timetable);
-      
-      // Save to storage
-      final data = _timetables.map((tt) => tt.toJson()).toList();
-      await StorageService.saveData(AppConstants.keyTimetables, data);
-      
-      _updateCurrentTimetable();
+
+      // Transform the weekly schedule into individual timetable entries
+      final List<Map<String, dynamic>> timetableEntries = [];
+
+      timetable.weeklySchedule.forEach((day, periods) {
+        for (var period in periods) {
+          timetableEntries.add({
+            'teacherId': period.teacherId,
+            'subject': period.subject,
+            'dayOfWeek': day,
+            'startTime': period.startTime,
+            'endTime': period.endTime,
+            'room': period.room,
+            'class': timetable.classId,
+            'section': timetable.section,
+            'isActive': true,
+          });
+        }
+      });
+
+      // Create each timetable entry individually
+      for (var entry in timetableEntries) {
+        await _apiService.createTimetable(entry);
+      }
+
+      // Reload from API to get fresh data
+      await loadTimetables();
+
       Get.snackbar('Success', 'Timetable saved successfully');
     } catch (e) {
       Get.snackbar('Error', 'Failed to save timetable: $e');
+      rethrow;
     } finally {
       _isLoading.value = false;
     }
@@ -133,12 +203,11 @@ class TimetableController extends GetxController {
   Future<void> deleteTimetable(String id) async {
     try {
       _isLoading.value = true;
-      _timetables.removeWhere((tt) => tt.id == id);
-      
-      final data = _timetables.map((tt) => tt.toJson()).toList();
-      await StorageService.saveData(AppConstants.keyTimetables, data);
-      
-      _updateCurrentTimetable();
+      await _apiService.deleteTimetable(id);
+
+      // Reload from API
+      await loadTimetables();
+
       Get.snackbar('Success', 'Timetable deleted successfully');
     } catch (e) {
       Get.snackbar('Error', 'Failed to delete timetable: $e');
@@ -147,4 +216,3 @@ class TimetableController extends GetxController {
     }
   }
 }
-
