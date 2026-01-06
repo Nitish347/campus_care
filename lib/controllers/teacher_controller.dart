@@ -62,7 +62,45 @@ class TeacherController extends GetxController {
       Future.delayed(const Duration(milliseconds: 300), () {
         Get.snackbar('Error', 'Failed to add teacher: ${e.toString()}');
       });
+    }
+  }
 
+  Future<void> updateTeacher(Teacher teacher) async {
+    try {
+      _isLoading.value = true;
+      final success = await TeacherService.updateTeacher(teacher);
+      if (success) {
+        await loadTeachers();
+        Get.back(); // Close edit screen/dialog
+        Future.delayed(const Duration(milliseconds: 300), () {
+          Get.snackbar('Success', 'Teacher updated successfully');
+        });
+      } else {
+        throw Exception('Update failed');
+      }
+    } catch (e) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        Get.snackbar('Error', 'Failed to update teacher: ${e.toString()}');
+      });
+    } finally {
+      _isLoading.value = false;
+    }
+  }
+
+  Future<void> deleteTeacher(String id) async {
+    try {
+      _isLoading.value = true;
+      await TeacherService.deleteTeacher(id);
+      await loadTeachers();
+      Future.delayed(const Duration(milliseconds: 300), () {
+        Get.snackbar('Success', 'Teacher deleted successfully');
+      });
+    } catch (e) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        Get.snackbar('Error', 'Failed to delete teacher: ${e.toString()}');
+      });
+    } finally {
+      _isLoading.value = false;
     }
   }
 }

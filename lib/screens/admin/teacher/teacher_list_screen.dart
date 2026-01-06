@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/controllers/teacher_controller.dart';
+import 'package:campus_care/screens/admin/teacher_management/add_teacher_screen.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/common/info_card.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
@@ -542,7 +543,7 @@ class TeacherListScreen extends GetView<TeacherController> {
         if (value == 'view') {
           _showTeacherDetails(context, teacher);
         } else if (value == 'edit') {
-          Get.snackbar('Info', 'Edit ${teacher.fullName}');
+          Get.to(() => AddTeacherScreen(teacher: teacher));
         } else if (value == 'delete') {
           _showDeleteDialog(context, teacher);
         }
@@ -571,7 +572,7 @@ class TeacherListScreen extends GetView<TeacherController> {
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
-              Get.snackbar('Info', 'Delete functionality coming soon');
+              controller.deleteTeacher(teacher.id);
             },
             style: FilledButton.styleFrom(
               backgroundColor: Colors.red,

@@ -235,6 +235,18 @@ class AdminDashboard extends StatelessWidget {
                 title: 'Timetable',
                 onTap: () => Get.toNamed(AppRoutes.timetable),
               ),
+              _buildSidebarItem(
+                context,
+                icon: Icons.how_to_reg_outlined,
+                title: 'Attendance',
+                onTap: () => Get.toNamed(AppRoutes.adminAttendance),
+              ),
+              _buildSidebarItem(
+                context,
+                icon: Icons.how_to_reg_outlined,
+                title: 'Attendance',
+                onTap: () => Get.toNamed(AppRoutes.adminAttendance),
+              ),
               const SizedBox(height: 16),
               _buildSidebarSection('Examination'),
               _buildSidebarItem(
@@ -439,6 +451,20 @@ class AdminDashboard extends StatelessWidget {
                   subtitle: 'View schedule',
                   onTap: () => Get.toNamed(AppRoutes.timetable),
                   iconColor: Colors.orange,
+                ),
+                DashboardCard(
+                  icon: Icons.how_to_reg_outlined,
+                  title: 'Attendance',
+                  subtitle: 'Manage attendance',
+                  onTap: () => Get.toNamed(AppRoutes.adminAttendance),
+                  iconColor: Colors.teal,
+                ),
+                DashboardCard(
+                  icon: Icons.how_to_reg_outlined,
+                  title: 'Attendance',
+                  subtitle: 'Manage attendance',
+                  onTap: () => Get.toNamed(AppRoutes.adminAttendance),
+                  iconColor: Colors.teal,
                 ),
                 DashboardCard(
                   icon: Icons.quiz_outlined,

@@ -115,4 +115,43 @@ class StudentController extends GetxController {
       _isLoading.value = false;
     }
   }
+
+  Future<void> updateStudent(Student student) async {
+    try {
+      _isLoading.value = true;
+      final success = await StudentService.updateStudent(student);
+      if (success) {
+        await loadStudents();
+        Get.back(); // Close edit screen/dialog
+        Future.delayed(const Duration(milliseconds: 300), () {
+          Get.snackbar('Success', 'Student updated successfully');
+        });
+      } else {
+        throw Exception('Update failed');
+      }
+    } catch (e) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        Get.snackbar('Error', 'Failed to update student: ${e.toString()}');
+      });
+    } finally {
+      _isLoading.value = false;
+    }
+  }
+
+  Future<void> deleteStudent(String id) async {
+    try {
+      _isLoading.value = true;
+      await StudentService.deleteStudent(id);
+      await loadStudents();
+      Future.delayed(const Duration(milliseconds: 300), () {
+        Get.snackbar('Success', 'Student deleted successfully');
+      });
+    } catch (e) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        Get.snackbar('Error', 'Failed to delete student: ${e.toString()}');
+      });
+    } finally {
+      _isLoading.value = false;
+    }
+  }
 }

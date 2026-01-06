@@ -1,27 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/class_controller.dart';
+import 'package:campus_care/models/class.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/buttons/primary_button.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
 
-class AddClassScreen extends StatelessWidget {
-  const AddClassScreen({super.key});
+class AddClassScreen extends StatefulWidget {
+  final SchoolClass? schoolClass;
+
+  const AddClassScreen({super.key, this.schoolClass});
+
+  @override
+  State<AddClassScreen> createState() => _AddClassScreenState();
+}
+
+class _AddClassScreenState extends State<AddClassScreen> {
+  bool get isEditMode => widget.schoolClass != null;
+
+  late final TextEditingController classNameController;
+  late final TextEditingController gradeController;
+  late final TextEditingController sectionController;
+  late final TextEditingController teacherController;
+  late final RxList<String> selectedSubjects;
+
+  @override
+  void initState() {
+    super.initState();
+    classNameController = TextEditingController(
+      text: isEditMode ? widget.schoolClass!.name : '',
+    );
+    gradeController = TextEditingController(
+      text: isEditMode ? widget.schoolClass!.grade : '',
+    );
+    sectionController = TextEditingController(
+      text: isEditMode ? widget.schoolClass!.sections.join(', ') : '',
+    );
+    teacherController = TextEditingController(
+      text: isEditMode ? (widget.schoolClass!.teacherId ?? '') : '',
+    );
+    selectedSubjects = (isEditMode
+            ? (widget.schoolClass!.subjects?.cast<String>() ?? <String>[])
+            : <String>[])
+        .obs;
+  }
+
+  @override
+  void dispose() {
+    classNameController.dispose();
+    gradeController.dispose();
+    sectionController.dispose();
+    teacherController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final ClassController classController = Get.find<ClassController>();
-    final classNameController = TextEditingController();
-    final gradeController = TextEditingController(); // Added grade controller
-    final sectionController = TextEditingController();
-    // Note: Backend doesn't seem to store room number in Class model, only name, grade, sections, teacherId, maxStudents
-    final teacherController = TextEditingController(); // Ideally a dropdown
-    final selectedSubjects = <String>[].obs;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add New Class'),
+        title: Text(isEditMode ? 'Edit Class' : 'Add New Class'),
       ),
       body: SingleChildScrollView(
         child: ResponsivePadding(
@@ -111,18 +151,24 @@ class AddClassScreen extends StatelessWidget {
                               'grade': gradeController.text.trim(),
                               'sections': sections,
                               'subjects': selectedSubjects.toList(),
-                              // 'teacherId': teacherController.text.trim(), // Optional
                             };
                             if (teacherController.text.isNotEmpty) {
                               classData['teacherId'] =
                                   teacherController.text.trim();
                             }
 
-                            classController.addClass(classData);
+                            if (isEditMode) {
+                              classController.updateClass(
+                                widget.schoolClass!.id,
+                                classData,
+                              );
+                            } else {
+                              classController.addClass(classData);
+                            }
                           },
                     child: classController.isLoading.value
                         ? const CircularProgressIndicator()
-                        : const Text('Add Class'),
+                        : Text(isEditMode ? 'Update Class' : 'Add Class'),
                   )),
             ],
           ),

@@ -64,7 +64,7 @@ class AttendanceApiService {
     String id,
     Map<String, dynamic> attendanceData,
   ) async {
-    final response = await _apiClient.put(
+    final response = await _apiClient.patch(
       '${AppConstants.attendanceEndpoint}/$id',
       body: attendanceData,
     );
@@ -74,6 +74,22 @@ class AttendanceApiService {
     }
 
     throw Exception('Failed to update attendance');
+  }
+
+  /// Bulk mark attendance
+  Future<List<dynamic>> bulkMarkAttendance(
+    List<Map<String, dynamic>> attendanceData,
+  ) async {
+    final response = await _apiClient.post(
+      '${AppConstants.attendanceEndpoint}/bulk',
+      body: {'attendanceData': attendanceData},
+    );
+
+    if (response['success'] == true && response['data'] != null) {
+      return response['data'] as List<dynamic>;
+    }
+
+    throw Exception('Failed to mark bulk attendance');
   }
 
   /// Delete attendance record

@@ -55,4 +55,31 @@ class ClassController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  Future<void> updateClass(String id, Map<String, dynamic> classData) async {
+    try {
+      isLoading.value = true;
+      await _classApiService.updateClass(id, classData);
+      Get.snackbar('Success', 'Class updated successfully');
+      fetchClasses(); // Refresh list
+      Get.back(); // Close edit screen/dialog
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to update class: ${e.toString()}');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> deleteClass(String id) async {
+    try {
+      isLoading.value = true;
+      await _classApiService.deleteClass(id);
+      Get.snackbar('Success', 'Class deleted successfully');
+      fetchClasses(); // Refresh list
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to delete class: ${e.toString()}');
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }

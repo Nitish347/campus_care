@@ -23,8 +23,10 @@ class AuthApiService {
       case AppConstants.roleTeacher:
         loginEndpoint = '${AppConstants.authEndpoint}/login/teacher';
         break;
-      case AppConstants.roleAdmin:
       case AppConstants.roleSuperAdmin:
+        loginEndpoint = '${AppConstants.authEndpoint}/login/super-admin';
+        break;
+      case AppConstants.roleAdmin:
         loginEndpoint = '${AppConstants.authEndpoint}/login/admin';
         break;
       default:

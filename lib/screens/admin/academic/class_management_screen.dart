@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/controllers/class_controller.dart';
+import 'package:campus_care/screens/admin/academic/add_class_screen.dart';
+import 'package:campus_care/models/class.dart';
 import 'package:campus_care/widgets/common/info_card.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
@@ -48,6 +50,34 @@ class ClassManagementScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(
+      BuildContext context, String classId, String className) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Class'),
+        content: Text(
+            'Are you sure you want to delete $className? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _controller.deleteClass(classId);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
   }
@@ -99,6 +129,42 @@ class ClassManagementScreen extends StatelessWidget {
                   ),
                   subtitle: Text(
                     'Sections: ${schoolClass.sections.join(", ")} | Students: ${schoolClass.maxStudents} max',
+                  ),
+                  trailing: PopupMenuButton(
+                    icon: const Icon(Icons.more_vert),
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit),
+                            SizedBox(width: 8),
+                            Text('Edit'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        Get.to(() => AddClassScreen(schoolClass: schoolClass));
+                      } else if (value == 'delete') {
+                        _showDeleteDialog(
+                          context,
+                          schoolClass.id,
+                          '${schoolClass.name} - Grade ${schoolClass.grade}',
+                        );
+                      }
+                    },
                   ),
                   children: [
                     Padding(

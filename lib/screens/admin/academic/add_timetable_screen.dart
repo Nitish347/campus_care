@@ -14,7 +14,9 @@ import 'package:campus_care/widgets/common/section_header.dart';
 import '../../../widgets/inputs/class_section_dropdown.dart';
 
 class AddTimetableScreen extends StatefulWidget {
-  const AddTimetableScreen({super.key});
+  final TimeTableModel? timetable;
+
+  const AddTimetableScreen({super.key, this.timetable});
 
   @override
   State<AddTimetableScreen> createState() => _AddTimetableScreenState();
@@ -28,6 +30,8 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
   String? _selectedSection;
   final Map<String, List<TimeTableItem>> _weeklySchedule = {};
   List<Teacher> _teachers = [];
+
+  bool get isEditMode => widget.timetable != null;
 
   final List<String> _days = [
     'Monday',
@@ -65,6 +69,25 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
     super.initState();
     for (var day in _days) {
       _weeklySchedule[day] = [];
+    }
+    if (isEditMode) {
+      // Pre-populate from existing timetable
+      _selectedClass = widget.timetable!.classId;
+      _selectedSection = widget.timetable!.section;
+      // Copy the weekly schedule
+      widget.timetable!.weeklySchedule.forEach((day, periods) {
+        _weeklySchedule[day] = periods
+            .map((p) => TimeTableItem(
+                  period: p.period,
+                  subject: p.subject,
+                  teacherId: p.teacherId,
+                  room: p.room,
+                  startTime: p.startTime,
+                  endTime: p.endTime,
+                  type: p.type,
+                ))
+            .toList();
+      });
     }
     _loadTeachers();
   }
@@ -183,7 +206,7 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Timetable'),
+        title: Text(isEditMode ? 'Edit Timetable' : 'Add Timetable'),
       ),
       body: SingleChildScrollView(
         child: ResponsivePadding(
@@ -194,16 +217,46 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
               children: [
                 SectionHeader(title: 'Class & Section'),
                 const SizedBox(height: 16),
-                ClassSectionDropDown(onChangedClass: (value) {
-                  setState(() {
-                    _selectedClass = value;
-                    _selectedSection = null;
-                  });
-                }, onChangedSection: (value) {
-                  setState(() {
-                    _selectedSection = value;
-                  });
-                }),
+                if (isEditMode)
+                  // Show selected class/section in edit mode (read-only)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer
+                          .withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.class_,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Class: $_selectedClass, Section: $_selectedSection',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ClassSectionDropDown(onChangedClass: (value) {
+                    setState(() {
+                      _selectedClass = value;
+                      _selectedSection = null;
+                    });
+                  }, onChangedSection: (value) {
+                    setState(() {
+                      _selectedSection = value;
+                    });
+                  }),
 
                 const SizedBox(height: 32),
                 SectionHeader(
@@ -257,7 +310,8 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
                 const SizedBox(height: 24),
                 PrimaryButton(
                   onPressed: _saveTimetable,
-                  child: const Text('Save Timetable'),
+                  child:
+                      Text(isEditMode ? 'Update Timetable' : 'Save Timetable'),
                 ),
                 const SizedBox(height: 16),
               ],

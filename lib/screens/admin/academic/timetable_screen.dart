@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/timetable_controller.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
+import 'package:campus_care/screens/admin/academic/add_timetable_screen.dart';
 import 'package:campus_care/models/timetable_model.dart';
 import 'package:campus_care/widgets/common/info_card.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
@@ -42,57 +43,81 @@ class TimetableScreen extends GetView<TimetableController> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Class and Section Selection
-
-          ClassSectionDropDown(onChangedClass: (val) {
-            controller.selectClass(val);
-          }, onChangedSection: (val) {
-            controller.selectSection(val);
-          }),
-
-          // Timetable View
-          Expanded(
-            child: Obx(() {
-              if (controller.isLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (controller.selectedClass == null ||
-                  controller.selectedSection == null) {
-                return const EmptyState(
-                  icon: Icons.schedule,
-                  title: 'Select Class and Section',
-                  message:
-                      'Please select a class and section to view timetable',
-                );
-              }
-
-              if (controller.currentTimetable == null) {
-                return EmptyState(
-                  icon: Icons.event_busy,
-                  title: 'No timetable found',
-                  message: 'Create a timetable for this class and section',
-                  action: ElevatedButton.icon(
+      body: Obx(
+        () => Column(
+          children: [
+            // Edit Button (shown when timetable exists)
+            if (controller.currentTimetable != null)
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
                     onPressed: () async {
-                      await Get.toNamed(AppRoutes.addTimetable);
-                      // Refresh when returning
+                      await Get.to(() => AddTimetableScreen(
+                            timetable: controller.currentTimetable!,
+                          ));
+                      // Refresh after editing
                       controller.loadTimetables(
                         classId: controller.selectedClass,
                         section: controller.selectedSection,
                       );
                     },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Create Timetable'),
+                    icon: const Icon(Icons.edit),
+                    label: const Text('Edit Timetable'),
                   ),
-                );
-              }
+                ),
+              ),
+            // Class and Section Selection
 
-              return _buildTimetable(context);
+            ClassSectionDropDown(onChangedClass: (val) {
+              controller.selectClass(val);
+            }, onChangedSection: (val) {
+              controller.selectSection(val);
             }),
-          ),
-        ],
+
+            // Timetable View
+            Expanded(
+              child: Obx(() {
+                if (controller.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (controller.selectedClass == null ||
+                    controller.selectedSection == null) {
+                  return const EmptyState(
+                    icon: Icons.schedule,
+                    title: 'Select Class and Section',
+                    message:
+                        'Please select a class and section to view timetable',
+                  );
+                }
+
+                if (controller.currentTimetable == null) {
+                  return EmptyState(
+                    icon: Icons.event_busy,
+                    title: 'No timetable found',
+                    message: 'Create a timetable for this class and section',
+                    action: ElevatedButton.icon(
+                      onPressed: () async {
+                        await Get.toNamed(AppRoutes.addTimetable);
+                        // Refresh when returning
+                        controller.loadTimetables(
+                          classId: controller.selectedClass,
+                          section: controller.selectedSection,
+                        );
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text('Create Timetable'),
+                    ),
+                  );
+                }
+
+                return _buildTimetable(context);
+              }),
+            ),
+          ],
+        ),
       ),
     );
   }

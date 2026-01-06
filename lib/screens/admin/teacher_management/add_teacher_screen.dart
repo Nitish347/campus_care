@@ -9,7 +9,9 @@ import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
 
 class AddTeacherScreen extends StatefulWidget {
-  const AddTeacherScreen({super.key});
+  final Teacher? teacher;
+
+  const AddTeacherScreen({super.key, this.teacher});
 
   @override
   State<AddTeacherScreen> createState() => _AddTeacherScreenState();
@@ -27,6 +29,26 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
   final TeacherController _teacherController = Get.find<TeacherController>();
 
   DateTime? _hireDate;
+
+  bool get isEditMode => widget.teacher != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (isEditMode) {
+      _populateFields();
+    }
+  }
+
+  void _populateFields() {
+    final teacher = widget.teacher!;
+    _nameController.text = teacher.fullName;
+    _emailController.text = teacher.email;
+    _phoneController.text = teacher.phone ?? '';
+    _addressController.text = teacher.address ?? '';
+    _departmentController.text = teacher.department ?? '';
+    _hireDate = teacher.hireDate;
+  }
 
   @override
   void dispose() {
@@ -63,11 +85,12 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
         nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '-';
 
     final teacher = Teacher(
-      id: '', // Backend generates this
+      id: isEditMode ? widget.teacher!.id : '', // Use existing ID in edit mode
       firstName: firstName,
       lastName: lastName,
       email: _emailController.text,
-      password: _passwordController.text, // Include password for creation
+      password:
+          _passwordController.text.isNotEmpty ? _passwordController.text : null,
       phone: _phoneController.text.isNotEmpty ? _phoneController.text : null,
       address:
           _addressController.text.isNotEmpty ? _addressController.text : null,
@@ -75,24 +98,29 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
           ? _departmentController.text
           : null,
       hireDate: _hireDate,
-      institute: '', // Backend handles this
-      createdAt: DateTime.now(),
+      institute:
+          isEditMode ? widget.teacher!.institute : '', // Preserve institute
+      createdAt: isEditMode ? widget.teacher!.createdAt : DateTime.now(),
       updatedAt: DateTime.now(),
     );
 
-    await _teacherController.addTeacher(teacher);
+    if (isEditMode) {
+      await _teacherController.updateTeacher(teacher);
+    } else {
+      await _teacherController.addTeacher(teacher);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Teacher'),
+        title: Text(isEditMode ? 'Edit Teacher' : 'Add Teacher'),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
             onPressed: _saveTeacher,
-            tooltip: 'Save Teacher',
+            tooltip: isEditMode ? 'Update Teacher' : 'Save Teacher',
           ),
         ],
       ),
@@ -138,15 +166,19 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
                 const SizedBox(height: 16),
                 CustomTextField(
                   controller: _passwordController,
-                  labelText: 'Password *',
-                  hintText: 'Enter password',
+                  labelText: isEditMode
+                      ? 'Password (leave blank to keep current)'
+                      : 'Password *',
+                  hintText: isEditMode
+                      ? 'Enter new password to change'
+                      : 'Enter password',
                   obscureText: true,
                   prefixIcon: const Icon(Icons.lock),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
+                    if (!isEditMode && (value == null || value.isEmpty)) {
                       return 'Please enter password';
                     }
-                    if (value.length < 6) {
+                    if (value != null && value.isNotEmpty && value.length < 6) {
                       return 'Password must be at least 6 characters';
                     }
                     return null;
@@ -192,7 +224,7 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
                 const SizedBox(height: 24),
                 PrimaryButton(
                   onPressed: _saveTeacher,
-                  child: const Text('Add Teacher'),
+                  child: Text(isEditMode ? 'Update Teacher' : 'Add Teacher'),
                 ),
                 const SizedBox(height: 24),
               ],

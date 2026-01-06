@@ -1,7 +1,7 @@
 import 'package:campus_care/screens/admin/profile/admin_profile_screen.dart';
 import 'package:get/get.dart';
 
-import 'package:campus_care/screens/auth/login_screen.dart';
+import 'package:campus_care/screens/auth/tabbed_login_screen.dart';
 import 'package:campus_care/screens/splash_screen.dart';
 import 'package:campus_care/screens/admin/admin_dashboard.dart';
 import 'package:campus_care/screens/admin/student_management/student_list_screen.dart';
@@ -55,6 +55,8 @@ import 'package:campus_care/screens/super_admin/add_edit_institute_screen.dart';
 import 'package:campus_care/core/middleware/auth_middleware.dart';
 import 'package:campus_care/core/middleware/super_admin_middleware.dart';
 import 'package:campus_care/core/middleware/school_admin_middleware.dart';
+import 'package:campus_care/screens/admin/attendance/admin_attendance_screen.dart';
+import 'package:campus_care/controllers/attendance_controller.dart';
 
 class AppRoutes {
   // Auth Routes
@@ -117,6 +119,7 @@ class AppRoutes {
   static const String addMedicalRecord = '/admin/medical/add';
   static const String addClass = '/admin/classes/add';
   static const String addTimetable = '/admin/timetable/add';
+  static const String adminAttendance = '/admin/attendance';
 
   // Teacher Homework & Exam Routes
   static const String homeworkSubmissions = '/teacher/homework/submissions';
@@ -132,7 +135,7 @@ class AppRoutes {
 
   static List<GetPage> getPages = [
     GetPage(name: splash, page: () => const SplashScreen()),
-    GetPage(name: login, page: () => const LoginScreen()),
+    GetPage(name: login, page: () => const TabbedLoginScreen()),
 
     // Admin Pages (Protected by SchoolAdminMiddleware)
     GetPage(
@@ -163,6 +166,14 @@ class AppRoutes {
     GetPage(
       name: timetable,
       page: () => const TimetableScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: adminAttendance,
+      page: () => const AdminAttendanceScreen(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut(() => AttendanceController());
+      }),
       middlewares: [SchoolAdminMiddleware()],
     ),
     GetPage(

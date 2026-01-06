@@ -60,7 +60,7 @@ class TeacherApiService {
     String id,
     Map<String, dynamic> teacherData,
   ) async {
-    final response = await _apiClient.put(
+    final response = await _apiClient.patch(
       '${AppConstants.teachersEndpoint}/$id',
       body: teacherData,
     );

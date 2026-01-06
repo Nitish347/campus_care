@@ -3,6 +3,7 @@ import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
+import 'package:campus_care/screens/admin/student_management/add_student_screen.dart';
 import 'package:campus_care/controllers/student_controller.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/common/info_card.dart';
@@ -44,17 +45,11 @@ class StudentListScreen extends GetView<StudentController> {
           return const Center(child: CircularProgressIndicator());
         }
 
-
-
         // Step 3: Show Student List
         return _buildStudentList(context);
       }),
     );
   }
-
-
-
-
 
   Widget _buildStudentList(BuildContext context) {
     final theme = Theme.of(context);
@@ -63,16 +58,14 @@ class StudentListScreen extends GetView<StudentController> {
 
     return Column(
       children: [
-
-     ClassSectionDropDown(onChangedClass: (val){
-       controller.selectClass(val);
-     }, onChangedSection: (val){
-       controller.selectSection(val);
-     }),
+        ClassSectionDropDown(onChangedClass: (val) {
+          controller.selectClass(val);
+        }, onChangedSection: (val) {
+          controller.selectSection(val);
+        }),
 
         // Search Bar and Stats
         Container(
-
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest
                 .withValues(alpha: 0.3),
@@ -241,7 +234,7 @@ class StudentListScreen extends GetView<StudentController> {
                           context,
                           Icons.phone_outlined,
                           'Phone',
-                          student.phone??"",
+                          student.phone ?? "",
                         ),
                       ),
                     ],
@@ -446,7 +439,7 @@ class StudentListScreen extends GetView<StudentController> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                   "",
+                                    "",
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: theme.colorScheme.onSurfaceVariant,
                                     ),
@@ -493,7 +486,7 @@ class StudentListScreen extends GetView<StudentController> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            student.phone??"",
+                            student.phone ?? "",
                             style: theme.textTheme.bodyMedium,
                           ),
                         ],
@@ -569,7 +562,7 @@ class StudentListScreen extends GetView<StudentController> {
         if (value == 'view') {
           _showStudentDetails(context, student);
         } else if (value == 'edit') {
-          Get.snackbar('Info', 'Edit ${student.fullName}');
+          Get.to(() => AddStudentScreen(student: student));
         } else if (value == 'delete') {
           _showDeleteDialog(context, student);
         }
@@ -672,7 +665,7 @@ class StudentListScreen extends GetView<StudentController> {
                             context,
                             Icons.phone,
                             'Phone',
-                            student.phone??"",
+                            student.phone ?? "",
                           ),
                           // _buildDetailRow(
                           //   context,
@@ -746,8 +739,7 @@ class StudentListScreen extends GetView<StudentController> {
                         ],
                       ),
                       // if (student.address.isNotEmpty)
-                        ...
-                      [
+                      ...[
                         const SizedBox(height: 24),
                         _buildDetailSection(
                           context,
@@ -787,7 +779,7 @@ class StudentListScreen extends GetView<StudentController> {
                     ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pop(context);
-                        Get.snackbar('Info', 'Edit ${student.fullName}');
+                        Get.to(() => AddStudentScreen(student: student));
                       },
                       icon: const Icon(Icons.edit, size: 18),
                       label: const Text('Edit'),
@@ -889,7 +881,7 @@ class StudentListScreen extends GetView<StudentController> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              Get.snackbar('Info', 'Delete functionality coming soon');
+              controller.deleteStudent(student.id);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -901,4 +893,3 @@ class StudentListScreen extends GetView<StudentController> {
     );
   }
 }
-

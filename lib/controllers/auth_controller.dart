@@ -53,7 +53,7 @@ class AuthController extends GetxController {
       if (_currentRole.value.isNotEmpty) {
         _navigateToRoleDashboard();
       }
-    }else{
+    } else {
       Get.offAllNamed(AppRoutes.login);
     }
   }
@@ -83,7 +83,7 @@ class AuthController extends GetxController {
         passwordController.clear();
 
         // Navigate to appropriate dashboard
-       _navigateToRoleDashboard();
+        _navigateToRoleDashboard();
 
         Get.snackbar(
           'Success',
@@ -115,11 +115,60 @@ class AuthController extends GetxController {
     }
   }
 
-  void _navigateToRoleDashboard() async{
+  Future<void> loginWithCredentials({
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    try {
+      _isLoading.value = true;
+
+      final user = await AuthService.login(
+        email.trim(),
+        password.trim(),
+        role,
+      );
+
+      if (user != null) {
+        _isLoggedIn.value = true;
+        _currentRole.value = role;
+
+        // Navigate to appropriate dashboard
+        _navigateToRoleDashboard();
+
+        Get.snackbar(
+          'Success',
+          'Welcome back!',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+      } else {
+        Get.snackbar(
+          'Login Failed',
+          'Invalid email or password. Please try again.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        e.toString().replaceAll('Exception: ', ''),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+    } finally {
+      _isLoading.value = false;
+    }
+  }
+
+  void _navigateToRoleDashboard() async {
     final data = await AuthService.getCurrentUser();
 
     if (data == null) {
-
       Get.snackbar(
         'Error',
         'Failed to retrieve user data.',
@@ -139,8 +188,19 @@ class AuthController extends GetxController {
         _currentTeacher.value = data;
 
         break;
-      case AppConstants.roleAdmin:
       case AppConstants.roleSuperAdmin:
+        // For super admin, data is a Map, convert to Admin-like structure
+        _currentAdmin.value = Admin.fromJson({
+          'id': data['id'],
+          '_id': data['id'],
+          'firstName': data['firstName'],
+          'lastName': data['lastName'],
+          'email': data['email'],
+          'instituteName': 'Super Admin',
+          'phone': '+1234567890',
+        });
+        break;
+      case AppConstants.roleAdmin:
         _currentAdmin.value = data;
         break;
       default:
@@ -199,7 +259,8 @@ class AuthController extends GetxController {
     try {
       _isLoading.value = true;
 
-      final success = await AuthService.changePassword(oldPassword, newPassword);
+      final success =
+          await AuthService.changePassword(oldPassword, newPassword);
 
       if (success) {
         Get.snackbar(

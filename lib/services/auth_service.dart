@@ -61,8 +61,12 @@ class AuthService {
           var data = await TeacherService.getTeacherById(userData['id']!);
           return data!;
 
-        case AppConstants.roleAdmin:
         case AppConstants.roleSuperAdmin:
+          // For super admin, return the stored user data directly
+          // since there's no separate endpoint to fetch super admin details
+          return userData;
+
+        case AppConstants.roleAdmin:
           var data = await AdminService.getAdminById(userData['id']!);
           log(userData['id']!);
           return data!;
