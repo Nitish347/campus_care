@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
-import 'package:campus_care/models/user.dart';
+
 import 'package:campus_care/services/auth_service.dart';
 
 class AuthController extends GetxController {

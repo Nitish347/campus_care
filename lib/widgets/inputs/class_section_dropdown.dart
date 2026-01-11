@@ -12,7 +12,11 @@ class ClassSectionDropDown extends StatefulWidget {
   final Function(
     String classId,
   ) onChangedSection;
-  const ClassSectionDropDown({super.key, this.padding, required this.onChangedClass, required this.onChangedSection});
+  const ClassSectionDropDown(
+      {super.key,
+      this.padding,
+      required this.onChangedClass,
+      required this.onChangedSection});
 
   @override
   State<ClassSectionDropDown> createState() => _ClassSectionDropDownState();
@@ -40,7 +44,8 @@ class _ClassSectionDropDownState extends State<ClassSectionDropDown> {
                   },
                   items: List.generate(controller.classes.length, (index) {
                     return DropdownMenuItem(
-                        value: controller.classes[index].name, child: Text(controller.classes[index].name));
+                        value: controller.classes[index].id,
+                        child: Text(controller.classes[index].name));
                   }))),
           SizedBox(
             width: 10,
@@ -55,11 +60,18 @@ class _ClassSectionDropDownState extends State<ClassSectionDropDown> {
                   },
                   items: selectedClass == null
                       ? []
-                      : List.generate(controller.classes.firstWhere((e) => e.name == selectedClass).sections.length,
-                          (index) {
+                      : List.generate(
+                          controller.classes
+                              .firstWhere((e) => e.id == selectedClass)
+                              .sections
+                              .length, (index) {
                           return DropdownMenuItem(
-                              value: controller.classes.firstWhere((e) => e.name == selectedClass).sections[index],
-                              child: Text(controller.classes.firstWhere((e) => e.name == selectedClass).sections[index]));
+                              value: controller.classes
+                                  .firstWhere((e) => e.id == selectedClass)
+                                  .sections[index],
+                              child: Text(controller.classes
+                                  .firstWhere((e) => e.id == selectedClass)
+                                  .sections[index]));
                         }))),
         ],
       ),

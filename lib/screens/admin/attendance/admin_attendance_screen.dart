@@ -1,3 +1,5 @@
+import 'package:campus_care/widgets/common/info_card.dart';
+import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +15,8 @@ class AdminAttendanceScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final AttendanceController controller = Get.put(AttendanceController());
     final theme = Theme.of(context);
+    final size = MediaQuery.of(context).size;
+    final isWideScreen = size.width > 900;
 
     return Scaffold(
       appBar: AppBar(
@@ -27,9 +31,9 @@ class AdminAttendanceScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Selection Controls
+          // Compact Selection Controls
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest
                   .withValues(alpha: 0.3),
@@ -42,83 +46,164 @@ class AdminAttendanceScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Class and Section Selection
-                ClassSectionDropDown(
-                  onChangedClass: (value) {
-                    controller.selectClass(value);
-                  },
-                  onChangedSection: (value) {
-                    controller.selectSection(value);
-                  },
-                  padding: 0,
-                ),
-                const SizedBox(height: 16),
-                // Date Picker
-                Obx(() => InkWell(
-                      onTap: () => _selectDate(context, controller),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: theme.colorScheme.outline,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
+                // Class, Section, and Date in a more compact layout
+                if (isWideScreen)
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: ClassSectionDropDown(
+                          onChangedClass: (value) =>
+                              controller.selectClass(value),
+                          onChangedSection: (value) =>
+                              controller.selectSection(value),
+                          padding: 0,
                         ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_today,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Attendance Date',
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: Obx(() => InkWell(
+                              onTap: () => _selectDate(context, controller),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: theme.colorScheme.outline),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.calendar_today,
+                                        color: theme.colorScheme.primary,
+                                        size: 20),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Date',
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                              color: theme
+                                                  .colorScheme.onSurfaceVariant,
+                                            ),
+                                          ),
+                                          Text(
+                                            DateFormat('MMM dd, yyyy').format(
+                                                controller.selectedDate),
+                                            style: theme.textTheme.bodyMedium
+                                                ?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    DateFormat('EEEE, MMMM dd, yyyy')
-                                        .format(controller.selectedDate),
-                                    style:
-                                        theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
+                                  ],
+                                ),
+                              ),
+                            )),
+                      ),
+                      const SizedBox(width: 12),
+                      Obx(() => SizedBox(
+                            width: 140,
+                            child: PrimaryButton(
+                              height: 48,
+                              onPressed: controller.selectedClass != null &&
+                                      controller.selectedSection != null
+                                  ? controller.loadStudentsAndAttendance
+                                  : null,
+                              child: controller.isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text('Load'),
+                            ),
+                          )),
+                    ],
+                  )
+                else
+                  Column(
+                    children: [
+                      ClassSectionDropDown(
+                        onChangedClass: (value) =>
+                            controller.selectClass(value),
+                        onChangedSection: (value) =>
+                            controller.selectSection(value),
+                        padding: 0,
+                      ),
+                      const SizedBox(height: 12),
+                      Obx(() => InkWell(
+                            onTap: () => _selectDate(context, controller),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: theme.colorScheme.outline),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.calendar_today,
+                                      color: theme.colorScheme.primary,
+                                      size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Date',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: theme
+                                                .colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        Text(
+                                          DateFormat('MMM dd, yyyy')
+                                              .format(controller.selectedDate),
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            Icon(
-                              Icons.arrow_drop_down,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ],
-                        ),
-                      ),
-                    )),
-                const SizedBox(height: 16),
-                // Load Button
-                Obx(() => PrimaryButton(
-                      onPressed: controller.selectedClass != null &&
-                              controller.selectedSection != null
-                          ? controller.loadStudentsAndAttendance
-                          : null,
-                      child: controller.isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Load Students'),
-                    )),
+                          )),
+                      const SizedBox(height: 12),
+                      Obx(() => PrimaryButton(
+                            height: 44,
+                            onPressed: controller.selectedClass != null &&
+                                    controller.selectedSection != null
+                                ? controller.loadStudentsAndAttendance
+                                : null,
+                            child: controller.isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text('Load Students'),
+                          )),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -158,70 +243,46 @@ class AdminAttendanceScreen extends StatelessWidget {
 
               return Column(
                 children: [
-                  // Summary Header
+                  // Compact Summary Header with Bulk Actions
                   Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
+                    margin: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          theme.colorScheme.primaryContainer,
-                          theme.colorScheme.secondaryContainer,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant,
                       ),
                     ),
                     child: Column(
                       children: [
-                        Text(
-                          DateFormat('EEEE, MMMM dd, yyyy')
-                              .format(controller.selectedDate),
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
+                        // Compact Summary Stats
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildSummaryItem(
+                            _buildCompactSummaryItem(
                               theme,
                               Icons.people_outline,
                               '${controller.totalStudents}',
                               'Total',
                               theme.colorScheme.primary,
                             ),
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: theme.colorScheme.outline.withOpacity(0.3),
-                            ),
-                            _buildSummaryItem(
+                            _buildCompactSummaryItem(
                               theme,
                               Icons.check_circle_outline,
                               '${controller.presentCount}',
                               'Present',
                               Colors.green,
                             ),
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: theme.colorScheme.outline.withOpacity(0.3),
-                            ),
-                            _buildSummaryItem(
+                            _buildCompactSummaryItem(
                               theme,
                               Icons.cancel_outlined,
                               '${controller.absentCount}',
                               'Absent',
                               Colors.red,
                             ),
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: theme.colorScheme.outline.withOpacity(0.3),
-                            ),
-                            _buildSummaryItem(
+                            _buildCompactSummaryItem(
                               theme,
                               Icons.percent,
                               '${controller.attendancePercentage}%',
@@ -232,58 +293,68 @@ class AdminAttendanceScreen extends StatelessWidget {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 12),
+                        // Bulk Actions
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: controller.markAllPresent,
+                                icon: const Icon(Icons.check_circle, size: 18),
+                                label: const Text('All Present'),
+                                style: OutlinedButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: controller.markAllAbsent,
+                                icon: const Icon(Icons.cancel, size: 18),
+                                label: const Text('All Absent'),
+                                style: OutlinedButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
 
-                  // Bulk Actions
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: controller.markAllPresent,
-                            icon: const Icon(Icons.check_circle),
-                            label: const Text('Mark All Present'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: controller.markAllAbsent,
-                            icon: const Icon(Icons.cancel),
-                            label: const Text('Mark All Absent'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Student List
+                  // Student List - Now with more space!
                   Expanded(
                     child: ResponsivePadding(
                       child: ListView.builder(
                         itemCount: controller.students.length,
+                        padding: const EdgeInsets.only(bottom: 8),
                         itemBuilder: (context, index) {
                           final student = controller.students[index];
                           final status = controller.attendanceMap[student.id] ??
-                              AttendanceStatus.present;
+                              AttendanceStatus.absent;
 
                           return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
+                            margin: const EdgeInsets.only(bottom: 8),
                             child: Card(
                               elevation: 0,
+                              margin: EdgeInsets.zero,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(12),
                                 side: BorderSide(
                                   color: theme.colorScheme.outlineVariant,
                                   width: 1,
                                 ),
                               ),
                               child: ListTile(
-                                contentPadding: const EdgeInsets.all(16),
+                                dense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
                                 leading: CircleAvatar(
+                                  radius: 20,
                                   backgroundColor:
                                       _getStatusColor(status).withOpacity(0.1),
                                   child: Text(
@@ -293,65 +364,45 @@ class AdminAttendanceScreen extends StatelessWidget {
                                     style: TextStyle(
                                       color: _getStatusColor(status),
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 12,
                                     ),
                                   ),
                                 ),
                                 title: Text(
                                   student.fullName,
-                                  style: theme.textTheme.titleMedium?.copyWith(
+                                  style: theme.textTheme.titleSmall?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 subtitle: Text(
-                                  'Roll: ${student.rollNumber} | Enrollment: ${student.enrollmentNumber}',
+                                  'Roll: ${student.rollNumber} | ${student.enrollmentNumber}',
+                                  style: theme.textTheme.bodySmall,
                                 ),
                                 trailing: SizedBox(
-                                  width: 180,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Expanded(
-                                        child: DropdownButtonFormField<
-                                            AttendanceStatus>(
-                                          value: status,
-                                          decoration: InputDecoration(
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 8,
-                                            ),
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                          ),
-                                          items: AttendanceStatus.values
-                                              .map((s) => DropdownMenuItem(
-                                                    value: s,
-                                                    child: Text(
-                                                      _getStatusLabel(s),
-                                                      style: TextStyle(
-                                                        color:
-                                                            _getStatusColor(s),
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        fontSize: 13,
-                                                      ),
-                                                    ),
-                                                  ))
-                                              .toList(),
-                                          onChanged: (newStatus) {
-                                            if (newStatus != null) {
-                                              controller
-                                                  .toggleStudentAttendance(
-                                                student.id,
-                                                newStatus,
-                                              );
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    ],
+                                  width: 130,
+                                  child: CustomDropdown(
+                                    onChanged: (newStatus) {
+                                      if (newStatus != null) {
+                                        controller.toggleStudentAttendance(
+                                          student.id,
+                                          newStatus,
+                                        );
+                                      }
+                                    },
+                                    value: status,
+                                    items: AttendanceStatus.values
+                                        .map((s) => DropdownMenuItem(
+                                              value: s,
+                                              child: Text(
+                                                _getStatusLabel(s),
+                                                style: TextStyle(
+                                                  color: _getStatusColor(s),
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ))
+                                        .toList(),
                                   ),
                                 ),
                               ),
@@ -362,9 +413,18 @@ class AdminAttendanceScreen extends StatelessWidget {
                     ),
                   ),
 
-                  // Save Button
-                  Padding(
-                    padding: const EdgeInsets.all(16),
+                  // Compact Save Button
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      border: Border(
+                        top: BorderSide(
+                          color:
+                              theme.colorScheme.outline.withValues(alpha: 0.2),
+                        ),
+                      ),
+                    ),
                     child: SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
@@ -374,7 +434,7 @@ class AdminAttendanceScreen extends StatelessWidget {
                         icon: const Icon(Icons.save),
                         label: const Text('Save Attendance'),
                         style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
                     ),
@@ -388,29 +448,38 @@ class AdminAttendanceScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryItem(
+  Widget _buildCompactSummaryItem(
     ThemeData theme,
     IconData icon,
     String value,
     String label,
     Color color,
   ) {
-    return Column(
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+        Icon(icon, color: color, size: 18),
+        const SizedBox(width: 6),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              value,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: color,
+                fontSize: 14,
+              ),
+            ),
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 11,
+              ),
+            ),
+          ],
         ),
       ],
     );

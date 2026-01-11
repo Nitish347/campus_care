@@ -1,8 +1,12 @@
 import 'package:get/get.dart';
 import 'package:campus_care/models/homework_model.dart';
 import 'package:campus_care/models/homework_submission_model.dart';
+import 'package:campus_care/services/api/homework_api_service.dart';
+import 'package:campus_care/core/api_exception.dart';
 
 class HomeworkController extends GetxController {
+  final HomeworkApiService _apiService = HomeworkApiService();
+
   // Observable lists
   final RxList<HomeWorkModel> homeworkList = <HomeWorkModel>[].obs;
   final RxList<HomeworkSubmission> submissions = <HomeworkSubmission>[].obs;
@@ -18,127 +22,37 @@ class HomeworkController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadStaticData();
+    fetchHomework();
   }
 
-  // Load static data for demonstration
-  void _loadStaticData() {
-    final now = DateTime.now();
+  // Fetch homework from backend
+  Future<void> fetchHomework() async {
+    try {
+      isLoading.value = true;
+      final data = await _apiService.getHomework(
+        classId: selectedClass.value.isNotEmpty ? selectedClass.value : null,
+        section:
+            selectedSection.value.isNotEmpty ? selectedSection.value : null,
+        subject: selectedSubject.value != 'All' ? selectedSubject.value : null,
+      );
 
-    homeworkList.value = [
-      HomeWorkModel(
-        id: '1',
-        title: 'Math Assignment - Algebra',
-        description:
-            'Complete exercises 1-20 from chapter 5. Focus on quadratic equations.',
-        subject: 'Mathematics',
-        teacherId: 'teacher1',
-        classId: 'class_5a',
-        section: 'A',
-        assignedStudents: [
-          'student1',
-          'student2',
-          'student3',
-          'student4',
-          'student5'
-        ],
-        dueDate: now.add(const Duration(days: 3)),
-        createdAt: now.subtract(const Duration(days: 2)),
-        priority: 'high',
-        totalMarks: 20,
-        attachments: ['worksheet.pdf'],
-      ),
-      HomeWorkModel(
-        id: '2',
-        title: 'Science Project - Photosynthesis',
-        description:
-            'Create a detailed presentation on the photosynthesis process.',
-        subject: 'Science',
-        teacherId: 'teacher1',
-        classId: 'class_5a',
-        section: 'A',
-        assignedStudents: ['student1', 'student2', 'student3'],
-        dueDate: now.add(const Duration(days: 7)),
-        createdAt: now.subtract(const Duration(days: 5)),
-        priority: 'medium',
-        totalMarks: 30,
-      ),
-      HomeWorkModel(
-        id: '3',
-        title: 'English Essay - My Favorite Book',
-        description: 'Write a 500-word essay about your favorite book.',
-        subject: 'English',
-        teacherId: 'teacher1',
-        classId: 'class_5b',
-        section: 'B',
-        assignedStudents: ['student6', 'student7', 'student8'],
-        dueDate: now.add(const Duration(days: 5)),
-        createdAt: now.subtract(const Duration(days: 3)),
-        priority: 'medium',
-        totalMarks: 25,
-      ),
-      HomeWorkModel(
-        id: '4',
-        title: 'History Timeline - World War II',
-        description: 'Create a timeline of major events in World War II.',
-        subject: 'History',
-        teacherId: 'teacher1',
-        classId: 'class_5a',
-        section: 'A',
-        assignedStudents: ['student1', 'student2', 'student3', 'student4'],
-        dueDate: now.subtract(const Duration(days: 1)),
-        createdAt: now.subtract(const Duration(days: 10)),
-        priority: 'high',
-        totalMarks: 15,
-      ),
-    ];
-
-    // Create submissions for homework
-    submissions.value = [
-      // Homework 1 submissions
-      HomeworkSubmission(
-        id: 'sub1',
-        homeworkId: '1',
-        studentId: 'student1',
-        status: 'submitted',
-        submittedAt: now.subtract(const Duration(hours: 5)),
-        submissionContent: 'Completed all 20 exercises',
-        createdAt: now.subtract(const Duration(days: 2)),
-        updatedAt: now.subtract(const Duration(hours: 5)),
-      ),
-      HomeworkSubmission(
-        id: 'sub2',
-        homeworkId: '1',
-        studentId: 'student2',
-        status: 'graded',
-        submittedAt: now.subtract(const Duration(days: 1)),
-        submissionContent: 'Completed exercises',
-        marksObtained: 18,
-        feedback: 'Excellent work!',
-        createdAt: now.subtract(const Duration(days: 2)),
-        updatedAt: now.subtract(const Duration(hours: 2)),
-      ),
-      HomeworkSubmission(
-        id: 'sub3',
-        homeworkId: '1',
-        studentId: 'student3',
-        status: 'pending',
-        createdAt: now.subtract(const Duration(days: 2)),
-        updatedAt: now.subtract(const Duration(days: 2)),
-      ),
-      // Homework 2 submissions
-      HomeworkSubmission(
-        id: 'sub4',
-        homeworkId: '2',
-        studentId: 'student1',
-        status: 'submitted',
-        submittedAt: now.subtract(const Duration(hours: 10)),
-        submissionContent: 'Presentation created with diagrams',
-        attachments: ['presentation.pptx'],
-        createdAt: now.subtract(const Duration(days: 5)),
-        updatedAt: now.subtract(const Duration(hours: 10)),
-      ),
-    ];
+      homeworkList.value =
+          data.map((json) => HomeWorkModel.fromJson(json)).toList();
+    } on ApiException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.message,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to load homework: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // Get homework filtered by class and section
@@ -181,30 +95,125 @@ class HomeworkController extends GetxController {
 
   // Add new homework
   Future<void> addHomework(HomeWorkModel homework) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(milliseconds: 500));
-    homeworkList.add(homework);
-    isLoading.value = false;
+    try {
+      isLoading.value = true;
+
+      final homeworkData = {
+        'title': homework.title,
+        'description': homework.description,
+        'subject': homework.subject,
+        'classId': homework.classId,
+        'section': homework.section,
+        'dueDate': homework.dueDate.toIso8601String(),
+        'priority': homework.priority,
+        if (homework.totalMarks != null) 'totalMarks': homework.totalMarks,
+      };
+
+      final createdHomework = await _apiService.createHomework(homeworkData);
+      homeworkList.add(HomeWorkModel.fromJson(createdHomework));
+
+      Get.snackbar(
+        'Success',
+        'Homework created successfully',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } on ApiException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.message,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      rethrow;
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to create homework: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      rethrow;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // Update homework
   Future<void> updateHomework(HomeWorkModel homework) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(milliseconds: 500));
-    final index = homeworkList.indexWhere((hw) => hw.id == homework.id);
-    if (index != -1) {
-      homeworkList[index] = homework;
+    try {
+      isLoading.value = true;
+
+      final homeworkData = {
+        'title': homework.title,
+        'description': homework.description,
+        'subject': homework.subject,
+        'classId': homework.classId,
+        'section': homework.section,
+        'dueDate': homework.dueDate.toIso8601String(),
+        'priority': homework.priority,
+        if (homework.totalMarks != null) 'totalMarks': homework.totalMarks,
+      };
+
+      final updatedHomework =
+          await _apiService.updateHomework(homework.id, homeworkData);
+
+      final index = homeworkList.indexWhere((hw) => hw.id == homework.id);
+      if (index != -1) {
+        homeworkList[index] = HomeWorkModel.fromJson(updatedHomework);
+      }
+
+      Get.snackbar(
+        'Success',
+        'Homework updated successfully',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } on ApiException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.message,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      rethrow;
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to update homework: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      rethrow;
+    } finally {
+      isLoading.value = false;
     }
-    isLoading.value = false;
   }
 
   // Delete homework
   Future<void> deleteHomework(String homeworkId) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(milliseconds: 500));
-    homeworkList.removeWhere((hw) => hw.id == homeworkId);
-    submissions.removeWhere((sub) => sub.homeworkId == homeworkId);
-    isLoading.value = false;
+    try {
+      isLoading.value = true;
+      await _apiService.deleteHomework(homeworkId);
+      homeworkList.removeWhere((hw) => hw.id == homeworkId);
+      submissions.removeWhere((sub) => sub.homeworkId == homeworkId);
+
+      Get.snackbar(
+        'Success',
+        'Homework deleted successfully',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } on ApiException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.message,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      rethrow;
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to delete homework: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      rethrow;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // Grade a submission
@@ -230,14 +239,17 @@ class HomeworkController extends GetxController {
   // Set filters
   void setClassFilter(String classId) {
     selectedClass.value = classId;
+    fetchHomework(); // Refetch with new filter
   }
 
   void setSectionFilter(String section) {
     selectedSection.value = section;
+    fetchHomework(); // Refetch with new filter
   }
 
   void setSubjectFilter(String subject) {
     selectedSubject.value = subject;
+    // No need to refetch, just filter client-side
   }
 
   // Clear filters
@@ -245,5 +257,6 @@ class HomeworkController extends GetxController {
     selectedClass.value = '';
     selectedSection.value = '';
     selectedSubject.value = 'All';
+    fetchHomework();
   }
 }

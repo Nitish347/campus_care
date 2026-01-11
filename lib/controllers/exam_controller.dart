@@ -1,8 +1,12 @@
 import 'package:get/get.dart';
 import 'package:campus_care/models/exam_model.dart';
 import 'package:campus_care/models/exam_result_model.dart';
+import 'package:campus_care/services/api/exam_api_service.dart';
+import 'package:campus_care/core/api_exception.dart';
 
 class ExamController extends GetxController {
+  final ExamApiService _apiService = ExamApiService();
+
   // Observable lists
   final RxList<ExamModel> examList = <ExamModel>[].obs;
   final RxList<ExamResult> examResults = <ExamResult>[].obs;
@@ -18,106 +22,36 @@ class ExamController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadStaticData();
+    fetchExams();
   }
 
-  // Load static data for demonstration
-  void _loadStaticData() {
-    final now = DateTime.now();
+  // Fetch exams from API
+  Future<void> fetchExams() async {
+    try {
+      isLoading.value = true;
 
-    examList.value = [
-      ExamModel(
-        id: 'exam1',
-        name: 'Mid-Term Mathematics',
-        type: 'mid-term',
-        subject: 'Mathematics',
-        classId: 'class_5a',
-        section: 'A',
-        teacherId: 'teacher1',
-        totalMarks: 100,
-        durationMinutes: 120,
-        examDate: now.add(const Duration(days: 10)),
-        instructions: 'Bring calculator and geometry box',
-        syllabus: 'Chapters 1-5',
-        createdAt: now.subtract(const Duration(days: 15)),
-        updatedAt: now.subtract(const Duration(days: 15)),
-      ),
-      ExamModel(
-        id: 'exam2',
-        name: 'Science Quiz - Chapter 3',
-        type: 'quiz',
-        subject: 'Science',
-        classId: 'class_5a',
-        section: 'A',
-        teacherId: 'teacher1',
-        totalMarks: 25,
-        durationMinutes: 30,
-        examDate: now.subtract(const Duration(days: 5)),
-        instructions: 'MCQ based quiz',
-        syllabus: 'Chapter 3: Photosynthesis',
-        createdAt: now.subtract(const Duration(days: 20)),
-        updatedAt: now.subtract(const Duration(days: 20)),
-      ),
-      ExamModel(
-        id: 'exam3',
-        name: 'English Final Exam',
-        type: 'final',
-        subject: 'English',
-        classId: 'class_5b',
-        section: 'B',
-        teacherId: 'teacher1',
-        totalMarks: 100,
-        durationMinutes: 180,
-        examDate: now.add(const Duration(days: 30)),
-        instructions: 'Bring writing materials',
-        syllabus: 'Full syllabus',
-        createdAt: now.subtract(const Duration(days: 10)),
-        updatedAt: now.subtract(const Duration(days: 10)),
-      ),
-    ];
+      final exams = await _apiService.getExams(
+        classId: selectedClass.value.isNotEmpty ? selectedClass.value : null,
+        section:
+            selectedSection.value.isNotEmpty ? selectedSection.value : null,
+      );
 
-    examResults.value = [
-      // Results for exam2 (Science Quiz)
-      ExamResult(
-        id: 'result1',
-        studentId: 'student1',
-        examId: 'exam2',
-        subject: 'Science',
-        marks: 22,
-        totalMarks: 25,
-        status: 'graded',
-        isPresent: true,
-        teacherRemarks: 'Excellent performance',
-        createdAt: now.subtract(const Duration(days: 5)),
-        updatedAt: now.subtract(const Duration(days: 4)),
-      ),
-      ExamResult(
-        id: 'result2',
-        studentId: 'student2',
-        examId: 'exam2',
-        subject: 'Science',
-        marks: 18,
-        totalMarks: 25,
-        status: 'graded',
-        isPresent: true,
-        teacherRemarks: 'Good work',
-        createdAt: now.subtract(const Duration(days: 5)),
-        updatedAt: now.subtract(const Duration(days: 4)),
-      ),
-      ExamResult(
-        id: 'result3',
-        studentId: 'student3',
-        examId: 'exam2',
-        subject: 'Science',
-        marks: 0,
-        totalMarks: 25,
-        status: 'pending',
-        isPresent: false,
-        teacherRemarks: 'Absent',
-        createdAt: now.subtract(const Duration(days: 5)),
-        updatedAt: now.subtract(const Duration(days: 5)),
-      ),
-    ];
+      examList.value = exams.map((e) => ExamModel.fromJson(e)).toList();
+    } on ApiException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.message,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to fetch exams: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // Get exams filtered by class and section
@@ -183,30 +117,134 @@ class ExamController extends GetxController {
 
   // Add new exam
   Future<void> addExam(ExamModel exam) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(milliseconds: 500));
-    examList.add(exam);
-    isLoading.value = false;
+    try {
+      isLoading.value = true;
+
+      final examData = {
+        'examTypeId': exam.examTypeId,
+        'name': exam.name,
+        'type': exam.type,
+        'subject': exam.subject,
+        'classId': exam.classId,
+        'section': exam.section,
+        'examDate': exam.examDate.toIso8601String(),
+        'startTime':
+            '${exam.examDate.hour.toString().padLeft(2, '0')}:${exam.examDate.minute.toString().padLeft(2, '0')}',
+        'duration': exam.durationMinutes,
+        'totalMarks': exam.totalMarks,
+        if (exam.instructions != null) 'instructions': exam.instructions,
+        if (exam.syllabus != null) 'syllabus': exam.syllabus,
+      };
+
+      final createdExam = await _apiService.createExam(examData);
+      examList.add(ExamModel.fromJson(createdExam));
+
+      Get.snackbar(
+        'Success',
+        'Exam created successfully',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } on ApiException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.message,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      rethrow;
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to create exam: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      rethrow;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // Update exam
   Future<void> updateExam(ExamModel exam) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(milliseconds: 500));
-    final index = examList.indexWhere((e) => e.id == exam.id);
-    if (index != -1) {
-      examList[index] = exam;
+    try {
+      isLoading.value = true;
+
+      final examData = {
+        'examTypeId': exam.examTypeId,
+        'name': exam.name,
+        'type': exam.type,
+        'subject': exam.subject,
+        'classId': exam.classId,
+        'section': exam.section,
+        'examDate': exam.examDate.toIso8601String(),
+        'startTime':
+            '${exam.examDate.hour.toString().padLeft(2, '0')}:${exam.examDate.minute.toString().padLeft(2, '0')}',
+        'duration': exam.durationMinutes,
+        'totalMarks': exam.totalMarks,
+        if (exam.instructions != null) 'instructions': exam.instructions,
+        if (exam.syllabus != null) 'syllabus': exam.syllabus,
+      };
+
+      final updatedExam = await _apiService.updateExam(exam.id, examData);
+
+      final index = examList.indexWhere((e) => e.id == exam.id);
+      if (index != -1) {
+        examList[index] = ExamModel.fromJson(updatedExam);
+      }
+
+      Get.snackbar(
+        'Success',
+        'Exam updated successfully',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } on ApiException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.message,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      rethrow;
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to update exam: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      rethrow;
+    } finally {
+      isLoading.value = false;
     }
-    isLoading.value = false;
   }
 
   // Delete exam
   Future<void> deleteExam(String examId) async {
-    isLoading.value = true;
-    await Future.delayed(const Duration(milliseconds: 500));
-    examList.removeWhere((e) => e.id == examId);
-    examResults.removeWhere((r) => r.examId == examId);
-    isLoading.value = false;
+    try {
+      isLoading.value = true;
+      await _apiService.deleteExam(examId);
+      examList.removeWhere((e) => e.id == examId);
+      examResults.removeWhere((r) => r.examId == examId);
+
+      Get.snackbar(
+        'Success',
+        'Exam deleted successfully',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } on ApiException catch (e) {
+      Get.snackbar(
+        'Error',
+        e.message,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      rethrow;
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to delete exam: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      rethrow;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // Save exam results (bulk entry)
@@ -247,10 +285,12 @@ class ExamController extends GetxController {
   // Set filters
   void setClassFilter(String classId) {
     selectedClass.value = classId;
+    fetchExams();
   }
 
   void setSectionFilter(String section) {
     selectedSection.value = section;
+    fetchExams();
   }
 
   void setSubjectFilter(String subject) {
@@ -262,5 +302,6 @@ class ExamController extends GetxController {
     selectedClass.value = '';
     selectedSection.value = '';
     selectedSubject.value = 'All';
+    fetchExams();
   }
 }

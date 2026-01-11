@@ -1,5 +1,6 @@
 class ExamModel {
   final String id;
+  final String examTypeId; // Link to ExamType
   final String name;
   final String type; // quiz, mid-term, final, assignment
   final String subject;
@@ -17,6 +18,7 @@ class ExamModel {
 
   ExamModel({
     required this.id,
+    required this.examTypeId,
     required this.name,
     required this.type,
     required this.subject,
@@ -35,7 +37,8 @@ class ExamModel {
 
   factory ExamModel.fromJson(Map<String, dynamic> json) {
     return ExamModel(
-      id: json['id'] ?? '',
+      id: json['_id'] ?? json['id'] ?? '',
+      examTypeId: json['examTypeId'] ?? '',
       name: json['name'] ?? '',
       type: json['type'] ?? 'quiz',
       subject: json['subject'] ?? '',
@@ -44,8 +47,8 @@ class ExamModel {
       teacherId: json['teacherId'] ?? '',
       totalMarks: (json['totalMarks'] ?? 0).toDouble(),
       durationMinutes: json['durationMinutes'],
-      examDate:
-          DateTime.parse(json['examDate'] ?? DateTime.now().toIso8601String()),
+      examDate: DateTime.parse(
+          json['examDate'] ?? json['date'] ?? DateTime.now().toIso8601String()),
       instructions: json['instructions'],
       syllabus: json['syllabus'],
       createdAt:
@@ -59,6 +62,7 @@ class ExamModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'examTypeId': examTypeId,
       'name': name,
       'type': type,
       'subject': subject,
@@ -78,6 +82,7 @@ class ExamModel {
 
   ExamModel copyWith({
     String? id,
+    String? examTypeId,
     String? name,
     String? type,
     String? subject,
@@ -95,6 +100,7 @@ class ExamModel {
   }) {
     return ExamModel(
       id: id ?? this.id,
+      examTypeId: examTypeId ?? this.examTypeId,
       name: name ?? this.name,
       type: type ?? this.type,
       subject: subject ?? this.subject,

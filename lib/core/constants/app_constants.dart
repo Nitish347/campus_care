@@ -47,6 +47,7 @@ class AppConstants {
   static const String homeworkEndpoint = '/homework';
   static const String homeworkSubmissionsEndpoint = '/homework-submissions';
   static const String examsEndpoint = '/exams';
+  static const String examTypesEndpoint = '/exam-types';
   static const String examResultsEndpoint = '/exam-results';
   static const String feesEndpoint = '/fees';
   static const String noticesEndpoint = '/notices';

@@ -12,7 +12,9 @@ import 'package:campus_care/widgets/common/institute_context_indicator.dart';
 
 import '../../controllers/admin_controller.dart';
 import '../../controllers/admin/admin_auth_controller.dart';
+import '../../controllers/class_controller.dart';
 import '../../controllers/theme_controller.dart';
+import '../../services/dummy_data_service.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -20,6 +22,8 @@ class AdminDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
+    final classController = Get.find<ClassController>();
+    classController.fetchClasses();
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 1200;
@@ -51,6 +55,39 @@ class AdminDashboard extends StatelessWidget {
             ),
           ),
           const InstituteContextIndicator(),
+          // IconButton(
+          //   onPressed: () {
+          //     // Trigger dummy data generation
+          //     Get.defaultDialog(
+          //       title: 'Generate Dummy Data',
+          //       middleText:
+          //           'Are you sure you want to generate dummy data? This action cannot be undone.',
+          //       textConfirm: 'Generate',
+          //       textCancel: 'Cancel',
+          //       confirmTextColor: Colors.white,
+          //       onConfirm: () async {
+          //         Get.back(); // Close dialog
+          //         // Show loading indicator
+          //         Get.dialog(
+          //           const Center(child: CircularProgressIndicator()),
+          //           barrierDismissible: false,
+          //         );
+          //
+          //         try {
+          //           final dummyService = Get.put(
+          //               DummyDataService()); // Lazy put or just instance
+          //           await dummyService.generateDummyData();
+          //           Get.back(); // Close loading
+          //         } catch (e) {
+          //           Get.back(); // Close loading
+          //           Get.snackbar('Error', 'Failed to generate data: $e');
+          //         }
+          //       },
+          //     );
+          //   },
+          //   icon: const Icon(Icons.cloud_upload_outlined),
+          //   tooltip: 'Generate Dummy Data',
+          // ),
           IconButton(
             onPressed: () {
               // TODO: Implement notifications
@@ -246,6 +283,24 @@ class AdminDashboard extends StatelessWidget {
                 icon: Icons.how_to_reg_outlined,
                 title: 'Attendance',
                 onTap: () => Get.toNamed(AppRoutes.adminAttendance),
+              ),
+              _buildSidebarItem(
+                context,
+                icon: Icons.assignment_outlined,
+                title: 'Homework',
+                onTap: () => Get.toNamed(AppRoutes.adminHomework),
+              ),
+              _buildSidebarItem(
+                context,
+                icon: Icons.event_note,
+                title: 'Exam Schedules',
+                onTap: () => Get.toNamed(AppRoutes.adminExamType),
+              ),
+              _buildSidebarItem(
+                context,
+                icon: Icons.table_chart,
+                title: 'Exam Timetable',
+                onTap: () => Get.toNamed(AppRoutes.adminExamTimetable),
               ),
               const SizedBox(height: 16),
               _buildSidebarSection('Examination'),
@@ -460,11 +515,25 @@ class AdminDashboard extends StatelessWidget {
                   iconColor: Colors.teal,
                 ),
                 DashboardCard(
-                  icon: Icons.how_to_reg_outlined,
-                  title: 'Attendance',
-                  subtitle: 'Manage attendance',
-                  onTap: () => Get.toNamed(AppRoutes.adminAttendance),
-                  iconColor: Colors.teal,
+                  icon: Icons.assignment_outlined,
+                  title: 'Homework',
+                  subtitle: 'Manage homework',
+                  onTap: () => Get.toNamed(AppRoutes.adminHomework),
+                  iconColor: Colors.indigo,
+                ),
+                DashboardCard(
+                  icon: Icons.event_note,
+                  title: 'Exam Schedules',
+                  subtitle: 'Manage exam periods',
+                  onTap: () => Get.toNamed(AppRoutes.adminExamType),
+                  iconColor: Colors.purple,
+                ),
+                DashboardCard(
+                  icon: Icons.table_chart,
+                  title: 'Exam Timetable',
+                  subtitle: 'View & edit timetable',
+                  onTap: () => Get.toNamed(AppRoutes.adminExamTimetable),
+                  iconColor: Colors.deepOrange,
                 ),
                 DashboardCard(
                   icon: Icons.quiz_outlined,

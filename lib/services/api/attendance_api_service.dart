@@ -16,7 +16,12 @@ class AttendanceApiService {
     if (classId != null) queryParams['classId'] = classId;
     if (section != null) queryParams['section'] = section;
     if (studentId != null) queryParams['studentId'] = studentId;
-    if (date != null) queryParams['date'] = date;
+    if (date != null) {
+      // Backend expects startDate and endDate for date filtering
+      // Assuming date key is passed as YYYY-MM-DD
+      queryParams['startDate'] = '${date}T00:00:00.000Z';
+      queryParams['endDate'] = '${date}T23:59:59.999Z';
+    }
 
     final response = await _apiClient.get(
       AppConstants.attendanceEndpoint,

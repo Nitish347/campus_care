@@ -28,7 +28,7 @@ class AdminController extends GetxController {
   void onInit() {
     super.onInit();
     loadAdmins();
-    fetchDashboardStats();
+    // fetchDashboardStats();
   }
 
   Future<void> fetchDashboardStats() async {

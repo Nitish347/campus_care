@@ -102,26 +102,18 @@ class AttendanceController extends GetxController {
       _existingAttendanceIds.clear();
 
       for (var record in attendanceRecords) {
-        final studentId = record['studentId'] as String?;
-        if (studentId == null && record['studentId'] is Map) {
-          // Handle populated student object
-          final studentObj = record['studentId'];
-          if (studentObj['id'] != null) {
-            _existingAttendanceIds[studentObj['id']] =
-                record['_id'] ?? record['id'];
-            _attendanceMap[studentObj['id']] =
-                _parseAttendanceStatus(record['status']);
-          } else if (studentObj['_id'] != null) {
-            _existingAttendanceIds[studentObj['_id']] =
-                record['_id'] ?? record['id'];
-            _attendanceMap[studentObj['_id']] =
-                _parseAttendanceStatus(record['status']);
-          }
-        } else if (studentId != null) {
-          // Handle raw student ID
+        dynamic studentIdRaw = record['studentId'];
+        String? studentId;
+
+        if (studentIdRaw is Map) {
+          studentId = studentIdRaw['_id'] ?? studentIdRaw['id'];
+        } else if (studentIdRaw is String) {
+          studentId = studentIdRaw;
+        }
+
+        if (studentId != null) {
           final status = record['status'] as String?;
           final id = record['_id'] as String? ?? record['id'] as String?;
-
           if (status != null && id != null) {
             _attendanceMap[studentId] = _parseAttendanceStatus(status);
             _existingAttendanceIds[studentId] = id;
@@ -132,7 +124,7 @@ class AttendanceController extends GetxController {
       // Initialize attendance map for students without records
       for (var student in _students) {
         if (!_attendanceMap.containsKey(student.id)) {
-          _attendanceMap[student.id] = AttendanceStatus.present;
+          _attendanceMap[student.id] = AttendanceStatus.absent;
         }
       }
     } catch (e) {

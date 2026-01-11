@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/screens/admin/student_management/add_student_screen.dart';
 import 'package:campus_care/controllers/student_controller.dart';
+import 'package:campus_care/controllers/class_controller.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/common/info_card.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
@@ -247,7 +248,7 @@ class StudentListScreen extends GetView<StudentController> {
                           context,
                           Icons.class_outlined,
                           'Class',
-                          '${student.class_} - ${student.section}',
+                          '${_getClassName(student.class_)} - ${student.section}',
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -505,7 +506,7 @@ class StudentListScreen extends GetView<StudentController> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          '${student.class_} - ${student.section}',
+                          '${_getClassName(student.class_)} - ${student.section}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: theme.colorScheme.primary,
@@ -696,7 +697,7 @@ class StudentListScreen extends GetView<StudentController> {
                             context,
                             Icons.class_,
                             'Class',
-                            '${student.class_} - ${student.section}',
+                            '${_getClassName(student.class_)} - ${student.section}',
                           ),
                           // _buildDetailRow(
                           //   context,
@@ -792,6 +793,19 @@ class StudentListScreen extends GetView<StudentController> {
         ),
       ),
     );
+  }
+
+  String _getClassName(String? classId) {
+    if (classId == null) return 'N/A';
+    // Use try-catch or firstWhere with orElse to avoid crash
+    try {
+      final cls = Get.find<ClassController>()
+          .classes
+          .firstWhere((c) => c.id == classId);
+      return cls.name;
+    } catch (_) {
+      return 'Unknown Class';
+    }
   }
 
   Widget _buildDetailSection(

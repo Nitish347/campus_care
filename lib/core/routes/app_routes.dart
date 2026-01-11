@@ -46,17 +46,24 @@ import 'package:campus_care/screens/admin/academic/add_timetable_screen.dart';
 import 'package:campus_care/screens/student/payment/payment_screen.dart';
 import 'package:campus_care/screens/teacher/homework/homework_submissions_screen.dart';
 import 'package:campus_care/screens/teacher/homework/student_homework_detail_screen.dart';
-import 'package:campus_care/screens/teacher/marks/exam_management_screen.dart';
-import 'package:campus_care/screens/super_admin/super_admin_dashboard.dart';
-import 'package:campus_care/screens/super_admin/institute_management_screen.dart';
 import 'package:campus_care/models/teacher/teacher.dart';
-import 'package:campus_care/screens/super_admin/institute_detail_screen.dart';
-import 'package:campus_care/screens/super_admin/add_edit_institute_screen.dart';
 import 'package:campus_care/core/middleware/auth_middleware.dart';
-import 'package:campus_care/core/middleware/super_admin_middleware.dart';
 import 'package:campus_care/core/middleware/school_admin_middleware.dart';
 import 'package:campus_care/screens/admin/attendance/admin_attendance_screen.dart';
 import 'package:campus_care/controllers/attendance_controller.dart';
+import 'package:campus_care/screens/admin/exam/admin_add_edit_exam_screen.dart';
+
+import '../../screens/admin/exam/admin_add_edit_exam_type_screen.dart';
+import '../../screens/admin/exam/admin_exam_timetable_screen.dart';
+import '../../screens/admin/exam/admin_exam_type_screen.dart';
+import '../../screens/admin/homework/admin_add_edit_homework_screen.dart';
+import '../../screens/admin/homework/admin_homework_management_screen.dart';
+import '../../screens/super_admin/add_edit_institute_screen.dart';
+import '../../screens/super_admin/institute_detail_screen.dart';
+import '../../screens/super_admin/institute_management_screen.dart';
+import '../../screens/super_admin/super_admin_dashboard.dart';
+import '../../screens/teacher/marks/exam_management_screen.dart';
+import '../middleware/super_admin_middleware.dart';
 
 class AppRoutes {
   // Auth Routes
@@ -120,6 +127,16 @@ class AppRoutes {
   static const String addClass = '/admin/classes/add';
   static const String addTimetable = '/admin/timetable/add';
   static const String adminAttendance = '/admin/attendance';
+  static const String adminHomework = '/admin/homework';
+  static const String adminAddHomework = '/admin/homework/add';
+  static const String adminEditHomework = '/admin/homework/edit';
+  // Admin Exam Routes
+  static const String adminExamType = '/admin/exam-type';
+  static const String adminAddExamType = '/admin/exam-type/add';
+  static const String adminEditExamType = '/admin/exam-type/edit';
+  static const String adminExamTimetable = '/admin/exam-timetable';
+  static const String adminAddExam = '/admin/exam-timetable/add';
+  static const String adminEditExam = '/admin/exam-timetable/edit';
 
   // Teacher Homework & Exam Routes
   static const String homeworkSubmissions = '/teacher/homework/submissions';
@@ -258,6 +275,50 @@ class AppRoutes {
     GetPage(name: addMedicalRecord, page: () => const AddMedicalRecordScreen()),
     GetPage(name: addClass, page: () => const AddClassScreen()),
     GetPage(name: addTimetable, page: () => const AddTimetableScreen()),
+    GetPage(
+      name: adminHomework,
+      page: () => const AdminHomeworkManagementScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: adminAddHomework,
+      page: () => const AdminAddEditHomeworkScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: adminEditHomework,
+      page: () {
+        final homework = Get.arguments;
+        return AdminAddEditHomeworkScreen(homework: homework);
+      },
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    // Admin Exam Type Management
+    GetPage(
+      name: adminExamType,
+      page: () => const AdminExamTypeScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: adminAddExamType,
+      page: () => const AdminAddEditExamTypeScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: adminEditExamType,
+      page: () {
+        final examType = Get.arguments;
+        return AdminAddEditExamTypeScreen(examType: examType);
+      },
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+
+    // Admin Exam Timetable Management
+    GetPage(
+      name: adminExamTimetable,
+      page: () => const AdminExamTimetableScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
 
     // Teacher Homework & Exam Pages
     GetPage(
