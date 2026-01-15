@@ -32,7 +32,8 @@ class AppConstants {
   // API Configuration
   // For emulator: use 'http://10.0.2.2:3000' (Android) or 'http://localhost:3000' (iOS/Web)
   // For physical device: use 'http://YOUR_COMPUTER_IP:3000'
-  static const String baseUrl = 'https://campus-care-ymlr.onrender.com';
+  // static const String baseUrl = 'https://campus-care-ymlr.onrender.com';
+  static const String baseUrl = 'http://localhost:5000';
   static const String apiVersion = '/api/v1';
 
   // API Endpoints
@@ -44,6 +45,7 @@ class AppConstants {
   static const String classesEndpoint = '/classes';
   static const String subjectsEndpoint = '/subjects';
   static const String attendanceEndpoint = '/attendance';
+  static const String lunchEndpoint = '/lunch';
   static const String homeworkEndpoint = '/homework';
   static const String homeworkSubmissionsEndpoint = '/homework-submissions';
   static const String examsEndpoint = '/exams';

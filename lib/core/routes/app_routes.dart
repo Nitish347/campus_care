@@ -50,6 +50,7 @@ import 'package:campus_care/models/teacher/teacher.dart';
 import 'package:campus_care/core/middleware/auth_middleware.dart';
 import 'package:campus_care/core/middleware/school_admin_middleware.dart';
 import 'package:campus_care/screens/admin/attendance/admin_attendance_screen.dart';
+import 'package:campus_care/screens/admin/lunch/admin_lunch_management_screen.dart';
 import 'package:campus_care/controllers/attendance_controller.dart';
 import 'package:campus_care/screens/admin/exam/admin_add_edit_exam_screen.dart';
 
@@ -127,6 +128,7 @@ class AppRoutes {
   static const String addClass = '/admin/classes/add';
   static const String addTimetable = '/admin/timetable/add';
   static const String adminAttendance = '/admin/attendance';
+  static const String adminLunchManagement = '/admin/lunch';
   static const String adminHomework = '/admin/homework';
   static const String adminAddHomework = '/admin/homework/add';
   static const String adminEditHomework = '/admin/homework/edit';
@@ -191,6 +193,11 @@ class AppRoutes {
       binding: BindingsBuilder(() {
         Get.lazyPut(() => AttendanceController());
       }),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: adminLunchManagement,
+      page: () => const AdminLunchManagementScreen(),
       middlewares: [SchoolAdminMiddleware()],
     ),
     GetPage(
