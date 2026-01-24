@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:campus_care/core/api_client.dart';
 import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/services/storage_service.dart';
@@ -33,6 +35,12 @@ class AuthApiService {
         loginEndpoint = '${AppConstants.authEndpoint}/login/student';
     }
 
+    log('=== ABOUT TO CALL API ===');
+    log('Login endpoint: $loginEndpoint');
+    log('Email: $email');
+    log('Role: $role');
+    log('========================');
+
     final response = await _apiClient.post(
       loginEndpoint,
       body: {
@@ -41,6 +49,13 @@ class AuthApiService {
       },
       includeAuth: false,
     );
+
+    // Debug logging
+    print('=== LOGIN RESPONSE ===');
+    print('Full response: $response');
+    print('Success: ${response['success']}');
+    print('Data: ${response['data']}');
+    print('====================');
 
     // Extract token and user data from response
     if (response['success'] == true && response['data'] != null) {
@@ -59,6 +74,7 @@ class AuthApiService {
       };
     }
 
+    print('Login failed - throwing exception');
     throw Exception('Invalid login response');
   }
 

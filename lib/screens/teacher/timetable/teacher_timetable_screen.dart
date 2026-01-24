@@ -1,7 +1,9 @@
-import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:campus_care/controllers/teacher_timetable_controller.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
+import 'package:campus_care/widgets/common/summary_card.dart';
+import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:intl/intl.dart';
 
 class TeacherTimetableScreen extends StatefulWidget {
@@ -13,308 +15,21 @@ class TeacherTimetableScreen extends StatefulWidget {
 
 class _TeacherTimetableScreenState extends State<TeacherTimetableScreen>
     with SingleTickerProviderStateMixin {
+  final TeacherTimetableController _controller =
+      Get.put(TeacherTimetableController());
   late TabController _tabController;
-
-  // Days of the week
-  final List<String> _days = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-  ];
-
-  // Static timetable data for teacher
-  final Map<String, List<Map<String, dynamic>>> _timetable = {
-    'Monday': [
-      {
-        'time': '9:00 AM - 10:00 AM',
-        'subject': 'Mathematics',
-        'class': 'Class 10 - A',
-        'room': 'Room 101',
-        'type': 'lecture',
-        'students': 35,
-      },
-      {
-        'time': '10:00 AM - 11:00 AM',
-        'subject': 'Mathematics',
-        'class': 'Class 9 - B',
-        'room': 'Room 102',
-        'type': 'lecture',
-        'students': 32,
-      },
-      {
-        'time': '11:00 AM - 12:00 PM',
-        'subject': 'Mathematics Lab',
-        'class': 'Class 10 - A',
-        'room': 'Math Lab',
-        'type': 'lab',
-        'students': 35,
-      },
-      {
-        'time': '12:00 PM - 1:00 PM',
-        'subject': 'Lunch Break',
-        'class': '',
-        'room': 'Staff Room',
-        'type': 'break',
-        'students': 0,
-      },
-      {
-        'time': '1:00 PM - 2:00 PM',
-        'subject': 'Mathematics',
-        'class': 'Class 8 - A',
-        'room': 'Room 105',
-        'type': 'lecture',
-        'students': 30,
-      },
-      {
-        'time': '2:00 PM - 3:00 PM',
-        'subject': 'Free Period',
-        'class': '',
-        'room': 'Staff Room',
-        'type': 'activity',
-        'students': 0,
-      },
-    ],
-    'Tuesday': [
-      {
-        'time': '9:00 AM - 10:00 AM',
-        'subject': 'Mathematics',
-        'class': 'Class 9 - A',
-        'room': 'Room 103',
-        'type': 'lecture',
-        'students': 33,
-      },
-      {
-        'time': '10:00 AM - 11:00 AM',
-        'subject': 'Mathematics',
-        'class': 'Class 10 - B',
-        'room': 'Room 101',
-        'type': 'lecture',
-        'students': 34,
-      },
-      {
-        'time': '11:00 AM - 12:00 PM',
-        'subject': 'Mathematics',
-        'class': 'Class 8 - B',
-        'room': 'Room 104',
-        'type': 'lecture',
-        'students': 31,
-      },
-      {
-        'time': '12:00 PM - 1:00 PM',
-        'subject': 'Lunch Break',
-        'class': '',
-        'room': 'Staff Room',
-        'type': 'break',
-        'students': 0,
-      },
-      {
-        'time': '1:00 PM - 2:00 PM',
-        'subject': 'Mathematics Lab',
-        'class': 'Class 9 - A',
-        'room': 'Math Lab',
-        'type': 'lab',
-        'students': 33,
-      },
-      {
-        'time': '2:00 PM - 3:00 PM',
-        'subject': 'Class Test',
-        'class': 'Class 10 - A',
-        'room': 'Room 101',
-        'type': 'activity',
-        'students': 35,
-      },
-    ],
-    'Wednesday': [
-      {
-        'time': '9:00 AM - 10:00 AM',
-        'subject': 'Mathematics',
-        'class': 'Class 10 - A',
-        'room': 'Room 101',
-        'type': 'lecture',
-        'students': 35,
-      },
-      {
-        'time': '10:00 AM - 11:00 AM',
-        'subject': 'Mathematics',
-        'class': 'Class 9 - B',
-        'room': 'Room 102',
-        'type': 'lecture',
-        'students': 32,
-      },
-      {
-        'time': '11:00 AM - 12:00 PM',
-        'subject': 'Mathematics',
-        'class': 'Class 8 - A',
-        'room': 'Room 105',
-        'type': 'lecture',
-        'students': 30,
-      },
-      {
-        'time': '12:00 PM - 1:00 PM',
-        'subject': 'Lunch Break',
-        'class': '',
-        'room': 'Staff Room',
-        'type': 'break',
-        'students': 0,
-      },
-      {
-        'time': '1:00 PM - 2:00 PM',
-        'subject': 'Mathematics Lab',
-        'class': 'Class 10 - B',
-        'room': 'Math Lab',
-        'type': 'lab',
-        'students': 34,
-      },
-      {
-        'time': '2:00 PM - 3:00 PM',
-        'subject': 'Free Period',
-        'class': '',
-        'room': 'Staff Room',
-        'type': 'activity',
-        'students': 0,
-      },
-    ],
-    'Thursday': [
-      {
-        'time': '9:00 AM - 10:00 AM',
-        'subject': 'Mathematics',
-        'class': 'Class 9 - A',
-        'room': 'Room 103',
-        'type': 'lecture',
-        'students': 33,
-      },
-      {
-        'time': '10:00 AM - 11:00 AM',
-        'subject': 'Mathematics',
-        'class': 'Class 10 - A',
-        'room': 'Room 101',
-        'type': 'lecture',
-        'students': 35,
-      },
-      {
-        'time': '11:00 AM - 12:00 PM',
-        'subject': 'Mathematics',
-        'class': 'Class 8 - B',
-        'room': 'Room 104',
-        'type': 'lecture',
-        'students': 31,
-      },
-      {
-        'time': '12:00 PM - 1:00 PM',
-        'subject': 'Lunch Break',
-        'class': '',
-        'room': 'Staff Room',
-        'type': 'break',
-        'students': 0,
-      },
-      {
-        'time': '1:00 PM - 2:00 PM',
-        'subject': 'Mathematics Lab',
-        'class': 'Class 9 - B',
-        'room': 'Math Lab',
-        'type': 'lab',
-        'students': 32,
-      },
-      {
-        'time': '2:00 PM - 3:00 PM',
-        'subject': 'Staff Meeting',
-        'class': '',
-        'room': 'Conference Room',
-        'type': 'activity',
-        'students': 0,
-      },
-    ],
-    'Friday': [
-      {
-        'time': '9:00 AM - 10:00 AM',
-        'subject': 'Mathematics',
-        'class': 'Class 10 - B',
-        'room': 'Room 101',
-        'type': 'lecture',
-        'students': 34,
-      },
-      {
-        'time': '10:00 AM - 11:00 AM',
-        'subject': 'Mathematics',
-        'class': 'Class 9 - A',
-        'room': 'Room 103',
-        'type': 'lecture',
-        'students': 33,
-      },
-      {
-        'time': '11:00 AM - 12:00 PM',
-        'subject': 'Mathematics',
-        'class': 'Class 8 - A',
-        'room': 'Room 105',
-        'type': 'lecture',
-        'students': 30,
-      },
-      {
-        'time': '12:00 PM - 1:00 PM',
-        'subject': 'Lunch Break',
-        'class': '',
-        'room': 'Staff Room',
-        'type': 'break',
-        'students': 0,
-      },
-      {
-        'time': '1:00 PM - 2:00 PM',
-        'subject': 'Doubt Clearing Session',
-        'class': 'All Classes',
-        'room': 'Room 101',
-        'type': 'activity',
-        'students': 0,
-      },
-      {
-        'time': '2:00 PM - 3:00 PM',
-        'subject': 'Free Period',
-        'class': '',
-        'room': 'Staff Room',
-        'type': 'activity',
-        'students': 0,
-      },
-    ],
-    'Saturday': [
-      {
-        'time': '9:00 AM - 10:00 AM',
-        'subject': 'Extra Classes',
-        'class': 'Class 10 - A',
-        'room': 'Room 101',
-        'type': 'lecture',
-        'students': 35,
-      },
-      {
-        'time': '10:00 AM - 11:00 AM',
-        'subject': 'Parent-Teacher Meeting',
-        'class': '',
-        'room': 'Conference Room',
-        'type': 'activity',
-        'students': 0,
-      },
-      {
-        'time': '11:00 AM - 12:00 PM',
-        'subject': 'Exam Preparation',
-        'class': 'Class 9 - A',
-        'room': 'Room 103',
-        'type': 'activity',
-        'students': 33,
-      },
-    ],
-  };
 
   @override
   void initState() {
     super.initState();
+    _controller.fetchTeacherTimetable();
+
     // Set initial tab to current day
-    final currentDay = DateFormat('EEEE').format(DateTime.now());
-    final initialIndex = _days.indexOf(currentDay);
+    final currentDay = _getCurrentDayIndex();
     _tabController = TabController(
-      length: _days.length,
+      length: _controller.daysOfWeek.length,
       vsync: this,
-      initialIndex: initialIndex >= 0 ? initialIndex : 0,
+      initialIndex: currentDay,
     );
   }
 
@@ -324,39 +39,54 @@ class _TeacherTimetableScreenState extends State<TeacherTimetableScreen>
     super.dispose();
   }
 
-  Color _getSubjectColor(String type, ThemeData theme) {
-    switch (type) {
-      case 'lecture':
-        return theme.colorScheme.primary;
-      case 'lab':
-        return theme.colorScheme.secondary;
-      case 'break':
-        return Colors.orange;
-      case 'activity':
-        return Colors.purple;
-      default:
-        return theme.colorScheme.primary;
+  int _getCurrentDayIndex() {
+    final now = DateTime.now();
+    final dayIndex = now.weekday - 1; // Monday = 0
+    if (dayIndex >= 0 && dayIndex < _controller.daysOfWeek.length) {
+      return dayIndex;
     }
-  }
-
-  IconData _getSubjectIcon(String type) {
-    switch (type) {
-      case 'lecture':
-        return Icons.school_outlined;
-      case 'lab':
-        return Icons.science_outlined;
-      case 'break':
-        return Icons.restaurant_outlined;
-      case 'activity':
-        return Icons.event_outlined;
-      default:
-        return Icons.book_outlined;
-    }
+    return 0;
   }
 
   bool _isCurrentDay(String day) {
     final currentDay = DateFormat('EEEE').format(DateTime.now());
     return currentDay == day;
+  }
+
+  Color _getSubjectColor(String subject, ThemeData theme) {
+    switch (subject.toLowerCase()) {
+      case 'mathematics':
+      case 'math':
+        return Colors.blue;
+      case 'science':
+        return Colors.green;
+      case 'english':
+        return Colors.purple;
+      case 'history':
+        return Colors.brown;
+      case 'computer science':
+        return Colors.orange;
+      default:
+        return theme.colorScheme.primary;
+    }
+  }
+
+  IconData _getSubjectIcon(String subject) {
+    switch (subject.toLowerCase()) {
+      case 'mathematics':
+      case 'math':
+        return Icons.calculate_outlined;
+      case 'science':
+        return Icons.science_outlined;
+      case 'english':
+        return Icons.menu_book_outlined;
+      case 'history':
+        return Icons.history_edu_outlined;
+      case 'computer science':
+        return Icons.computer_outlined;
+      default:
+        return Icons.book_outlined;
+    }
   }
 
   @override
@@ -367,20 +97,27 @@ class _TeacherTimetableScreenState extends State<TeacherTimetableScreen>
       appBar: AppBar(
         title: const Text('My Timetable'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_month_outlined),
-            onPressed: () {
-              // TODO: Show calendar view
-            },
-            tooltip: 'Calendar View',
-          ),
+          Obx(() => _controller.isLoading.value
+              ? const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => _controller.fetchTeacherTimetable(),
+                  tooltip: 'Refresh',
+                )),
         ],
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
           indicatorSize: TabBarIndicatorSize.label,
           indicatorWeight: 3,
-          tabs: _days.map((day) {
+          tabs: _controller.daysOfWeek.map((day) {
             final isToday = _isCurrentDay(day);
             return Tab(
               child: Container(
@@ -439,109 +176,89 @@ class _TeacherTimetableScreenState extends State<TeacherTimetableScreen>
 
           // Timetable content
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: _days.map((day) {
-                final periods = _timetable[day] ?? [];
+            child: Obx(() {
+              if (_controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                if (periods.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.event_busy,
-                          size: 64,
-                          color: theme.colorScheme.outline,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No classes scheduled',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+              return TabBarView(
+                controller: _tabController,
+                children: _controller.daysOfWeek.map((day) {
+                  final periods = _controller.getClassesForDay(day);
 
-                return ResponsivePadding(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    itemCount: periods.length,
-                    itemBuilder: (context, index) {
-                      final period = periods[index];
-                      final subject = period['subject'] as String;
-                      final classInfo = period['class'] as String;
-                      final room = period['room'] as String;
-                      final time = period['time'] as String;
-                      final type = period['type'] as String;
-                      final students = period['students'] as int;
+                  if (periods.isEmpty) {
+                    return const EmptyState(
+                      icon: Icons.event_busy,
+                      title: 'No classes scheduled',
+                      message: 'You have no classes scheduled for this day',
+                    );
+                  }
 
-                      final color = _getSubjectColor(type, theme);
-                      final icon = _getSubjectIcon(type);
+                  return ResponsivePadding(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      itemCount: periods.length,
+                      itemBuilder: (context, index) {
+                        final period = periods[index];
+                        final color = _getSubjectColor(
+                            period.subject , theme);
+                        final icon =
+                            _getSubjectIcon(period.subject);
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Card(
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: type != 'break'
-                                ? () {
-                                    // Show period details
-                                    _showPeriodDetails(context, period);
-                                  }
-                                : null,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Row(
-                                children: [
-                                  // Time indicator
-                                  Container(
-                                    width: 4,
-                                    height: 60,
-                                    decoration: BoxDecoration(
-                                      color: color,
-                                      borderRadius: BorderRadius.circular(2),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Card(
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () => _showPeriodDetails(context, period),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  children: [
+                                    // Time indicator
+                                    Container(
+                                      width: 4,
+                                      height: 60,
+                                      decoration: BoxDecoration(
+                                        color: color,
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 16),
+                                    const SizedBox(width: 16),
 
-                                  // Icon
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: color.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(12),
+                                    // Icon
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: color.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Icon(
+                                        icon,
+                                        color: color,
+                                        size: 28,
+                                      ),
                                     ),
-                                    child: Icon(
-                                      icon,
-                                      color: color,
-                                      size: 28,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
+                                    const SizedBox(width: 16),
 
-                                  // Content
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          subject,
-                                          style: theme.textTheme.titleMedium
-                                              ?.copyWith(
-                                            fontWeight: FontWeight.bold,
+                                    // Content
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            period.subject,
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        if (classInfo.isNotEmpty)
+                                          const SizedBox(height: 4),
                                           Row(
                                             children: [
                                               Icon(
@@ -552,7 +269,7 @@ class _TeacherTimetableScreenState extends State<TeacherTimetableScreen>
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
-                                                classInfo,
+                                                'Class Period',
                                                 style: theme
                                                     .textTheme.bodyMedium
                                                     ?.copyWith(
@@ -560,106 +277,68 @@ class _TeacherTimetableScreenState extends State<TeacherTimetableScreen>
                                                       .onSurfaceVariant,
                                                 ),
                                               ),
-                                              if (students > 0) ...[
-                                                const SizedBox(width: 8),
-                                                Icon(
-                                                  Icons.people_outline,
-                                                  size: 16,
-                                                  color: theme.colorScheme
-                                                      .onSurfaceVariant,
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  '$students',
-                                                  style: theme
-                                                      .textTheme.bodyMedium
-                                                      ?.copyWith(
-                                                    color: theme.colorScheme
-                                                        .onSurfaceVariant,
-                                                  ),
-                                                ),
-                                              ],
                                             ],
                                           ),
-                                        const SizedBox(height: 2),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.location_on_outlined,
-                                              size: 16,
-                                              color: theme
-                                                  .colorScheme.onSurfaceVariant,
+                                        ],
+                                      ),
+                                    ),
+
+                                    // Time
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: color.withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            period.startTime,
+                                            style: theme.textTheme.labelMedium
+                                                ?.copyWith(
+                                              color: color,
+                                              fontWeight: FontWeight.bold,
                                             ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              room,
-                                              style: theme.textTheme.bodySmall
-                                                  ?.copyWith(
-                                                color: theme.colorScheme
-                                                    .onSurfaceVariant,
-                                              ),
-                                            ),
-                                          ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          period.endTime,
+                                          style: theme.textTheme.labelSmall
+                                              ?.copyWith(
+                                            color: theme
+                                                .colorScheme.onSurfaceVariant,
+                                          ),
                                         ),
                                       ],
                                     ),
-                                  ),
-
-                                  // Time
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: color.withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: Text(
-                                          time.split(' - ')[0],
-                                          style: theme.textTheme.labelMedium
-                                              ?.copyWith(
-                                            color: color,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        time.split(' - ')[1],
-                                        style: theme.textTheme.labelSmall
-                                            ?.copyWith(
-                                          color: theme
-                                              .colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              }).toList(),
-            ),
+                        );
+                      },
+                    ),
+                  );
+                }).toList(),
+              );
+            }),
           ),
         ],
       ),
     );
   }
 
-  void _showPeriodDetails(BuildContext context, Map<String, dynamic> period) {
+  void _showPeriodDetails(BuildContext context, dynamic period) {
     final theme = Theme.of(context);
-    final type = period['type'] as String;
-    final color = _getSubjectColor(type, theme);
+    final color = _getSubjectColor(period.subject, theme);
 
     showModalBottomSheet(
       context: context,
@@ -681,7 +360,7 @@ class _TeacherTimetableScreenState extends State<TeacherTimetableScreen>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
-                    _getSubjectIcon(type),
+                    _getSubjectIcon(period.subject),
                     color: color,
                     size: 32,
                   ),
@@ -692,13 +371,13 @@ class _TeacherTimetableScreenState extends State<TeacherTimetableScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        period['subject'] as String,
+                        period.subject,
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        period['time'] as String,
+                        '${period.startTime} - ${period.endTime}',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -709,35 +388,18 @@ class _TeacherTimetableScreenState extends State<TeacherTimetableScreen>
               ],
             ),
             const SizedBox(height: 24),
-            if ((period['class'] as String).isNotEmpty)
-              _buildDetailRow(
-                context,
-                Icons.class_outlined,
-                'Class',
-                period['class'] as String,
-              ),
-            if ((period['class'] as String).isNotEmpty)
-              const SizedBox(height: 12),
             _buildDetailRow(
               context,
-              Icons.location_on_outlined,
-              'Room',
-              period['room'] as String,
+              Icons.class_outlined,
+              'Period',
+              period.period,
             ),
             const SizedBox(height: 12),
-            if ((period['students'] as int) > 0)
-              _buildDetailRow(
-                context,
-                Icons.people_outline,
-                'Students',
-                '${period['students']}',
-              ),
-            if ((period['students'] as int) > 0) const SizedBox(height: 12),
             _buildDetailRow(
               context,
-              Icons.category_outlined,
-              'Type',
-              type.toUpperCase(),
+              Icons.room,
+              'Room',
+              period.room ?? 'Not assigned',
             ),
             const SizedBox(height: 24),
           ],

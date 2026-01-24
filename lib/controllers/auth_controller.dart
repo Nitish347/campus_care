@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:campus_care/models/admin/admin.dart';
 import 'package:campus_care/models/student/student.dart';
 import 'package:campus_care/models/teacher/teacher.dart';
@@ -67,7 +69,8 @@ class AuthController extends GetxController {
       // Determine role based on email or default to student
       String role = AppConstants.roleSuperAdmin;
       final email = emailController.text.trim().toLowerCase();
-
+log( emailController.text.trim());
+log( passwordController.text.trim());
       final user = await AuthService.login(
         emailController.text.trim(),
         passwordController.text.trim(),
@@ -122,7 +125,8 @@ class AuthController extends GetxController {
   }) async {
     try {
       _isLoading.value = true;
-
+log(email);
+log(password);
       final user = await AuthService.login(
         email.trim(),
         password.trim(),

@@ -30,10 +30,10 @@ class AppConstants {
   static const String keyTimetables = 'timetables_data';
 
   // API Configuration
-  // For emulator: use 'http://10.0.2.2:3000' (Android) or 'http://localhost:3000' (iOS/Web)
-  // For physical device: use 'http://YOUR_COMPUTER_IP:3000'
-  static const String baseUrl = 'https://campus-care-ymlr.onrender.com';
-  // static const String baseUrl = 'http://localhost:5000';
+  // For emulator: use 'http://10.0.2.2:5000' (Android) or 'http://localhost:5000' (iOS/Web)
+  // For physical device: use 'http://YOUR_COMPUTER_IP:5000'
+  // static const String baseUrl = 'https://campus-care-ymlr.onrender.com';
+  static const String baseUrl = 'http://localhost:5000';
   static const String apiVersion = '/api/v1';
 
   // API Endpoints

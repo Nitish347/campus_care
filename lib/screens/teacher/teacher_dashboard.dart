@@ -2,23 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/controllers/theme_controller.dart';
+import 'package:campus_care/controllers/teacher_timetable_controller.dart';
+import 'package:campus_care/controllers/homework_controller.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/widgets/cards/dashboard_card.dart';
 import 'package:campus_care/widgets/cards/stat_card.dart';
 
-class TeacherDashboard extends StatelessWidget {
+class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
+
+  @override
+  State<TeacherDashboard> createState() => _TeacherDashboardState();
+}
+
+class _TeacherDashboardState extends State<TeacherDashboard> {
+  final TeacherTimetableController _timetableController =
+      Get.put(TeacherTimetableController());
+  final HomeworkController _homeworkController = Get.put(HomeworkController());
+
+  @override
+  void initState() {
+    super.initState();
+    _timetableController.fetchTeacherTimetable();
+    _homeworkController.fetchHomework();
+  }
 
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<AuthController>();
     final theme = Theme.of(context);
-
-    // Sample data - in real app, this would come from services
-    final totalClasses = 5;
-    final totalStudents = 120;
-    final pendingHomework = 8;
-    final todayAttendance = 95;
 
     return Scaffold(
       appBar: AppBar(
@@ -106,19 +118,63 @@ class TeacherDashboard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Welcome Section
-            Obx(() => Text(
-                  'Welcome, ${authController.currentTeacher?.fullName ?? 'Teacher'}! 👋',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+            Obx(() {
+              final teacher = authController.currentTeacher;
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primaryContainer,
+                      theme.colorScheme.secondaryContainer,
+                    ],
                   ),
-                )),
-            const SizedBox(height: 8),
-            Text(
-              'Here\'s your overview for today',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Welcome back,',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            teacher?.fullName ?? 'Teacher',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            teacher?.email ?? '',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onPrimaryContainer
+                                  .withValues(alpha: 0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    CircleAvatar(
+                      radius: 32,
+                      backgroundColor: theme.colorScheme.primary,
+                      child: Icon(
+                        Icons.person,
+                        size: 32,
+                        color: theme.colorScheme.onPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
             const SizedBox(height: 24),
 
             // Quick Stats
@@ -128,103 +184,47 @@ class TeacherDashboard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.2,
-              children: [
-                StatCard(
-                  icon: Icons.class_outlined,
-                  title: 'Total Classes',
-                  value: '$totalClasses',
-                  color: theme.colorScheme.primary,
-                ),
-                StatCard(
-                  icon: Icons.people_outlined,
-                  title: 'Total Students',
-                  value: '$totalStudents',
-                  color: theme.colorScheme.secondary,
-                ),
-                StatCard(
-                  icon: Icons.assignment_outlined,
-                  title: 'Pending Homework',
-                  value: '$pendingHomework',
-                  color: Colors.orange,
-                ),
-                StatCard(
-                  icon: Icons.check_circle_outline,
-                  title: 'Today\'s Attendance',
-                  value: '$todayAttendance%',
-                  color: Colors.green,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            Obx(() {
+              final timetableStats = _timetableController.getStats();
+              final homeworkStats = _homeworkController.homeworkList.length;
+              final todayPeriods = timetableStats['todayPeriods'] ?? 0;
 
-            // Quick Access Cards
-            Text(
-              'Quick Access',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.9,
-              children: [
-                DashboardCard(
-                  icon: Icons.assignment_outlined,
-                  title: 'Manage Homework',
-                  subtitle: 'Assign & review',
-                  onTap: () => Get.toNamed(AppRoutes.teacherHomeworkManagement),
-                  iconColor: theme.colorScheme.primary,
-                ),
-                DashboardCard(
-                  icon: Icons.checklist_outlined,
-                  title: 'Mark Attendance',
-                  subtitle: 'Take attendance',
-                  onTap: () => Get.toNamed(AppRoutes.attendance),
-                  iconColor: theme.colorScheme.secondary,
-                ),
-                DashboardCard(
-                  icon: Icons.edit_outlined,
-                  title: 'Manage Exams',
-                  subtitle: 'Exams & marks',
-                  onTap: () => Get.toNamed(AppRoutes.examManagement),
-                  iconColor: theme.colorScheme.tertiary,
-                ),
-                DashboardCard(
-                  icon: Icons.schedule_outlined,
-                  title: 'Timetable',
-                  subtitle: 'View schedule',
-                  onTap: () => Get.toNamed(AppRoutes.teacherTimetable),
-                  iconColor: Colors.orange,
-                ),
-                DashboardCard(
-                  icon: Icons.chat_bubble_outline,
-                  title: 'Communication',
-                  subtitle: 'Chat with parents',
-                  onTap: () => Get.toNamed(AppRoutes.chatList),
-                  iconColor: Colors.purple,
-                ),
-                DashboardCard(
-                  icon: Icons.person_outline,
-                  title: 'Profile & Leave',
-                  subtitle: 'Manage profile',
-                  onTap: () => Get.toNamed(AppRoutes.teacherProfile),
-                  iconColor: Colors.teal,
-                ),
-              ],
-            ),
+              return GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 1.5,
+                children: [
+                  StatCard(
+                    icon: Icons.class_outlined,
+                    title: 'Total Classes',
+                    value: '${timetableStats['totalClasses'] ?? 0}',
+                    color: theme.colorScheme.primary,
+                  ),
+                  StatCard(
+                    icon: Icons.assignment_outlined,
+                    title: 'Pending Homework',
+                    value: '$homeworkStats',
+                    color: Colors.orange,
+                  ),
+                  StatCard(
+                    icon: Icons.event_outlined,
+                    title: 'Today\'s Classes',
+                    value: '$todayPeriods',
+                    color: Colors.green,
+                  ),
+                  StatCard(
+                    icon: Icons.book_outlined,
+                    title: 'Subjects',
+                    value: '${timetableStats['totalSubjects'] ?? 0}',
+                    color: Colors.purple,
+                  ),
+                ],
+              );
+            }),
             const SizedBox(height: 24),
 
             // Today's Schedule
@@ -234,101 +234,150 @@ class TeacherDashboard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
-            Card(
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '9:00',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+            const SizedBox(height: 16),
+            Obx(() {
+              final todaysClasses = _timetableController.getTodaysClasses();
+
+              if (_timetableController.isLoading.value) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+
+              if (todaysClasses.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.event_busy,
+                          size: 48,
+                          color: theme.colorScheme.outline,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'No classes scheduled for today',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return Column(
+                children: todaysClasses.take(3).map((period) {
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.book,
+                          color: theme.colorScheme.primary,
                         ),
                       ),
-                    ),
-                    title: const Text('Mathematics - Class 5A'),
-                    subtitle: const Text('Room 101'),
-                    trailing: const Icon(Icons.chevron_right),
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.secondaryContainer,
-                        borderRadius: BorderRadius.circular(8),
+                      title: Text(period.subject),
+                      subtitle: Text('Period ${period.period}'),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            period.startTime,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            period.endTime,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
                       ),
-                      child: Text(
-                        '10:00',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
                     ),
-                    title: const Text('Science - Class 5B'),
-                    subtitle: const Text('Room 102'),
-                    trailing: const Icon(Icons.chevron_right),
-                  ),
-                ],
+                  );
+                }).toList(),
+              );
+            }),
+            const SizedBox(height: 24),
+
+            // Quick Access
+            Text(
+              'Quick Access',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
+            ),
+            const SizedBox(height: 16),
+            GridView.count(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: 1.2,
+              children: [
+                DashboardCard(
+                  icon: Icons.assignment_outlined,
+                  title: 'Manage Homework',
+                  subtitle: 'Assign & review',
+                  onTap: () => Get.toNamed(AppRoutes.teacherHomeworkManagement),
+                  iconColor: theme.colorScheme.primary,
+                ),
+                DashboardCard(
+                  icon: Icons.fact_check_outlined,
+                  title: 'Mark Attendance',
+                  subtitle: 'Daily attendance',
+                  onTap: () => Get.toNamed(AppRoutes.attendance),
+                  iconColor: Colors.green,
+                ),
+                DashboardCard(
+                  icon: Icons.assignment_turned_in_outlined,
+                  title: 'Exams & Marks',
+                  subtitle: 'Enter marks',
+                  onTap: () => Get.toNamed(AppRoutes.examManagement),
+                  iconColor: Colors.orange,
+                ),
+                DashboardCard(
+                  icon: Icons.schedule_outlined,
+                  title: 'My Timetable',
+                  subtitle: 'View schedule',
+                  onTap: () => Get.toNamed(AppRoutes.teacherTimetable),
+                  iconColor: Colors.purple,
+                ),
+                DashboardCard(
+                  icon: Icons.chat_outlined,
+                  title: 'Communication',
+                  subtitle: 'Chat & notices',
+                  onTap: () => Get.toNamed(AppRoutes.chatList),
+                  iconColor: Colors.blue,
+                ),
+                DashboardCard(
+                  icon: Icons.person_outlined,
+                  title: 'My Profile',
+                  subtitle: 'View details',
+                  onTap: () => Get.toNamed(AppRoutes.teacherProfile),
+                  iconColor: Colors.teal,
+                ),
+              ],
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: 0,
-        onDestinationSelected: (index) {
-          switch (index) {
-            case 0:
-              // Already on dashboard
-              break;
-            case 1:
-              Get.toNamed(AppRoutes.teacherProfile);
-              break;
-            case 2:
-              Get.toNamed(AppRoutes.homework);
-              break;
-            case 3:
-              Get.toNamed(AppRoutes.attendance);
-              break;
-            case 4:
-              Get.toNamed(AppRoutes.chatList);
-              break;
-          }
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outlined),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.assignment_outlined),
-            selectedIcon: Icon(Icons.assignment),
-            label: 'Homework',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.checklist_outlined),
-            selectedIcon: Icon(Icons.checklist),
-            label: 'Attendance',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outlined),
-            selectedIcon: Icon(Icons.chat_bubble),
-            label: 'Chat',
-          ),
-        ],
       ),
     );
   }

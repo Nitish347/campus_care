@@ -663,14 +663,18 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
     required TimeOfDay initialTime,
     required void Function(TimeOfDay) onTimeSelected,
   }) {
-    final timeString =
-        '${initialTime.hour.toString().padLeft(2, '0')}:${initialTime.minute.toString().padLeft(2, '0')}';
-    final controller = TextEditingController(text: timeString);
+    // Display in 12-hour format with AM/PM
+    final period = initialTime.period == DayPeriod.am ? 'AM' : 'PM';
+    final hour = initialTime.hourOfPeriod == 0 ? 12 : initialTime.hourOfPeriod;
+    final displayTime =
+        '${hour.toString().padLeft(2, '0')}:${initialTime.minute.toString().padLeft(2, '0')} $period';
+
+    final controller = TextEditingController(text: displayTime);
 
     return CustomTextField(
       controller: controller,
       labelText: labelText,
-      hintText: 'HH:MM',
+      hintText: 'HH:MM AM/PM',
       prefixIcon: const Icon(Icons.access_time),
       readOnly: true,
       onTap: () async {
@@ -692,9 +696,13 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
           },
         );
         if (picked != null) {
-          final timeString =
-              '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-          controller.text = timeString;
+          // Display in 12-hour format with AM/PM
+          final pickedPeriod = picked.period == DayPeriod.am ? 'AM' : 'PM';
+          final pickedHour =
+              picked.hourOfPeriod == 0 ? 12 : picked.hourOfPeriod;
+          final displayTime =
+              '${pickedHour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')} $pickedPeriod';
+          controller.text = displayTime;
           onTimeSelected(picked);
         }
       },

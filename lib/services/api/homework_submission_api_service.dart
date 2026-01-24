@@ -26,6 +26,11 @@ class HomeworkSubmissionApiService {
     return [];
   }
 
+  /// Alias for getSubmissions with homeworkId filter
+  Future<List<dynamic>> getHomeworkSubmissions({String? homeworkId}) async {
+    return getSubmissions(homeworkId: homeworkId);
+  }
+
   /// Get submission by ID
   Future<Map<String, dynamic>?> getSubmissionById(String id) async {
     final response = await _apiClient.get(
@@ -70,6 +75,14 @@ class HomeworkSubmissionApiService {
     }
 
     throw Exception('Failed to update submission');
+  }
+
+  /// Alias for updateSubmission
+  Future<Map<String, dynamic>> updateHomeworkSubmission(
+    String id,
+    Map<String, dynamic> submissionData,
+  ) async {
+    return updateSubmission(id, submissionData);
   }
 
   /// Delete submission

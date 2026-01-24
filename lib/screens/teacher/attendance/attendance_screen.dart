@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
-import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/common/info_card.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
+import 'package:campus_care/controllers/attendance_controller.dart';
+import 'package:campus_care/controllers/class_controller.dart';
+import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -15,60 +16,45 @@ class AttendanceScreen extends StatefulWidget {
 }
 
 class _AttendanceScreenState extends State<AttendanceScreen> {
-  String? selectedClass = 'class_001';
-  String? selectedSection = 'A';
-  DateTime selectedDate = DateTime.now();
-  final Map<String, String> _attendanceStatus = {};
+  final AttendanceController _controller = Get.put(AttendanceController());
+  final ClassController _classController = Get.put(ClassController());
 
-  // Static UI data
-  static final _students = List.generate(25, (index) {
-    return {
-      'id': 'student_${index + 1}',
-      'name': 'Student ${index + 1}',
-      'studentId': 'STU2024${(index + 1).toString().padLeft(3, '0')}',
-    };
-  });
+  @override
+  void initState() {
+    super.initState();
+    _classController.fetchClasses();
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate,
+      initialDate: _controller.selectedDate,
       firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now(),
     );
     if (picked != null) {
-      setState(() {
-        selectedDate = picked;
-      });
+      _controller.selectDate(picked);
+      // Reload students and attendance
+      if (_controller.selectedClass != null &&
+          _controller.selectedSection != null) {
+        await _controller.loadStudentsAndAttendance();
+      }
     }
   }
 
-  Future<void> _takeAttendance() async {
-    if (selectedClass == null || selectedSection == null) {
+  Future<void> _saveAttendance() async {
+    if (_controller.selectedClass == null ||
+        _controller.selectedSection == null) {
       Get.snackbar('Error', 'Please select class and section');
       return;
     }
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Save Attendance'),
-        content: Text('Mark attendance for ${_students.length} students?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Get.snackbar('Success', 'Attendance saved successfully');
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
+    if (_controller.students.isEmpty) {
+      Get.snackbar('Error', 'No students found');
+      return;
+    }
+
+    await _controller.saveAttendance();
   }
 
   @override
@@ -79,11 +65,20 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       appBar: AppBar(
         title: const Text('Mark Attendance'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            onPressed: _takeAttendance,
-            tooltip: 'Save Attendance',
-          ),
+          Obx(() => _controller.isLoading
+              ? const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.save),
+                  onPressed: _saveAttendance,
+                  tooltip: 'Save Attendance',
+                )),
         ],
       ),
       body: Column(
@@ -93,158 +88,149 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             child: InfoCard(
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomDropdown<String>(
-                          value: selectedClass,
-                          labelText: 'Class',
-                          items: ['class_001', 'class_002', 'class_003']
-                              .map((cls) => DropdownMenuItem(
-                                    value: cls,
-                                    child: Text(cls.replaceAll('_', ' ').toUpperCase()),
-                                  ))
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              selectedClass = value;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: CustomDropdown<String>(
-                          value: selectedSection,
-                          labelText: 'Section',
-                          items: ['A', 'B', 'C']
-                              .map((sec) => DropdownMenuItem(
-                                    value: sec,
-                                    child: Text(sec),
-                                  ))
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              selectedSection = value;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
+                  ClassSectionDropDown(
+                    onChangedClass: (classId) {
+                      _controller.selectClass(classId);
+                    },
+                    onChangedSection: (section) {
+                      _controller.selectSection(section);
+                      // Load students when both class and section are selected
+                      if (_controller.selectedClass != null &&
+                          section != null) {
+                        _controller.loadStudentsAndAttendance();
+                      }
+                    },
                   ),
                   const SizedBox(height: 12),
-                  CustomTextField(
-                    readOnly: true,
-                    labelText: 'Date',
-                    hintText: DateFormat('EEEE, MMMM dd, yyyy').format(selectedDate),
-                    prefixIcon: const Icon(Icons.calendar_today),
-                    onTap: () => _selectDate(context),
-                  ),
+                  Obx(() => GestureDetector(
+                        onTap: () => _selectDate(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            border:
+                                Border.all(color: theme.colorScheme.outline),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.calendar_today,
+                                  color: theme.colorScheme.primary),
+                              const SizedBox(width: 12),
+                              Text(
+                                DateFormat('EEEE, MMMM dd, yyyy')
+                                    .format(_controller.selectedDate),
+                                style: theme.textTheme.bodyLarge,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )),
                 ],
               ),
             ),
           ),
 
           // Statistics
-          ResponsivePadding(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatChip(
-                  context,
-                  'Present',
-                  _attendanceStatus.values.where((s) => s == 'present').length,
-                  Colors.green,
+          Obx(() => ResponsivePadding(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildStatChip(
+                      context,
+                      'Present',
+                      _controller.presentCount,
+                      Colors.green,
+                    ),
+                    _buildStatChip(
+                      context,
+                      'Absent',
+                      _controller.absentCount,
+                      Colors.red,
+                    ),
+                    _buildStatChip(
+                      context,
+                      'Total',
+                      _controller.totalStudents,
+                      theme.colorScheme.primary,
+                    ),
+                  ],
                 ),
-                _buildStatChip(
-                  context,
-                  'Absent',
-                  _attendanceStatus.values.where((s) => s == 'absent').length,
-                  Colors.red,
-                ),
-                _buildStatChip(
-                  context,
-                  'Total',
-                  _students.length,
-                  theme.colorScheme.primary,
-                ),
-              ],
-            ),
-          ),
+              )),
 
           // Student List
           Expanded(
-            child: _students.isEmpty
-                ? EmptyState(
-                    icon: Icons.people_outline,
-                    title: 'No students found',
-                    message: 'Please select a class and section',
-                  )
-                : ResponsivePadding(
-                    child: ListView.builder(
-                      itemCount: _students.length,
-                      itemBuilder: (context, index) {
-                        final student = _students[index];
-                        final status = _attendanceStatus[student['id']] ?? 'present';
+            child: Obx(() {
+              if (_controller.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                        return InfoCard(
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: theme.colorScheme.primaryContainer,
-                              child: Text(
-                                (student['name'] as String).substring(0, 1).toUpperCase(),
-                                style: TextStyle(
-                                  color: theme.colorScheme.onPrimaryContainer,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            title: Text(student['name'] as String),
-                            subtitle: Text('ID: ${student['studentId']}'),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ChoiceChip(
-                                  label: const Text('P'),
-                                  selected: status == 'present',
-                                  onSelected: (selected) {
-                                    setState(() {
-                                      _attendanceStatus[student['id'] as String] = 'present';
-                                    });
-                                  },
-                                  selectedColor: Colors.green,
-                                  labelStyle: TextStyle(
-                                    color: status == 'present' ? Colors.white : null,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                ChoiceChip(
-                                  label: const Text('A'),
-                                  selected: status == 'absent',
-                                  onSelected: (selected) {
-                                    setState(() {
-                                      _attendanceStatus[student['id'] as String] = 'absent';
-                                    });
-                                  },
-                                  selectedColor: Colors.red,
-                                  labelStyle: TextStyle(
-                                    color: status == 'absent' ? Colors.white : null,
-                                  ),
-                                ),
-                              ],
+              if (_controller.students.isEmpty) {
+                return const EmptyState(
+                  icon: Icons.people_outline,
+                  title: 'No students found',
+                  message: 'Please select a class and section',
+                );
+              }
+
+              return ResponsivePadding(
+                child: ListView.builder(
+                  itemCount: _controller.students.length,
+                  itemBuilder: (context, index) {
+                    final student = _controller.students[index];
+                    final status = _controller.attendanceMap[student.id] ??
+                        AttendanceStatus.present;
+
+                    return InfoCard(
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: theme.colorScheme.primaryContainer,
+                          child: Text(
+                            student.fullName.substring(0, 1).toUpperCase(),
+                            style: TextStyle(
+                              color: theme.colorScheme.onPrimaryContainer,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
+                        ),
+                        title: Text(student.fullName),
+                        subtitle: Text(
+                            'Roll No: ${student.rollNumber.isNotEmpty ? student.rollNumber : student.id.substring(0, 8)}'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildAttendanceChip(
+                              context,
+                              'P',
+                              status == AttendanceStatus.present,
+                              Colors.green,
+                              () => _controller.toggleStudentAttendance(
+                                  student.id, AttendanceStatus.present),
+                            ),
+                            const SizedBox(width: 8),
+                            _buildAttendanceChip(
+                              context,
+                              'A',
+                              status == AttendanceStatus.absent,
+                              Colors.red,
+                              () => _controller.toggleStudentAttendance(
+                                  student.id, AttendanceStatus.absent),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            }),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatChip(BuildContext context, String label, int count, Color color) {
+  Widget _buildStatChip(
+      BuildContext context, String label, int count, Color color) {
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -267,6 +253,33 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
             style: theme.textTheme.bodySmall?.copyWith(color: color),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAttendanceChip(
+    BuildContext context,
+    String label,
+    bool isSelected,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? color : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : color,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
