@@ -1,3 +1,4 @@
+import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -19,6 +20,7 @@ class TimetableScreen extends GetView<TimetableController> {
     if (!Get.isRegistered<TimetableController>()) {
       Get.put(TimetableController());
     }
+    final authController = Get.find<AuthController>();
 
     return Scaffold(
       appBar: AppBar(
@@ -29,6 +31,7 @@ class TimetableScreen extends GetView<TimetableController> {
             onPressed: () => controller.loadTimetables(),
             tooltip: 'Refresh',
           ),
+          if(authController.isAdmin())
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () async {
@@ -47,7 +50,7 @@ class TimetableScreen extends GetView<TimetableController> {
         () => Column(
           children: [
             // Edit Button (shown when timetable exists)
-            if (controller.currentTimetable != null)
+            if (controller.currentTimetable != null && authController.isAdmin())
               Container(
                 padding: const EdgeInsets.all(16),
                 child: SizedBox(

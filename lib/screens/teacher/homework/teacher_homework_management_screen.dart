@@ -1,5 +1,5 @@
 import 'package:campus_care/widgets/common/summary_card.dart';
-import 'package:campus_care/widgets/inputs/teacher_class_section_dropdown.dart';
+import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -92,7 +92,7 @@ class _TeacherHomeworkManagementScreenState
       body: Column(
         children: [
           // Class/Section Filter - Now shows only assigned classes
-          TeacherClassSectionDropDown(
+          ClassSectionDropDown(
             onChangedClass: (classId) {
               _controller.setClassFilter(classId);
             },

@@ -69,8 +69,8 @@ class AuthController extends GetxController {
       // Determine role based on email or default to student
       String role = AppConstants.roleSuperAdmin;
       final email = emailController.text.trim().toLowerCase();
-log( emailController.text.trim());
-log( passwordController.text.trim());
+      log(emailController.text.trim());
+      log(passwordController.text.trim());
       final user = await AuthService.login(
         emailController.text.trim(),
         passwordController.text.trim(),
@@ -125,8 +125,8 @@ log( passwordController.text.trim());
   }) async {
     try {
       _isLoading.value = true;
-log(email);
-log(password);
+      log(email);
+      log(password);
       final user = await AuthService.login(
         email.trim(),
         password.trim(),
@@ -263,8 +263,7 @@ log(password);
     try {
       _isLoading.value = true;
 
-      final success =
-          await AuthService.changePassword(oldPassword, newPassword);
+      final success = await AuthService.changePassword(oldPassword, newPassword);
 
       if (success) {
         Get.snackbar(
@@ -357,5 +356,42 @@ log(password);
     emailController.text = 'student1@schoolstream.com';
     passwordController.text = 'student123';
     login();
+  }
+
+  String? getMarkedBy() {
+    if (currentRole != null) {
+      if (currentRole == AppConstants.roleAdmin) {
+        final admin = currentAdmin;
+        if (admin == null) {
+          Get.snackbar('Error', 'Authentication error: user not found');
+          return null;
+        }
+
+        return admin.id;
+      } else if (currentRole == AppConstants.roleTeacher) {
+        final teacher = currentTeacher;
+        if (teacher == null) {
+          Get.snackbar('Error', 'Authentication error: user not found');
+          return null;
+        }
+
+        return teacher.id;
+      } else {
+        Get.snackbar('Error', 'Authentication error: user not found');
+        return null;
+      }
+    }
+    return null;
+  }
+
+  bool isAdmin() {
+    if (currentRole != null) {
+      if (currentRole == AppConstants.roleAdmin || currentRole == AppConstants.roleSuperAdmin) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    return false;
   }
 }

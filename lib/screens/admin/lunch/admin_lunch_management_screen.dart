@@ -433,9 +433,11 @@ class AdminLunchManagementScreen extends StatelessWidget {
                     child: SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
-                        onPressed: controller.students.isNotEmpty
-                            ? controller.saveLunch
-                            : null,
+                        onPressed:(){
+                          controller.students.isNotEmpty
+                              ? controller.saveLunch()
+                              : null;
+                        },
                         icon: const Icon(Icons.save),
                         label: const Text('Save Lunch Records'),
                         style: FilledButton.styleFrom(

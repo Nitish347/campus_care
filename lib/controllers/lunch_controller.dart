@@ -153,13 +153,12 @@ class LunchController extends GetxController {
       return;
     }
 
-    final admin = _authController.currentAdmin;
-    if (admin == null) {
+    String? markedBy = _authController.getMarkedBy();
+    String? teacherId = _authController.getMarkedBy();
+    if (markedBy == null || teacherId == null) {
       Get.snackbar('Error', 'Authentication error: user not found');
       return;
     }
-    final markedBy = admin.id;
-    final teacherId = admin.id; // Using Admin ID as teacher ID
 
     try {
       _isLoading.value = true;
@@ -172,19 +171,19 @@ class LunchController extends GetxController {
         final status = _lunchMap[student.id] ?? LunchStatus.notTaken;
         final existingId = _existingLunchIds[student.id];
 
-        if (existingId != null) {
-          // Update existing lunch record
-          updateFutures.add(
-            _lunchService.updateLunch(
-              existingId,
-              {
-                'status': _getStatusString(status),
-                'date': dateString,
-                'markedBy': markedBy,
-              },
-            ),
-          );
-        } else {
+        // if (existingId != null) {
+        //   // Update existing lunch record
+        //   updateFutures.add(
+        //     _lunchService.updateLunch(
+        //       existingId,
+        //       {
+        //         'status': _getStatusString(status),
+        //         'date': dateString,
+        //         'markedBy': markedBy,
+        //       },
+        //     ),
+        //   );
+        // } else {
           // Add to bulk create
           bulkData.add({
             'teacherId': teacherId,
@@ -195,7 +194,7 @@ class LunchController extends GetxController {
             'section': _selectedSection.value,
             'markedBy': markedBy,
           });
-        }
+        // }
       }
 
       int successCount = 0;

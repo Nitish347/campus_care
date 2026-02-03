@@ -231,10 +231,10 @@ class AppRoutes {
     GetPage(
         name: teacherHomeworkManagement,
         page: () => const TeacherHomeworkManagementScreen()),
-    GetPage(
-        name: teacherAttendanceManagement,
-        page: () => const TeacherAttendanceManagementScreen()),
-    GetPage(name: attendance, page: () => const AttendanceScreen()),
+    // GetPage(
+    //     name: teacherAttendanceManagement,
+    //     page: () => const TeacherAttendanceManagementScreen()),
+    // GetPage(name: attendance, page: () => const TeacherAttendanceScreen()),
     GetPage(name: homework, page: () => const HomeworkScreen()),
     GetPage(name: chatList, page: () => const ChatListScreen()),
     GetPage(name: marksEntry, page: () => const MarksEntryScreen()),

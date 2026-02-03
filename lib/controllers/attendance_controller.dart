@@ -1,3 +1,4 @@
+import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/models/student/student.dart';
@@ -13,10 +14,8 @@ class AttendanceController extends GetxController {
 
   final _isLoading = false.obs;
   final _students = <Student>[].obs;
-  final _attendanceMap =
-      <String, AttendanceStatus>{}.obs; // studentId -> status
-  final _existingAttendanceIds =
-      <String, String>{}.obs; // studentId -> attendanceId
+  final _attendanceMap = <String, AttendanceStatus>{}.obs; // studentId -> status
+  final _existingAttendanceIds = <String, String>{}.obs; // studentId -> attendanceId
   final _selectedClass = Rxn<String>();
   final _selectedSection = Rxn<String>();
   final _selectedDate = Rx<DateTime>(DateTime.now());
@@ -30,20 +29,11 @@ class AttendanceController extends GetxController {
 
   // Statistics
   int get totalStudents => _students.length;
-  int get presentCount => _attendanceMap.values
-      .where((status) => status == AttendanceStatus.present)
-      .length;
-  int get absentCount => _attendanceMap.values
-      .where((status) => status == AttendanceStatus.absent)
-      .length;
-  int get lateCount => _attendanceMap.values
-      .where((status) => status == AttendanceStatus.late)
-      .length;
-  int get excusedCount => _attendanceMap.values
-      .where((status) => status == AttendanceStatus.excused)
-      .length;
-  int get attendancePercentage =>
-      totalStudents > 0 ? ((presentCount / totalStudents) * 100).round() : 0;
+  int get presentCount => _attendanceMap.values.where((status) => status == AttendanceStatus.present).length;
+  int get absentCount => _attendanceMap.values.where((status) => status == AttendanceStatus.absent).length;
+  int get lateCount => _attendanceMap.values.where((status) => status == AttendanceStatus.late).length;
+  int get excusedCount => _attendanceMap.values.where((status) => status == AttendanceStatus.excused).length;
+  int get attendancePercentage => totalStudents > 0 ? ((presentCount / totalStudents) * 100).round() : 0;
 
   void selectClass(String? classId) {
     _selectedClass.value = classId;
@@ -84,9 +74,7 @@ class AttendanceController extends GetxController {
       // Load students for selected class/section
       final allStudents = await StudentService.getAllStudents();
       _students.value = allStudents
-          .where((student) =>
-              student.class_ == _selectedClass.value &&
-              student.section == _selectedSection.value)
+          .where((student) => student.class_ == _selectedClass.value && student.section == _selectedSection.value)
           .toList();
 
       // Load existing attendance for the selected date
@@ -158,16 +146,38 @@ class AttendanceController extends GetxController {
       Get.snackbar('Error', 'No students to save attendance for');
       return;
     }
+    String? markedBy = _authController.getMarkedBy();
+    String? teacherId = _authController.getMarkedBy();
+        if (markedBy == null || teacherId == null) {
+          Get.snackbar('Error', 'Authentication error: user not found');
+          return;
+        }
+    // // Get current markedBy ID (Admin ID)
+    // if (_authController.currentRole != null) {
+    //   if (_authController.currentRole == AppConstants.roleAdmin) {
+    //     final admin = _authController.currentAdmin;
+    //     if (admin == null) {
+    //       Get.snackbar('Error', 'Authentication error: user not found');
+    //       return;
+    //     }
+    //     markedBy = admin.id;
+    //     // Use Admin ID (Institution ID) as teacherId as requested
+    //     teacherId = admin.id;
+    //   } else if (_authController.currentRole == AppConstants.roleTeacher) {
+    //     final teacher = _authController.currentTeacher;
+    //     if (teacher == null) {
+    //       Get.snackbar('Error', 'Authentication error: user not found');
+    //       return;
+    //     }
+    //     markedBy = teacher.id;
+    //     // Use Admin ID (Institution ID) as teacherId as requested
+    //     teacherId = teacher.id;
+    //   } else {
+    //     Get.snackbar('Error', 'Authentication error: user not found');
+    //     return;
+    //   }
+    // }
 
-    // Get current markedBy ID (Admin ID)
-    final admin = _authController.currentAdmin;
-    if (admin == null) {
-      Get.snackbar('Error', 'Authentication error: user not found');
-      return;
-    }
-    final markedBy = admin.id;
-    // Use Admin ID (Institution ID) as teacherId as requested
-    final teacherId = admin.id;
 
     // Get teacherId from selected class (Legacy check removed as we use Admin ID now)
     // final selectedClassObj = _classController.classes.firstWhereOrNull(
@@ -262,12 +272,9 @@ class AttendanceController extends GetxController {
                   Text('$successCount records saved successfully.'),
                   Text('$failureCount records failed.'),
                   const SizedBox(height: 8),
-                  const Text('Errors:',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  ...errors.take(5).map((e) => Text('• $e',
-                      style: const TextStyle(color: Colors.red, fontSize: 12))),
-                  if (errors.length > 5)
-                    Text('...and ${errors.length - 5} more'),
+                  const Text('Errors:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ...errors.take(5).map((e) => Text('• $e', style: const TextStyle(color: Colors.red, fontSize: 12))),
+                  if (errors.length > 5) Text('...and ${errors.length - 5} more'),
                 ],
               ),
             ),

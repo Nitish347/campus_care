@@ -1,3 +1,4 @@
+import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -18,6 +19,7 @@ class NoticeManagementScreen extends GetView<NoticeController> {
     if (!Get.isRegistered<NoticeController>()) {
       Get.put(NoticeController());
     }
+    final authController = Get.find<AuthController>();
 
     final theme = Theme.of(context);
 
@@ -30,6 +32,7 @@ class NoticeManagementScreen extends GetView<NoticeController> {
             onPressed: () => controller.loadNotices(),
             tooltip: 'Refresh',
           ),
+          if(authController.isAdmin())
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _showAddEditDialog(context, null),
@@ -87,7 +90,7 @@ class NoticeManagementScreen extends GetView<NoticeController> {
                   itemCount: controller.notices.length,
                   itemBuilder: (context, index) {
                     final notice = controller.notices[index];
-                    return _buildNoticeCard(context, theme, notice);
+                    return _buildNoticeCard(context, theme, notice,authController.isAdmin());
                   },
                 ),
               );
@@ -99,7 +102,7 @@ class NoticeManagementScreen extends GetView<NoticeController> {
   }
 
   Widget _buildNoticeCard(
-      BuildContext context, ThemeData theme, NoticeModel notice) {
+      BuildContext context, ThemeData theme, NoticeModel notice, bool isAdmin) {
     Color priorityColor;
     switch (notice.priority) {
       case 'high':
@@ -208,6 +211,7 @@ class NoticeManagementScreen extends GetView<NoticeController> {
                   ],
                 ),
               ),
+              if(isAdmin)
               PopupMenuButton(
                 itemBuilder: (context) => [
                   const PopupMenuItem(

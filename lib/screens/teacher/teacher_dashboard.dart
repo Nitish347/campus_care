@@ -1,3 +1,4 @@
+import 'package:campus_care/controllers/class_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
@@ -7,6 +8,10 @@ import 'package:campus_care/controllers/homework_controller.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/widgets/cards/dashboard_card.dart';
 import 'package:campus_care/widgets/cards/stat_card.dart';
+import 'package:campus_care/widgets/responsive/responsive_grid.dart';
+import 'package:campus_care/widgets/responsive/responsive_padding.dart';
+import 'package:campus_care/widgets/common/section_header.dart';
+import 'package:campus_care/widgets/common/info_card.dart';
 
 class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
@@ -19,12 +24,14 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   final TeacherTimetableController _timetableController =
       Get.put(TeacherTimetableController());
   final HomeworkController _homeworkController = Get.put(HomeworkController());
+  final classController = Get.find<ClassController>();
 
   @override
   void initState() {
     super.initState();
     _timetableController.fetchTeacherTimetable();
     _homeworkController.fetchHomework();
+    classController.fetchClasses();
   }
 
   @override
@@ -113,90 +120,36 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome Section
-            Obx(() {
-              final teacher = authController.currentTeacher;
-              return Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primaryContainer,
-                      theme.colorScheme.secondaryContainer,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Welcome back,',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            teacher?.fullName ?? 'Teacher',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            teacher?.email ?? '',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onPrimaryContainer
-                                  .withValues(alpha: 0.7),
-                            ),
-                          ),
-                        ],
-                      ),
+        child: ResponsivePadding(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Welcome Section
+              Obx(() => Text(
+                    'Welcome back, ${authController.currentTeacher?.fullName ?? 'Teacher'}! 👋',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                    CircleAvatar(
-                      radius: 32,
-                      backgroundColor: theme.colorScheme.primary,
-                      child: Icon(
-                        Icons.person,
-                        size: 32,
-                        color: theme.colorScheme.onPrimary,
-                      ),
-                    ),
-                  ],
+                  )),
+              const SizedBox(height: 8),
+              Text(
+                'Here\'s your overview for today',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-              );
-            }),
-            const SizedBox(height: 24),
-
-            // Quick Stats
-            Text(
-              'Quick Stats',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 24),
+
+              // Quick Stats
+              SectionHeader(title: 'Quick Stats'),
+              const SizedBox(height: 12),
             Obx(() {
               final timetableStats = _timetableController.getStats();
               final homeworkStats = _homeworkController.homeworkList.length;
               final todayPeriods = timetableStats['todayPeriods'] ?? 0;
 
-              return GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 1.5,
+              return ResponsiveGrid(
+                childAspectRatio: 1.1,
                 children: [
                   StatCard(
                     icon: Icons.class_outlined,
@@ -228,13 +181,8 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             const SizedBox(height: 24),
 
             // Today's Schedule
-            Text(
-              'Today\'s Schedule',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
+            SectionHeader(title: 'Today\'s Schedule'),
+            const SizedBox(height: 12),
             Obx(() {
               final todaysClasses = _timetableController.getTodaysClasses();
 
@@ -277,8 +225,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
               return Column(
                 children: todaysClasses.take(3).map((period) {
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
+                  return InfoCard(
                     child: ListTile(
                       leading: Container(
                         padding: const EdgeInsets.all(8),
@@ -317,33 +264,58 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             const SizedBox(height: 24),
 
             // Quick Access
-            Text(
-              'Quick Access',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 1.2,
+            SectionHeader(title: 'Quick Access'),
+            const SizedBox(height: 12),
+            ResponsiveGrid(
+              childAspectRatio: 0.95,
               children: [
                 DashboardCard(
-                  icon: Icons.assignment_outlined,
-                  title: 'Manage Homework',
-                  subtitle: 'Assign & review',
-                  onTap: () => Get.toNamed(AppRoutes.teacherHomeworkManagement),
+                  icon: Icons.people_outlined,
+                  title: 'Student Management',
+                  subtitle: 'Manage students',
+                  onTap: () => Get.toNamed(AppRoutes.studentList),
                   iconColor: theme.colorScheme.primary,
                 ),
+                DashboardCard(
+                  icon: Icons.schedule_outlined,
+                  title: 'Timetable',
+                  subtitle: 'View schedule',
+                  onTap: () => Get.toNamed(AppRoutes.timetable),
+                  iconColor: Colors.orange,
+                ),
+                DashboardCard(
+                  icon: Icons.restaurant_menu,
+                  title: 'Lunch Management',
+                  subtitle: 'Track student meals',
+                  onTap: () => Get.toNamed(AppRoutes.adminLunchManagement),
+                  iconColor: Colors.deepPurple,
+                ),
+                DashboardCard(
+                  icon: Icons.assignment_outlined,
+                  title: 'Homework',
+                  subtitle: 'Manage homework',
+                  onTap: () => Get.toNamed(AppRoutes.adminHomework),
+                  iconColor: Colors.indigo,
+                ),
+                DashboardCard(
+                  icon: Icons.announcement_outlined,
+                  title: 'Notices & Events',
+                  subtitle: 'Announcements',
+                  onTap: () => Get.toNamed(AppRoutes.noticeManagement),
+                  iconColor: Colors.teal,
+                ),
+                // DashboardCard(
+                //   icon: Icons.assignment_outlined,
+                //   title: 'Manage Homework',
+                //   subtitle: 'Assign & review',
+                //   onTap: () => Get.toNamed(AppRoutes.teacherHomeworkManagement),
+                //   iconColor: theme.colorScheme.primary,
+                // ),
                 DashboardCard(
                   icon: Icons.fact_check_outlined,
                   title: 'Mark Attendance',
                   subtitle: 'Daily attendance',
-                  onTap: () => Get.toNamed(AppRoutes.attendance),
+                  onTap: () => Get.toNamed(AppRoutes.adminAttendance),
                   iconColor: Colors.green,
                 ),
                 DashboardCard(
@@ -360,25 +332,26 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                   onTap: () => Get.toNamed(AppRoutes.teacherTimetable),
                   iconColor: Colors.purple,
                 ),
-                DashboardCard(
-                  icon: Icons.chat_outlined,
-                  title: 'Communication',
-                  subtitle: 'Chat & notices',
-                  onTap: () => Get.toNamed(AppRoutes.chatList),
-                  iconColor: Colors.blue,
-                ),
-                DashboardCard(
-                  icon: Icons.person_outlined,
-                  title: 'My Profile',
-                  subtitle: 'View details',
-                  onTap: () => Get.toNamed(AppRoutes.teacherProfile),
-                  iconColor: Colors.teal,
-                ),
+                // DashboardCard(
+                //   icon: Icons.chat_outlined,
+                //   title: 'Communication',
+                //   subtitle: 'Chat & notices',
+                //   onTap: () => Get.toNamed(AppRoutes.chatList),
+                //   iconColor: Colors.blue,
+                // ),
+                // DashboardCard(
+                //   icon: Icons.person_outlined,
+                //   title: 'My Profile',
+                //   subtitle: 'View details',
+                //   onTap: () => Get.toNamed(AppRoutes.teacherProfile),
+                //   iconColor: Colors.teal,
+                // ),
               ],
             ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
-    );
+    ));
   }
 }

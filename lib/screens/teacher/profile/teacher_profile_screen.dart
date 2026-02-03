@@ -153,7 +153,7 @@ class TeacherProfileScreen extends StatelessWidget {
                       color: Colors.white.withOpacity(0.3), width: 4),
                 ),
                 child: CircleAvatar(
-                  radius: 60,
+                  radius: 65,
                   backgroundColor: Colors.white,
                   child: Text(
                     authController.currentTeacher?.fullName
@@ -169,14 +169,24 @@ class TeacherProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // Name
-              Text(
-                authController.currentTeacher?.fullName ?? 'Teacher Name',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              // Name with Shadow
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  authController.currentTeacher?.fullName ?? 'Teacher Name',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.5),
+                        offset: const Offset(0, 2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
 

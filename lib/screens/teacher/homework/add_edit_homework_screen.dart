@@ -1,6 +1,6 @@
 import 'package:campus_care/widgets/buttons/primary_button.dart';
 import 'package:campus_care/widgets/common/summary_card.dart';
-import 'package:campus_care/widgets/inputs/teacher_class_section_dropdown.dart';
+import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -133,7 +133,7 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
             SizedBox(
               height: 10,
             ),
-            TeacherClassSectionDropDown(
+            ClassSectionDropDown(
               padding: 0,
               onChangedClass: (String classId) {},
               onChangedSection: (String classId) {},
