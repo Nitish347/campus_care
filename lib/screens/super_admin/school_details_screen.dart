@@ -178,12 +178,105 @@ class _SchoolDetailsScreenState extends State<SchoolDetailsScreen>
 
           _buildInfoCard(
             theme,
+            'Location',
+            [
+              if (widget.school.address != null)
+                _buildInfoRow(theme, Icons.location_on, 'Address',
+                    widget.school.address!),
+              if (widget.school.city != null)
+                _buildInfoRow(
+                    theme, Icons.location_city, 'City', widget.school.city!),
+              if (widget.school.state != null)
+                _buildInfoRow(theme, Icons.map, 'State', widget.school.state!),
+              if (widget.school.country != null)
+                _buildInfoRow(
+                    theme, Icons.public, 'Country', widget.school.country!),
+              if (widget.school.pincode != null)
+                _buildInfoRow(
+                    theme, Icons.pin_drop, 'Pincode', widget.school.pincode!),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          _buildInfoCard(
+            theme,
             'Admin Details',
             [
               _buildInfoRow(theme, Icons.person, 'Name',
                   '${widget.school.firstName} ${widget.school.lastName}'),
               _buildInfoRow(
                   theme, Icons.email, 'Admin Email', widget.school.email),
+              if (widget.school.phone != null)
+                _buildInfoRow(
+                    theme, Icons.phone, 'Phone', widget.school.phone!),
+              if (widget.school.website != null)
+                _buildInfoRow(
+                    theme, Icons.language, 'Website', widget.school.website!),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Access Admin Dashboard Button
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () {
+                // Navigate to admin dashboard
+                // This allows superadmin to access the school's admin dashboard
+                Get.toNamed('/admin/dashboard');
+              },
+              icon: const Icon(Icons.dashboard, size: 24),
+              label: const Text('Access Admin Dashboard'),
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Management Actions
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    // Navigate to student management for this school
+                    Get.toNamed('/admin/students');
+                  },
+                  icon: const Icon(Icons.people),
+                  label: const Text('Manage Students'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    // Navigate to teacher management for this school
+                    Get.toNamed('/admin/teachers');
+                  },
+                  icon: const Icon(Icons.person),
+                  label: const Text('Manage Teachers'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ],

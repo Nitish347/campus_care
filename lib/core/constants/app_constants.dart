@@ -32,8 +32,10 @@ class AppConstants {
   // API Configuration
   // For emulator: use 'http://10.0.2.2:5000' (Android) or 'http://localhost:5000' (iOS/Web)
   // For physical device: use 'http://YOUR_COMPUTER_IP:5000'
-  static const String baseUrl = 'https://campus-care-ymlr.onrender.com';
+  // static const String baseUrl = 'https://campus-care-ymlr.onrender.com';
   // static const String baseUrl = 'http://localhost:5000';
+  // static const String baseUrl = 'https://campus-care-api.nitishchaurasiya3470.workers.dev';
+  static const String baseUrl = 'http://127.0.0.1:8787';
   static const String apiVersion = '/api/v1';
 
   // API Endpoints

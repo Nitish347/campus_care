@@ -96,66 +96,112 @@ class Student {
   String get fullName => '$firstName $lastName';
 
   factory Student.fromJson(Map<String, dynamic> json) {
+    // Helper to get value with fallback for both camelCase and snake_case
+    T? getValue<T>(String camelCase, String snakeCase) {
+      return (json[snakeCase] ?? json[camelCase]) as T?;
+    }
+
+    // Reconstruct guardian from flattened fields if any guardian field exists
+    Guardian? guardian;
+    if (json['guardian_name'] != null || json['guardianName'] != null) {
+      guardian = Guardian(
+        name: getValue('guardianName', 'guardian_name') ?? '',
+        phone: getValue('guardianPhone', 'guardian_phone') ?? '',
+        email: getValue('guardianEmail', 'guardian_email'),
+        relation: getValue('guardianRelation', 'guardian_relation'),
+      );
+    } else if (json['guardian'] != null) {
+      guardian = Guardian.fromJson(json['guardian']);
+    }
+
     return Student(
       id: json['_id'] ?? json['id'] ?? '',
-      firstName: json['firstName'] ?? '',
-      lastName: json['lastName'] ?? '',
+      firstName: getValue('firstName', 'first_name') ?? '',
+      lastName: getValue('lastName', 'last_name') ?? '',
       email: json['email'] ?? '',
       password: json['password'],
       phone: json['phone'],
-      enrollmentNumber: json['enrollmentNumber'] ?? '',
-      rollNumber: json['rollNumber'] ?? '',
+      enrollmentNumber: getValue('enrollmentNumber', 'enrollment_number') ?? '',
+      rollNumber: getValue('rollNumber', 'roll_number') ?? '',
       class_: json['class'],
       section: json['section'],
       gender: json['gender'],
       address: json['address'],
-      dateOfBirth: json['dateOfBirth'] != null
-          ? DateTime.parse(json['dateOfBirth'])
-          : null,
-      admissionDate: json['admissionDate'] != null
-          ? DateTime.parse(json['admissionDate'])
-          : null,
-      institute: json['institute'] ?? '',
-      teacher: json['teacher'],
-      isEmailVerified: json['isEmailVerified'] ?? false,
+      dateOfBirth: _parseDate(getValue('dateOfBirth', 'date_of_birth')),
+      admissionDate: _parseDate(getValue('admissionDate', 'admission_date')),
+      institute: getValue('institute', 'institute_id') ?? '',
+      teacher: getValue('teacher', 'teacher_id'),
+      isEmailVerified:
+          _parseBool(getValue('isEmailVerified', 'is_email_verified')),
       otp: json['otp'],
-      otpExpiry:
-          json['otpExpiry'] != null ? DateTime.parse(json['otpExpiry']) : null,
-      guardian:
-          json['guardian'] != null ? Guardian.fromJson(json['guardian']) : null,
+      otpExpiry: _parseDate(getValue('otpExpiry', 'otp_expiry')),
+      guardian: guardian,
       createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+          _parseDate(getValue('createdAt', 'created_at')) ?? DateTime.now(),
       updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+          _parseDate(getValue('updatedAt', 'updated_at')) ?? DateTime.now(),
     );
+  }
+
+  // Helper to parse dates (handles both ISO strings and Unix timestamps)
+  static DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    if (value is String) {
+      return DateTime.tryParse(value);
+    }
+    return null;
+  }
+
+  // Helper to parse boolean (handles both bool and int 0/1)
+  static bool _parseBool(dynamic value) {
+    if (value == null) return false;
+    if (value is bool) return value;
+    if (value is int) return value == 1;
+    return false;
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {
-      'firstName': firstName,
-      'lastName': lastName,
+      'first_name': firstName,
+      'last_name': lastName,
       'email': email,
-      'password': password,
       'phone': phone,
-      'enrollmentNumber': enrollmentNumber,
-      'rollNumber': rollNumber,
+      'enrollment_number': enrollmentNumber,
+      'roll_number': rollNumber,
       'class': class_,
       'section': section,
       'gender': gender,
       'address': address,
-      'dateOfBirth': dateOfBirth?.toIso8601String(),
-      'admissionDate': admissionDate?.toIso8601String(),
-      'institute': institute,
-      'teacher': teacher,
-      'isEmailVerified': isEmailVerified,
+      'date_of_birth':
+          dateOfBirth != null ? dateOfBirth!.millisecondsSinceEpoch : null,
+      'admission_date':
+          admissionDate != null ? admissionDate!.millisecondsSinceEpoch : null,
+      'institute_id': institute,
+      'teacher_id': teacher,
+      'is_email_verified': isEmailVerified ? 1 : 0,
       'otp': otp,
-      'otpExpiry': otpExpiry?.toIso8601String(),
-      'guardian': guardian?.toJson(),
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'otp_expiry':
+          otpExpiry != null ? otpExpiry!.millisecondsSinceEpoch : null,
     };
+
+    // Only include password if it's not null and not empty
+    if (password != null && password!.isNotEmpty) {
+      data['password'] = password;
+    }
+
+    // Add guardian fields separately if guardian exists
+    if (guardian != null) {
+      data['guardian_name'] = guardian!.name;
+      data['guardian_phone'] = guardian!.phone;
+      data['guardian_email'] = guardian!.email;
+      data['guardian_relation'] = guardian!.relation;
+    }
+
     if (id.isNotEmpty) {
-      data['_id'] = id;
+      data['id'] = id;
     }
     return data;
   }

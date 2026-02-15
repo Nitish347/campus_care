@@ -1,32 +1,30 @@
 import 'package:campus_care/core/api_client.dart';
-import 'package:campus_care/core/constants/app_constants.dart';
 
 class AdminApiService {
   final ApiClient _apiClient = ApiClient();
 
   /// Get admin dashboard statistics
   Future<Map<String, dynamic>> getDashboardStats() async {
-    final response =
-        await _apiClient.get('${AppConstants.adminEndpoint}/dashboard/stats');
+    final response = await _apiClient.get('/admin/dashboard/stats');
     return response['data'];
   }
 
-  /// Get all admins
+  /// Get all admins (superadmin only)
   Future<List<dynamic>> getAllAdmins() async {
-    final response = await _apiClient.get('${AppConstants.adminEndpoint}/list');
+    final response = await _apiClient.get('/admins');
     return response['data'];
   }
 
   /// Get admin by ID
   Future<Map<String, dynamic>> getAdminById(String id) async {
-    final response = await _apiClient.get('${AppConstants.adminEndpoint}/$id');
+    final response = await _apiClient.get('/admins/$id');
     return response['data'];
   }
 
-  /// Create new admin
+  /// Create new admin (superadmin only)
   Future<Map<String, dynamic>> createAdmin(Map<String, dynamic> data) async {
     final response = await _apiClient.post(
-      '${AppConstants.adminEndpoint}/create',
+      '/admins',
       body: data,
     );
     return response['data'];
@@ -36,28 +34,14 @@ class AdminApiService {
   Future<Map<String, dynamic>> updateAdmin(
       String id, Map<String, dynamic> data) async {
     final response = await _apiClient.put(
-      '${AppConstants.adminEndpoint}/$id',
+      '/admins/$id',
       body: data,
     );
     return response['data'];
   }
 
-  /// Delete admin
+  /// Delete admin (superadmin only)
   Future<void> deleteAdmin(String id) async {
-    await _apiClient.delete('${AppConstants.adminEndpoint}/$id');
-  }
-
-  /// Get all teachers (Admin view)
-  Future<List<dynamic>> getAllTeachers() async {
-    final response =
-        await _apiClient.get('${AppConstants.adminEndpoint}/teachers');
-    return response['data'];
-  }
-
-  /// Get all students (Admin view)
-  Future<List<dynamic>> getAllStudents() async {
-    final response =
-        await _apiClient.get('${AppConstants.adminEndpoint}/students');
-    return response['data'];
+    await _apiClient.delete('/admins/$id');
   }
 }

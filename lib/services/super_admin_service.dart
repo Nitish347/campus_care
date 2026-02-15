@@ -51,6 +51,15 @@ class SuperAdminService {
     }
   }
 
+  static Future<Admin> createSchool(Admin school) async {
+    try {
+      final data = await _apiService.createSchool(school.toJson());
+      return Admin.fromJson(data);
+    } catch (e) {
+      throw Exception('Failed to create school: $e');
+    }
+  }
+
   // Student Management - All
   static Future<List<Student>> getAllStudents() async {
     try {

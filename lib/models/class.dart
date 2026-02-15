@@ -26,36 +26,54 @@ class SchoolClass {
   });
 
   factory SchoolClass.fromJson(Map<String, dynamic> json) {
+    T? getValue<T>(String camelCase, String snakeCase) {
+      return (json[snakeCase] ?? json[camelCase]) as T?;
+    }
+
+    DateTime? parseDate(dynamic value) {
+      if (value == null) return null;
+      if (value is int)
+        return DateTime.fromMillisecondsSinceEpoch(
+            value > 10000000000 ? value : value * 1000);
+      if (value is String) return DateTime.tryParse(value);
+      return null;
+    }
+
+    bool parseBool(dynamic value) {
+      if (value == null) return false;
+      if (value is bool) return value;
+      if (value is int) return value == 1;
+      return false;
+    }
+
     return SchoolClass(
       id: json['_id'] ?? json['id'] ?? '',
       name: json['name'] ?? '',
       grade: json['grade'] ?? '',
       sections: List<String>.from(json['sections'] ?? []),
-      teacherId: json['teacherId'],
-      maxStudents: json['maxStudents'] ?? 40,
+      teacherId: getValue('teacherId', 'teacher_id'),
+      maxStudents: getValue('maxStudents', 'max_students') ?? 40,
       subjects: List<String>.from(json['subjects'] ?? []),
-      instituteId: json['instituteId'] ?? '',
-      isActive: json['isActive'] ?? true,
+      instituteId: getValue('instituteId', 'institute_id') ?? '',
+      isActive: parseBool(getValue('isActive', 'is_active')) || true,
       createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+          parseDate(getValue('createdAt', 'created_at')) ?? DateTime.now(),
       updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+          parseDate(getValue('updatedAt', 'updated_at')) ?? DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      '_id': id,
+      'id': id,
       'name': name,
       'grade': grade,
       'sections': sections,
-      'teacherId': teacherId,
-      'maxStudents': maxStudents,
+      'teacher_id': teacherId,
+      'max_students': maxStudents,
       'subjects': subjects,
-      'instituteId': instituteId,
-      'isActive': isActive,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'institute_id': instituteId,
+      'is_active': isActive ? 1 : 0,
     };
   }
 

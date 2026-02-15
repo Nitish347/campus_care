@@ -1,7 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/models/timetable_model.dart';
 import 'package:campus_care/services/api/timetable_api_service.dart';
 import 'package:campus_care/services/student_service.dart';
+
+import '../services/storage_service.dart';
 
 class TimetableController extends GetxController {
   final _isLoading = false.obs;
@@ -71,8 +74,9 @@ class TimetableController extends GetxController {
       final Map<String, Map<String, List<TimeTableItem>>> groupedByClass = {};
 
       for (var entry in data) {
-        final classKey = '${entry['class'] ?? ''}_${entry['section'] ?? ''}';
-        final day = entry['dayOfWeek'] as String;
+        final classKey =
+            '${entry['class_id'] ?? entry['class'] ?? ''}_${entry['section'] ?? ''}';
+        final day = entry['day_of_week'] ?? entry['dayOfWeek'] ?? '';
 
         if (!groupedByClass.containsKey(classKey)) {
           groupedByClass[classKey] = {};
@@ -84,19 +88,20 @@ class TimetableController extends GetxController {
 
         // Extract teacherId - handle both string and object (populated) formats
         String teacherId = '';
-        if (entry['teacherId'] is String) {
-          teacherId = entry['teacherId'];
-        } else if (entry['teacherId'] is Map) {
-          teacherId = entry['teacherId']['_id'] ?? '';
+        final teacherIdField = entry['teacher_id'] ?? entry['teacherId'];
+        if (teacherIdField is String) {
+          teacherId = teacherIdField;
+        } else if (teacherIdField is Map) {
+          teacherId = teacherIdField['_id'] ?? teacherIdField['id'] ?? '';
         }
 
         groupedByClass[classKey]![day]!.add(TimeTableItem(
           period: 'P${groupedByClass[classKey]![day]!.length + 1}',
-          subject: entry['subject'] ?? '',
+          subject: entry['subject_id'] ?? entry['subject'] ?? '',
           teacherId: teacherId,
-          room: entry['room'],
-          startTime: entry['startTime'] ?? '',
-          endTime: entry['endTime'] ?? '',
+          room: entry['room_number'] ?? entry['room'],
+          startTime: entry['start_time'] ?? entry['startTime'] ?? '',
+          endTime: entry['end_time'] ?? entry['endTime'] ?? '',
           type: 'class',
         ));
       }
@@ -164,37 +169,77 @@ class TimetableController extends GetxController {
     try {
       _isLoading.value = true;
 
+      // Get the current admin's institute ID from stored user data
+      final currentUser = await StorageService.currentUser;
+      final instituteId = currentUser?['id'] ?? '';
+
+      if (instituteId.isEmpty) {
+        throw Exception('Institute ID not found. Please log in again.');
+      }
+
+      print(
+          'DEBUG: Saving timetable with class_id: ${timetable.classId}, institute_id: $instituteId');
+
+      // First, delete all existing timetable entries for this class/section
+      // This ensures we replace the old schedule instead of adding duplicates
+      await _apiService.deleteTimetableByClassSection(
+        timetable.classId,
+        timetable.section,
+      );
+
       // Transform the weekly schedule into individual timetable entries
       final List<Map<String, dynamic>> timetableEntries = [];
 
       timetable.weeklySchedule.forEach((day, periods) {
+        int periodNumber = 1;
         for (var period in periods) {
+          // Extract period number from period string (e.g., "P1" -> 1)
+          final periodNum =
+              int.tryParse(period.period.replaceAll(RegExp(r'[^0-9]'), '')) ??
+                  periodNumber;
+
+          print(
+              'DEBUG: Period data - teacher_id: ${period.teacherId}, subject_id: ${period.subject}, class_id: ${timetable.classId}');
+
           timetableEntries.add({
-            'teacherId': period.teacherId,
-            'subject': period.subject,
-            'dayOfWeek': day,
-            'startTime': period.startTime,
-            'endTime': period.endTime,
-            'room': period.room,
-            'class': timetable.classId,
+            'period_number': periodNum,
+            'teacher_id': period.teacherId.isNotEmpty ? period.teacherId : null,
+            'subject_id':
+                null, // TODO: Integrate subjects table - for now null to avoid FK constraint
+            'day_of_week': day,
+            'start_time': period.startTime,
+            'end_time': period.endTime,
+            'room_number': (period.room != null && period.room!.isNotEmpty)
+                ? period.room
+                : null,
+            'class_id': timetable.classId,
             'section': timetable.section,
-            'isActive': true,
+            'institute_id': instituteId,
+            'is_active': 1,
           });
+          periodNumber++;
         }
       });
 
-      // Create each timetable entry individually
-      for (var entry in timetableEntries) {
-        await _apiService.createTimetable(entry);
-      }
+      // Batch create all timetable entries
+      await _apiService.createTimetable(timetableEntries);
 
-      // Reload from API to get fresh data
+      Get.snackbar(
+        'Success',
+        'Timetable saved successfully',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+
+      // Reload timetables to show updated data
       await loadTimetables();
-
-      Get.snackbar('Success', 'Timetable saved successfully');
     } catch (e) {
-      Get.snackbar('Error', 'Failed to save timetable: $e');
-      rethrow;
+      Get.snackbar(
+        'Error',
+        'Failed to save timetable: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       _isLoading.value = false;
     }

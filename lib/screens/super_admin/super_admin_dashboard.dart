@@ -455,13 +455,6 @@ class SuperAdminDashboard extends StatelessWidget {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Student count if available from stats
-                          if (school is Admin)
-                            Text(
-                              '${(school as dynamic).stats?['students'] ?? 0} students',
-                              style: theme.textTheme.bodySmall,
-                            ),
-                          const SizedBox(width: 16),
                           IconButton(
                             icon: const Icon(Icons.arrow_forward),
                             onPressed: () {
@@ -475,9 +468,8 @@ class SuperAdminDashboard extends StatelessWidget {
                       ),
                       onTap: () {
                         controller.selectSchool(school);
-                        Get.toNamed(
-                          AppRoutes.instituteDetail,
-                          arguments: school,
+                        Get.to(
+                          () => SchoolDetailsScreen(school: school),
                         );
                       },
                     );

@@ -36,51 +36,70 @@ class Teacher {
   String get fullName => '$firstName $lastName';
 
   factory Teacher.fromJson(Map<String, dynamic> json) {
+    T? getValue<T>(String camelCase, String snakeCase) {
+      return (json[snakeCase] ?? json[camelCase]) as T?;
+    }
+
+    DateTime? parseDate(dynamic value) {
+      if (value == null) return null;
+      if (value is int)
+        return DateTime.fromMillisecondsSinceEpoch(
+            value > 10000000000 ? value : value * 1000);
+      if (value is String) return DateTime.tryParse(value);
+      return null;
+    }
+
+    bool parseBool(dynamic value) {
+      if (value == null) return false;
+      if (value is bool) return value;
+      if (value is int) return value == 1;
+      return false;
+    }
+
     return Teacher(
       id: json['_id'] ?? json['id'] ?? '',
-      firstName: json['firstName'] ?? '',
-      lastName: json['lastName'] ?? '',
+      firstName: getValue('firstName', 'first_name') ?? '',
+      lastName: getValue('lastName', 'last_name') ?? '',
       email: json['email'] ?? '',
-      password: json['password'], // Usually not returned from backend
+      password: json['password'],
       phone: json['phone'],
       address: json['address'],
       department: json['department'],
-      hireDate:
-          json['hireDate'] != null ? DateTime.parse(json['hireDate']) : null,
-      institute: json['institute'] ?? '',
-      isEmailVerified: json['isEmailVerified'] ?? false,
+      hireDate: parseDate(getValue('hireDate', 'hire_date')),
+      institute: getValue('institute', 'institute_id') ?? '',
+      isEmailVerified:
+          parseBool(getValue('isEmailVerified', 'is_email_verified')),
       otp: json['otp'],
-      otpExpiry:
-          json['otpExpiry'] != null ? DateTime.parse(json['otpExpiry']) : null,
+      otpExpiry: parseDate(getValue('otpExpiry', 'otp_expiry')),
       createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+          parseDate(getValue('createdAt', 'created_at')) ?? DateTime.now(),
       updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+          parseDate(getValue('updatedAt', 'updated_at')) ?? DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{
-      'firstName': firstName,
-      'lastName': lastName,
+      'first_name': firstName,
+      'last_name': lastName,
       'email': email,
       'phone': phone,
       'address': address,
       'department': department,
-      'hireDate': hireDate?.toIso8601String(),
-      'institute': institute,
-      'isEmailVerified': isEmailVerified,
+      'hire_date':
+          hireDate != null ? hireDate!.millisecondsSinceEpoch ~/ 1000 : null,
+      'institute_id': institute,
+      'is_email_verified': isEmailVerified ? 1 : 0,
       'otp': otp,
-      'otpExpiry': otpExpiry?.toIso8601String(),
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'otp_expiry':
+          otpExpiry != null ? otpExpiry!.millisecondsSinceEpoch ~/ 1000 : null,
     };
-    // Only include _id if it's not empty
+    // Only include id if it's not empty
     if (id.isNotEmpty) {
-      json['_id'] = id;
+      json['id'] = id;
     }
-    // Only include password if it's set (for creation)
-    if (password != null) {
+    // Only include password if it's set and not empty
+    if (password != null && password!.isNotEmpty) {
       json['password'] = password!;
     }
     return json;

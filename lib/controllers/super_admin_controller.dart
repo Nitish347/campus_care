@@ -137,6 +137,20 @@ class SuperAdminController extends GetxController {
     _searchQuery.value = query;
   }
 
+  Future<void> createSchool(Admin school) async {
+    try {
+      _isLoading.value = true;
+      await SuperAdminService.createSchool(school);
+      await loadAllSchools();
+      Get.back();
+      Get.snackbar('Success', 'School created successfully');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to create school: $e');
+    } finally {
+      _isLoading.value = false;
+    }
+  }
+
   // Student Management
   Future<void> loadAllStudents() async {
     try {

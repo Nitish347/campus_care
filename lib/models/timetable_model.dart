@@ -2,7 +2,8 @@ class TimeTableModel {
   final String id;
   final String classId;
   final String section;
-  final Map<String, List<TimeTableItem>> weeklySchedule; // Key: day name (Monday, Tuesday, etc.)
+  final Map<String, List<TimeTableItem>>
+      weeklySchedule; // Key: day name (Monday, Tuesday, etc.)
 
   TimeTableModel({
     required this.id,
@@ -37,8 +38,7 @@ class TimeTableModel {
 
     return {
       'id': id,
-      'classId': classId,
-      'class': classId,
+      'class_id': classId,
       'section': section,
       'weeklySchedule': scheduleMap,
     };
@@ -80,24 +80,24 @@ class TimeTableItem {
 
   factory TimeTableItem.fromJson(Map<String, dynamic> json) {
     return TimeTableItem(
-      period: json['period'] ?? '',
-      subject: json['subject'] ?? '',
-      teacherId: json['teacherId'] ?? '',
-      room: json['room'],
-      startTime: json['startTime'] ?? '',
-      endTime: json['endTime'] ?? '',
+      period: json['period'] ?? json['period_number']?.toString() ?? '',
+      subject: json['subject'] ?? json['subject_id'] ?? '',
+      teacherId: json['teacher_id'] ?? json['teacherId'] ?? '',
+      room: json['room'] ?? json['room_number'],
+      startTime: json['start_time'] ?? json['startTime'] ?? '',
+      endTime: json['end_time'] ?? json['endTime'] ?? '',
       type: json['type'] ?? 'class',
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'period': period,
-      'subject': subject,
-      'teacherId': teacherId,
-      'room': room,
-      'startTime': startTime,
-      'endTime': endTime,
+      'period_number': int.tryParse(period) ?? 1,
+      'subject_id': subject,
+      'teacher_id': teacherId,
+      'room_number': room,
+      'start_time': startTime,
+      'end_time': endTime,
       'type': type,
     };
   }
@@ -122,4 +122,3 @@ class TimeTableItem {
     );
   }
 }
-

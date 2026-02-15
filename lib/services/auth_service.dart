@@ -28,7 +28,7 @@ class AuthService {
         // Store login state
         await StorageService.setLoggedIn(true);
         await StorageService.setCurrentUser(userData);
-        await StorageService.setUserRole(userData['role']);
+        await StorageService.setUserRole(role);
 
         return userData;
       }

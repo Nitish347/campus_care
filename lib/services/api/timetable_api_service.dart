@@ -41,9 +41,9 @@ class TimetableApiService {
     return null;
   }
 
-  /// Create new timetable
-  Future<Map<String, dynamic>> createTimetable(
-    Map<String, dynamic> timetableData,
+  /// Create new timetable(s) - supports both single entry and batch creation
+  Future<dynamic> createTimetable(
+    dynamic timetableData,
   ) async {
     final response = await _apiClient.post(
       AppConstants.timetablesEndpoint,
@@ -51,7 +51,7 @@ class TimetableApiService {
     );
 
     if (response['success'] == true && response['data'] != null) {
-      return response['data'] as Map<String, dynamic>;
+      return response['data'];
     }
 
     throw Exception('Failed to create timetable');
@@ -77,5 +77,24 @@ class TimetableApiService {
   /// Delete timetable
   Future<void> deleteTimetable(String id) async {
     await _apiClient.delete('${AppConstants.timetablesEndpoint}/$id');
+  }
+
+  /// Delete all timetable entries for a specific class and section
+  Future<void> deleteTimetableByClassSection(
+    String classId,
+    String section,
+  ) async {
+    // Get all entries for this class/section
+    final timetables = await getTimetables(
+      classId: classId,
+      section: section,
+    );
+
+    // Delete each entry
+    for (var timetable in timetables) {
+      if (timetable['id'] != null) {
+        await deleteTimetable(timetable['id'] as String);
+      }
+    }
   }
 }

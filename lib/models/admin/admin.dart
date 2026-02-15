@@ -49,56 +49,75 @@ class Admin {
   String get fullName => '$firstName $lastName';
 
   factory Admin.fromJson(Map<String, dynamic> json) {
+    T? getValue<T>(String camelCase, String snakeCase) {
+      return (json[snakeCase] ?? json[camelCase]) as T?;
+    }
+
+    DateTime? parseDate(dynamic value) {
+      if (value == null) return null;
+      if (value is int)
+        return DateTime.fromMillisecondsSinceEpoch(
+            value > 10000000000 ? value : value * 1000);
+      if (value is String) return DateTime.tryParse(value);
+      return null;
+    }
+
+    bool parseBool(dynamic value) {
+      if (value == null) return false;
+      if (value is bool) return value;
+      if (value is int) return value == 1;
+      return false;
+    }
+
     return Admin(
       id: json['_id'] ?? json['id'] ?? '',
-      firstName: json['firstName'] ?? '',
-      lastName: json['lastName'] ?? '',
+      firstName: getValue('firstName', 'first_name') ?? '',
+      lastName: getValue('lastName', 'last_name') ?? '',
       email: json['email'] ?? '',
       phone: json['phone'],
-      instituteName: json['instituteName'] ?? '',
+      instituteName: getValue('instituteName', 'institute_name') ?? '',
       address: json['address'],
       city: json['city'],
       state: json['state'],
       country: json['country'],
       pincode: json['pincode'],
       website: json['website'],
-      establishedYear: json['establishedYear'],
-      isEmailVerified: json['isEmailVerified'] ?? false,
+      establishedYear: getValue('establishedYear', 'established_year'),
+      isEmailVerified:
+          parseBool(getValue('isEmailVerified', 'is_email_verified')),
       otp: json['otp'],
-      otpExpiry:
-          json['otpExpiry'] != null ? DateTime.parse(json['otpExpiry']) : null,
-      isActive: json['isActive'] ?? true,
-      lastLogin:
-          json['lastLogin'] != null ? DateTime.parse(json['lastLogin']) : null,
+      otpExpiry: parseDate(getValue('otpExpiry', 'otp_expiry')),
+      isActive: parseBool(getValue('isActive', 'is_active')) || true,
+      lastLogin: parseDate(getValue('lastLogin', 'last_login')),
       createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+          parseDate(getValue('createdAt', 'created_at')) ?? DateTime.now(),
       updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+          parseDate(getValue('updatedAt', 'updated_at')) ?? DateTime.now(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      '_id': id,
-      'firstName': firstName,
-      'lastName': lastName,
+      'id': id,
+      'first_name': firstName,
+      'last_name': lastName,
       'email': email,
       'phone': phone,
-      'instituteName': instituteName,
+      'institute_name': instituteName,
       'address': address,
       'city': city,
       'state': state,
       'country': country,
       'pincode': pincode,
       'website': website,
-      'establishedYear': establishedYear,
-      'isEmailVerified': isEmailVerified,
+      'established_year': establishedYear,
+      'is_email_verified': isEmailVerified ? 1 : 0,
       'otp': otp,
-      'otpExpiry': otpExpiry?.toIso8601String(),
-      'isActive': isActive,
-      'lastLogin': lastLogin?.toIso8601String(),
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'otp_expiry':
+          otpExpiry != null ? otpExpiry!.millisecondsSinceEpoch ~/ 1000 : null,
+      'is_active': isActive ? 1 : 0,
+      'last_login':
+          lastLogin != null ? lastLogin!.millisecondsSinceEpoch ~/ 1000 : null,
     };
   }
 

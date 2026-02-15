@@ -51,12 +51,4 @@ class AdminService {
       throw Exception('Failed to load dashboard stats: $e');
     }
   }
-
-  static Future<List<dynamic>> getAllTeachers() async {
-    return await _apiService.getAllTeachers();
-  }
-
-  static Future<List<dynamic>> getAllStudents() async {
-    return await _apiService.getAllStudents();
-  }
 }
