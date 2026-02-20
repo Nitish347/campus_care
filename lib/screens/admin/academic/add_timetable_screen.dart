@@ -12,6 +12,7 @@ import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
 
 import '../../../widgets/inputs/class_section_dropdown.dart';
+import '../../../widgets/inputs/subject_dropdown.dart';
 
 class AddTimetableScreen extends StatefulWidget {
   final TimeTableModel? timetable;
@@ -48,20 +49,6 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
     'break',
     'lunch',
     'sports'
-  ];
-  final List<String> _subjects = [
-    'Mathematics',
-    'Science',
-    'English',
-    'History',
-    'Geography',
-    'Physics',
-    'Chemistry',
-    'Biology',
-    'Computer Science',
-    'Physical Education',
-    'Art',
-    'Music'
   ];
 
   @override
@@ -493,15 +480,12 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
             Row(
               children: [
                 Expanded(
-                  child: CustomDropdown<String>(
-                    value: period.subject.isEmpty ? null : period.subject,
+                  child: SubjectDropdown(
+                    initialValue:
+                        period.subject.isEmpty ? null : period.subject,
                     labelText: 'Subject *',
-                    items: _subjects
-                        .map((subject) => DropdownMenuItem(
-                              value: subject,
-                              child: Text(subject),
-                            ))
-                        .toList(),
+                    classId: _selectedClass,
+                    enabled: _selectedClass != null,
                     onChanged: (value) {
                       _updatePeriod(
                         day,

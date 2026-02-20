@@ -14,8 +14,10 @@ class AttendanceController extends GetxController {
 
   final _isLoading = false.obs;
   final _students = <Student>[].obs;
-  final _attendanceMap = <String, AttendanceStatus>{}.obs; // studentId -> status
-  final _existingAttendanceIds = <String, String>{}.obs; // studentId -> attendanceId
+  final _attendanceMap =
+      <String, AttendanceStatus>{}.obs; // studentId -> status
+  final _existingAttendanceIds =
+      <String, String>{}.obs; // studentId -> attendanceId
   final _selectedClass = Rxn<String>();
   final _selectedSection = Rxn<String>();
   final _selectedDate = Rx<DateTime>(DateTime.now());
@@ -29,11 +31,20 @@ class AttendanceController extends GetxController {
 
   // Statistics
   int get totalStudents => _students.length;
-  int get presentCount => _attendanceMap.values.where((status) => status == AttendanceStatus.present).length;
-  int get absentCount => _attendanceMap.values.where((status) => status == AttendanceStatus.absent).length;
-  int get lateCount => _attendanceMap.values.where((status) => status == AttendanceStatus.late).length;
-  int get excusedCount => _attendanceMap.values.where((status) => status == AttendanceStatus.excused).length;
-  int get attendancePercentage => totalStudents > 0 ? ((presentCount / totalStudents) * 100).round() : 0;
+  int get presentCount => _attendanceMap.values
+      .where((status) => status == AttendanceStatus.present)
+      .length;
+  int get absentCount => _attendanceMap.values
+      .where((status) => status == AttendanceStatus.absent)
+      .length;
+  int get lateCount => _attendanceMap.values
+      .where((status) => status == AttendanceStatus.late)
+      .length;
+  int get excusedCount => _attendanceMap.values
+      .where((status) => status == AttendanceStatus.excused)
+      .length;
+  int get attendancePercentage =>
+      totalStudents > 0 ? ((presentCount / totalStudents) * 100).round() : 0;
 
   void selectClass(String? classId) {
     _selectedClass.value = classId;
@@ -74,7 +85,9 @@ class AttendanceController extends GetxController {
       // Load students for selected class/section
       final allStudents = await StudentService.getAllStudents();
       _students.value = allStudents
-          .where((student) => student.class_ == _selectedClass.value && student.section == _selectedSection.value)
+          .where((student) =>
+              student.class_ == _selectedClass.value &&
+              student.section == _selectedSection.value)
           .toList();
 
       // Load existing attendance for the selected date
@@ -90,7 +103,8 @@ class AttendanceController extends GetxController {
       _existingAttendanceIds.clear();
 
       for (var record in attendanceRecords) {
-        dynamic studentIdRaw = record['studentId'];
+        // Handle snake_case and camelCase
+        dynamic studentIdRaw = record['student_id'] ?? record['studentId'];
         String? studentId;
 
         if (studentIdRaw is Map) {
@@ -148,10 +162,10 @@ class AttendanceController extends GetxController {
     }
     String? markedBy = _authController.getMarkedBy();
     String? teacherId = _authController.getMarkedBy();
-        if (markedBy == null || teacherId == null) {
-          Get.snackbar('Error', 'Authentication error: user not found');
-          return;
-        }
+    if (markedBy == null || teacherId == null) {
+      Get.snackbar('Error', 'Authentication error: user not found');
+      return;
+    }
     // // Get current markedBy ID (Admin ID)
     // if (_authController.currentRole != null) {
     //   if (_authController.currentRole == AppConstants.roleAdmin) {
@@ -178,25 +192,12 @@ class AttendanceController extends GetxController {
     //   }
     // }
 
-
-    // Get teacherId from selected class (Legacy check removed as we use Admin ID now)
-    // final selectedClassObj = _classController.classes.firstWhereOrNull(
-    //     (c) => c.id == _selectedClass.value || c.name == _selectedClass.value);
-
-    // if (selectedClassObj == null) {
-    //   Get.snackbar('Error', 'Selected class not found');
-    //   return;
-    // }
-
-    // final classTeacherId = selectedClassObj.teacherId;
-    // if (classTeacherId == null || classTeacherId.isEmpty) {
-    //    // Check removed
-    // }
+    // Use current user ID as teacher_id (Admin or Teacher)
+    // The database migration allows Admins (who are not in teachers table) to be stored here
 
     try {
       _isLoading.value = true;
 
-      final dateString = _formatDate(_selectedDate.value);
       final List<Map<String, dynamic>> bulkData = [];
       final List<Future> updateFutures = [];
 
@@ -211,21 +212,27 @@ class AttendanceController extends GetxController {
               existingId,
               {
                 'status': _getStatusString(status),
-                'date': dateString,
-                'markedBy': markedBy,
+                'date': DateTime(_selectedDate.value.year,
+                            _selectedDate.value.month, _selectedDate.value.day)
+                        .millisecondsSinceEpoch ~/
+                    1000,
+                'marked_by': markedBy,
               },
             ),
           );
         } else {
           // Add to bulk create
           bulkData.add({
-            'teacherId': teacherId, // Using Admin/Institution ID
-            'studentId': student.id,
-            'date': dateString,
+            // 'teacher_id': teacherId, // REMOVED
+            'student_id': student.id,
+            'date': DateTime(_selectedDate.value.year,
+                        _selectedDate.value.month, _selectedDate.value.day)
+                    .millisecondsSinceEpoch ~/
+                1000,
             'status': _getStatusString(status),
             'class': _selectedClass.value,
             'section': _selectedSection.value,
-            'markedBy': markedBy,
+            'marked_by': markedBy,
           });
         }
       }
@@ -272,9 +279,12 @@ class AttendanceController extends GetxController {
                   Text('$successCount records saved successfully.'),
                   Text('$failureCount records failed.'),
                   const SizedBox(height: 8),
-                  const Text('Errors:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ...errors.take(5).map((e) => Text('• $e', style: const TextStyle(color: Colors.red, fontSize: 12))),
-                  if (errors.length > 5) Text('...and ${errors.length - 5} more'),
+                  const Text('Errors:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  ...errors.take(5).map((e) => Text('• $e',
+                      style: const TextStyle(color: Colors.red, fontSize: 12))),
+                  if (errors.length > 5)
+                    Text('...and ${errors.length - 5} more'),
                 ],
               ),
             ),

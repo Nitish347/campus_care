@@ -22,7 +22,24 @@ class TimetableApiService {
     );
 
     if (response['success'] == true && response['data'] != null) {
-      return response['data'] as List<dynamic>;
+      var data = response['data'] as List<dynamic>;
+
+      // Manual filtering because backend might return all institute data
+      if (classId != null) {
+        data = data
+            .where((t) => (t['class_id'] ?? t['class']) == classId)
+            .toList();
+      }
+      if (section != null) {
+        data = data.where((t) => t['section'] == section).toList();
+      }
+      if (teacherId != null) {
+        data = data
+            .where((t) => (t['teacher_id'] ?? t['teacherId']) == teacherId)
+            .toList();
+      }
+
+      return data;
     }
 
     return [];

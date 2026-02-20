@@ -263,8 +263,14 @@ class AdminDashboard extends StatelessWidget {
               _buildSidebarItem(
                 context,
                 icon: Icons.class_outlined,
-                title: 'Classes & Subjects',
+                title: 'Classes',
                 onTap: () => Get.toNamed(AppRoutes.classManagement),
+              ),
+              _buildSidebarItem(
+                context,
+                icon: Icons.book_outlined,
+                title: 'Subjects',
+                onTap: () => Get.toNamed(AppRoutes.subjectManagement),
               ),
               _buildSidebarItem(
                 context,

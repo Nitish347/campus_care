@@ -6,6 +6,7 @@ import 'package:campus_care/controllers/exam_controller.dart';
 import 'package:campus_care/controllers/exam_type_controller.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
+import 'package:campus_care/widgets/inputs/subject_dropdown.dart';
 
 class AdminAddEditExamScreen extends StatefulWidget {
   final ExamModel? exam;
@@ -43,17 +44,6 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
 
   // For bulk add mode
   final List<ExamEntry> _examEntries = [];
-
-  final List<String> _subjects = [
-    'Mathematics',
-    'Science',
-    'English',
-    'History',
-    'Computer Science',
-    'Physics',
-    'Chemistry',
-    'Biology',
-  ];
 
   bool get _isEditing => widget.exam != null;
   bool _hasInitialized = false;
@@ -418,26 +408,14 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
             Row(
               children: [
                 Expanded(
-                  child: CustomDropdown<String>(
+                  child: SubjectDropdown(
+                    initialValue: _selectedSubject,
                     labelText: 'Subject *',
-                    value: _selectedSubject,
-                    prefixIcon: const Icon(Icons.book),
-                    items: _subjects
-                        .map((subject) => DropdownMenuItem(
-                              value: subject,
-                              child: Text(subject),
-                            ))
-                        .toList(),
+                    classId: widget.classId,
                     onChanged: (value) {
                       setState(() {
                         _selectedSubject = value;
                       });
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select subject';
-                      }
-                      return null;
                     },
                   ),
                 ),
@@ -776,18 +754,10 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
         // Subject
         Expanded(
           flex: 2,
-          child: DropdownButtonFormField<String>(
-            value: entry.subject,
-            decoration: const InputDecoration(
-              isDense: true,
-              labelText: 'Subject',
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              border: OutlineInputBorder(),
-            ),
-            hint: const Text('Select'),
-            items: _subjects
-                .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                .toList(),
+          child: SubjectDropdown(
+            initialValue: entry.subject,
+            labelText: 'Subject *',
+            classId: widget.classId,
             onChanged: (value) {
               setState(() {
                 entry.subject = value;
@@ -854,18 +824,10 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
         const SizedBox(height: 12),
 
         // Subject dropdown
-        DropdownButtonFormField<String>(
-          value: entry.subject,
-          decoration: const InputDecoration(
-            isDense: true,
-            labelText: 'Subject',
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            border: OutlineInputBorder(),
-          ),
-          hint: const Text('Select subject'),
-          items: _subjects
-              .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-              .toList(),
+        SubjectDropdown(
+          initialValue: entry.subject,
+          labelText: 'Subject *',
+          classId: widget.classId,
           onChanged: (value) {
             setState(() {
               entry.subject = value;

@@ -1,4 +1,5 @@
 import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
+import 'package:campus_care/widgets/inputs/subject_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -29,14 +30,6 @@ class _AdminAddEditHomeworkScreenState
   String? _selectedSubject;
   String _selectedPriority = 'medium';
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
-
-  final List<String> _subjects = [
-    'Mathematics',
-    'Science',
-    'English',
-    'History',
-    'Computer Science',
-  ];
 
   final List<String> _priorities = ['low', 'medium', 'high'];
 
@@ -226,26 +219,15 @@ class _AdminAddEditHomeworkScreenState
             const SizedBox(height: 16),
 
             // Subject
-            CustomDropdown<String>(
+            SubjectDropdown(
+              initialValue: _selectedSubject,
               labelText: 'Subject *',
-              value: _selectedSubject,
-              prefixIcon: const Icon(Icons.book),
-              items: _subjects
-                  .map((subject) => DropdownMenuItem(
-                        value: subject,
-                        child: Text(subject),
-                      ))
-                  .toList(),
+              classId: _selectedClass,
+              enabled: _selectedClass != null,
               onChanged: (value) {
                 setState(() {
                   _selectedSubject = value;
                 });
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please select a subject';
-                }
-                return null;
               },
             ),
 

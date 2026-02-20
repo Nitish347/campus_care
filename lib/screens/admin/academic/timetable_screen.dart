@@ -1,4 +1,6 @@
 import 'package:campus_care/controllers/auth_controller.dart';
+import 'package:campus_care/controllers/subject_controller.dart';
+import 'package:campus_care/controllers/teacher_controller.dart';
 import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -16,11 +18,21 @@ class TimetableScreen extends GetView<TimetableController> {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure controller is initialized
+    // Ensure controllers are initialized
     if (!Get.isRegistered<TimetableController>()) {
       Get.put(TimetableController());
     }
+    // Perform put if not already registered to ensure they are available
+    if (!Get.isRegistered<SubjectController>()) {
+      Get.put(SubjectController());
+    }
+    if (!Get.isRegistered<TeacherController>()) {
+      Get.put(TeacherController());
+    }
+
     final authController = Get.find<AuthController>();
+    final subjectController = Get.find<SubjectController>();
+    final teacherController = Get.find<TeacherController>();
 
     return Scaffold(
       appBar: AppBar(
@@ -28,22 +40,27 @@ class TimetableScreen extends GetView<TimetableController> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => controller.loadTimetables(),
+            onPressed: () {
+              controller.loadTimetables();
+              // Also refresh subjects and teachers to ensure fresh data for mapping
+              subjectController.fetchSubjects();
+              teacherController.loadTeachers();
+            },
             tooltip: 'Refresh',
           ),
-          if(authController.isAdmin())
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () async {
-              await Get.toNamed(AppRoutes.addTimetable);
-              // Refresh when returning from add screen
-              controller.loadTimetables(
-                classId: controller.selectedClass,
-                section: controller.selectedSection,
-              );
-            },
-            tooltip: 'Add Timetable',
-          ),
+          if (authController.isAdmin())
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () async {
+                await Get.toNamed(AppRoutes.addTimetable);
+                // Refresh when returning from add screen
+                controller.loadTimetables(
+                  classId: controller.selectedClass,
+                  section: controller.selectedSection,
+                );
+              },
+              tooltip: 'Add Timetable',
+            ),
         ],
       ),
       body: Obx(
@@ -181,6 +198,8 @@ class TimetableScreen extends GetView<TimetableController> {
     List<TimeTableItem> periods,
   ) {
     final theme = Theme.of(context);
+    final subjectController = Get.find<SubjectController>();
+    final teacherController = Get.find<TeacherController>();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -188,6 +207,17 @@ class TimetableScreen extends GetView<TimetableController> {
         itemCount: periods.length,
         itemBuilder: (context, index) {
           final period = periods[index];
+
+          // Resolve IDs to names
+          final subjectName = subjectController.subjects
+                  .firstWhereOrNull((s) => s.id == period.subject)
+                  ?.name ??
+              period.subject; // Fallback to ID/Text if not found
+
+          final teacherName = teacherController.teachers
+                  .firstWhereOrNull((t) => t.id == period.teacherId)
+                  ?.fullName ??
+              period.teacherId;
 
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
@@ -254,7 +284,7 @@ class TimetableScreen extends GetView<TimetableController> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  period.subject,
+                                  subjectName,
                                   style: theme.textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -284,7 +314,7 @@ class TimetableScreen extends GetView<TimetableController> {
                           _buildDetailRow(
                             theme,
                             Icons.person,
-                            'Teacher ID: ${period.teacherId}',
+                            'Teacher: $teacherName',
                           ),
                           if (period.room != null && period.room!.isNotEmpty)
                             _buildDetailRow(

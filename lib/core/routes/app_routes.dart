@@ -17,7 +17,6 @@ import 'package:campus_care/screens/admin/teacher/teacher_details_screen.dart';
 import 'package:campus_care/screens/admin/teacher_management/add_teacher_screen.dart';
 import 'package:campus_care/screens/admin/admin/admin_list_screen.dart';
 import 'package:campus_care/screens/teacher/teacher_dashboard.dart';
-import 'package:campus_care/screens/teacher/attendance/attendance_screen.dart';
 import 'package:campus_care/screens/teacher/homework/homework_screen.dart';
 import 'package:campus_care/screens/teacher/communication/chat_list_screen.dart';
 import 'package:campus_care/screens/teacher/marks/marks_entry_screen.dart';
@@ -34,7 +33,6 @@ import 'package:campus_care/screens/student/medical/student_medical_reports_scre
 import 'package:campus_care/screens/student/exams/student_exam_timetable_screen.dart';
 import 'package:campus_care/screens/student/exams/student_results_screen.dart';
 import 'package:campus_care/screens/teacher/homework/teacher_homework_management_screen.dart';
-import 'package:campus_care/screens/teacher/attendance/teacher_attendance_management_screen.dart';
 import 'package:campus_care/screens/teacher/leave/leave_history_screen.dart';
 import 'package:campus_care/screens/teacher/profile/change_password_screen.dart';
 import 'package:campus_care/screens/teacher/profile/settings_screen.dart';
@@ -47,12 +45,12 @@ import 'package:campus_care/screens/student/payment/payment_screen.dart';
 import 'package:campus_care/screens/teacher/homework/homework_submissions_screen.dart';
 import 'package:campus_care/screens/teacher/homework/student_homework_detail_screen.dart';
 import 'package:campus_care/models/teacher/teacher.dart';
-import 'package:campus_care/core/middleware/auth_middleware.dart';
 import 'package:campus_care/core/middleware/school_admin_middleware.dart';
 import 'package:campus_care/screens/admin/attendance/admin_attendance_screen.dart';
 import 'package:campus_care/screens/admin/lunch/admin_lunch_management_screen.dart';
 import 'package:campus_care/controllers/attendance_controller.dart';
-import 'package:campus_care/screens/admin/exam/admin_add_edit_exam_screen.dart';
+import 'package:campus_care/screens/admin/academic/subject_management_screen.dart';
+import 'package:campus_care/screens/admin/academic/add_edit_subject_screen.dart';
 
 import '../../screens/admin/exam/admin_add_edit_exam_type_screen.dart';
 import '../../screens/admin/exam/admin_exam_timetable_screen.dart';
@@ -132,6 +130,12 @@ class AppRoutes {
   static const String adminHomework = '/admin/homework';
   static const String adminAddHomework = '/admin/homework/add';
   static const String adminEditHomework = '/admin/homework/edit';
+
+  // Subject Management Routes
+  static const String subjectManagement = '/admin/subjects';
+  static const String addSubject = '/admin/subjects/add';
+  static const String editSubject = '/admin/subjects/edit';
+
   // Admin Exam Routes
   static const String adminExamType = '/admin/exam-type';
   static const String adminAddExamType = '/admin/exam-type/add';
@@ -300,6 +304,27 @@ class AppRoutes {
       },
       middlewares: [SchoolAdminMiddleware()],
     ),
+
+    // Subject Management Pages
+    GetPage(
+      name: subjectManagement,
+      page: () => SubjectManagementScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: addSubject,
+      page: () => const AddEditSubjectScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: editSubject,
+      page: () {
+        final subject = Get.arguments;
+        return AddEditSubjectScreen(subject: subject);
+      },
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+
     // Admin Exam Type Management
     GetPage(
       name: adminExamType,

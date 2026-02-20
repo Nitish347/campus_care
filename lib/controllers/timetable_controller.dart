@@ -204,8 +204,7 @@ class TimetableController extends GetxController {
           timetableEntries.add({
             'period_number': periodNum,
             'teacher_id': period.teacherId.isNotEmpty ? period.teacherId : null,
-            'subject_id':
-                null, // TODO: Integrate subjects table - for now null to avoid FK constraint
+            'subject_id': period.subject.isNotEmpty ? period.subject : null,
             'day_of_week': day,
             'start_time': period.startTime,
             'end_time': period.endTime,
