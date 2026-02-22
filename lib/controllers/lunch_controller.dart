@@ -96,7 +96,8 @@ class LunchController extends GetxController {
       _existingLunchIds.clear();
 
       for (var record in lunchRecords) {
-        dynamic studentIdRaw = record['studentId'];
+        // Backend returns snake_case: student_id
+        dynamic studentIdRaw = record['student_id'] ?? record['studentId'];
         String? studentId;
 
         if (studentIdRaw is Map) {
@@ -107,10 +108,15 @@ class LunchController extends GetxController {
 
         if (studentId != null) {
           final status = record['status'] as String?;
-          final id = record['_id'] as String? ?? record['id'] as String?;
-          if (status != null && id != null) {
+          // D1/SQLite returns 'id'; handle both
+          final id = record['id'] as String? ?? record['_id'] as String?;
+
+          // Always apply status even if id is missing
+          if (status != null) {
             _lunchMap[studentId] = _parseLunchStatus(status);
-            _existingLunchIds[studentId] = id;
+            if (id != null) {
+              _existingLunchIds[studentId] = id;
+            }
           }
         }
       }
@@ -163,7 +169,6 @@ class LunchController extends GetxController {
     try {
       _isLoading.value = true;
 
-      final dateString = _formatDate(_selectedDate.value);
       final List<Map<String, dynamic>> bulkData = [];
       final List<Future> updateFutures = [];
 
@@ -171,30 +176,35 @@ class LunchController extends GetxController {
         final status = _lunchMap[student.id] ?? LunchStatus.notTaken;
         final existingId = _existingLunchIds[student.id];
 
-        // if (existingId != null) {
-        //   // Update existing lunch record
-        //   updateFutures.add(
-        //     _lunchService.updateLunch(
-        //       existingId,
-        //       {
-        //         'status': _getStatusString(status),
-        //         'date': dateString,
-        //         'markedBy': markedBy,
-        //       },
-        //     ),
-        //   );
-        // } else {
-          // Add to bulk create
+        if (existingId != null) {
+          // Update existing lunch record
+          updateFutures.add(
+            _lunchService.updateLunch(
+              existingId,
+              {
+                'status': _getStatusString(status),
+                'date': DateTime(_selectedDate.value.year,
+                            _selectedDate.value.month, _selectedDate.value.day)
+                        .millisecondsSinceEpoch ~/
+                    1000,
+                'marked_by': markedBy,
+              },
+            ),
+          );
+        } else {
+          // Add to bulk create with snake_case fields and unix timestamp date
           bulkData.add({
-            'teacherId': teacherId,
-            'studentId': student.id,
-            'date': dateString,
+            'student_id': student.id,
+            'date': DateTime(_selectedDate.value.year,
+                        _selectedDate.value.month, _selectedDate.value.day)
+                    .millisecondsSinceEpoch ~/
+                1000,
             'status': _getStatusString(status),
             'class': _selectedClass.value,
             'section': _selectedSection.value,
-            'markedBy': markedBy,
+            'marked_by': markedBy,
           });
-        // }
+        }
       }
 
       int successCount = 0;

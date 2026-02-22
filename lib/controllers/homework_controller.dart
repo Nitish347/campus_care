@@ -102,11 +102,13 @@ class HomeworkController extends GetxController {
         'title': homework.title,
         'description': homework.description,
         'subject': homework.subject,
-        'classId': homework.classId,
+        'class_id': homework.classId,
         'section': homework.section,
-        'dueDate': homework.dueDate.toIso8601String(),
+        'due_date': homework.dueDate.millisecondsSinceEpoch ~/ 1000,
         'priority': homework.priority,
-        if (homework.totalMarks != null) 'totalMarks': homework.totalMarks,
+        'assigned_students': '[]',
+        'attachments': '[]',
+        if (homework.totalMarks != null) 'total_marks': homework.totalMarks,
       };
 
       final createdHomework = await _apiService.createHomework(homeworkData);
@@ -145,11 +147,11 @@ class HomeworkController extends GetxController {
         'title': homework.title,
         'description': homework.description,
         'subject': homework.subject,
-        'classId': homework.classId,
+        'class_id': homework.classId,
         'section': homework.section,
-        'dueDate': homework.dueDate.toIso8601String(),
+        'due_date': homework.dueDate.millisecondsSinceEpoch ~/ 1000,
         'priority': homework.priority,
-        if (homework.totalMarks != null) 'totalMarks': homework.totalMarks,
+        if (homework.totalMarks != null) 'total_marks': homework.totalMarks,
       };
 
       final updatedHomework =

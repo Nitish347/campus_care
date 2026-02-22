@@ -17,10 +17,17 @@ class AttendanceApiService {
     if (section != null) queryParams['section'] = section;
     if (studentId != null) queryParams['studentId'] = studentId;
     if (date != null) {
-      // Backend expects startDate and endDate for date filtering
-      // Assuming date key is passed as YYYY-MM-DD
-      queryParams['startDate'] = '${date}T00:00:00.000Z';
-      queryParams['endDate'] = '${date}T23:59:59.999Z';
+      // Parse YYYY-MM-DD and build local midnight boundaries, then convert to UTC.
+      // This ensures the query window matches the timezone where the app is running,
+      // because attendance 'date' is stored as local midnight unix seconds.
+      final parts = date.split('-');
+      final year = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final day = int.parse(parts[2]);
+      final startLocal = DateTime(year, month, day, 0, 0, 0);
+      final endLocal = DateTime(year, month, day, 23, 59, 59, 999);
+      queryParams['startDate'] = startLocal.toUtc().toIso8601String();
+      queryParams['endDate'] = endLocal.toUtc().toIso8601String();
     }
 
     final response = await _apiClient.get(

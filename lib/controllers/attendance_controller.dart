@@ -115,10 +115,15 @@ class AttendanceController extends GetxController {
 
         if (studentId != null) {
           final status = record['status'] as String?;
-          final id = record['_id'] as String? ?? record['id'] as String?;
-          if (status != null && id != null) {
+          // D1/SQLite returns 'id'; MongoDB returns '_id' — handle both
+          final id = record['id'] as String? ?? record['_id'] as String?;
+
+          // Always apply status even if id is missing (so student isn't shown as absent)
+          if (status != null) {
             _attendanceMap[studentId] = _parseAttendanceStatus(status);
-            _existingAttendanceIds[studentId] = id;
+            if (id != null) {
+              _existingAttendanceIds[studentId] = id;
+            }
           }
         }
       }

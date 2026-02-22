@@ -13,13 +13,19 @@ class LunchApiService {
     String? date,
   }) async {
     final queryParams = <String, dynamic>{};
-    if (classId != null) queryParams['class'] = classId;
+    if (classId != null) queryParams['classId'] = classId;
     if (section != null) queryParams['section'] = section;
     if (studentId != null) queryParams['studentId'] = studentId;
     if (date != null) {
-      // Backend expects startDate and endDate for date filtering
-      queryParams['startDate'] = '${date}T00:00:00.000Z';
-      queryParams['endDate'] = '${date}T23:59:59.999Z';
+      // Parse YYYY-MM-DD as local date and convert to UTC for timezone-aware query
+      final parts = date.split('-');
+      final year = int.parse(parts[0]);
+      final month = int.parse(parts[1]);
+      final day = int.parse(parts[2]);
+      final startLocal = DateTime(year, month, day, 0, 0, 0);
+      final endLocal = DateTime(year, month, day, 23, 59, 59, 999);
+      queryParams['startDate'] = startLocal.toUtc().toIso8601String();
+      queryParams['endDate'] = endLocal.toUtc().toIso8601String();
     }
 
     final response = await _apiClient.get(

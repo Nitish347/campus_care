@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class HomeWorkModel {
   final String id;
   final String title;
@@ -30,22 +32,42 @@ class HomeWorkModel {
   });
 
   factory HomeWorkModel.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic val) {
+      if (val == null) return DateTime.now();
+      // D1 stores dates as unix seconds (int)
+      if (val is int) return DateTime.fromMillisecondsSinceEpoch(val * 1000);
+      if (val is String) return DateTime.tryParse(val) ?? DateTime.now();
+      return DateTime.now();
+    }
+
+    List<String> parseList(dynamic val) {
+      if (val == null) return [];
+      if (val is List) return List<String>.from(val);
+      if (val is String && val.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(val);
+          if (decoded is List) return List<String>.from(decoded);
+        } catch (_) {}
+      }
+      return [];
+    }
+
     return HomeWorkModel(
-      id: json['_id'] ?? json['id'] ?? '',
+      id: json['id'] ?? json['_id'] ?? '',
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       subject: json['subject'] ?? '',
-      teacherId: json['teacherId'] ?? '',
-      classId: json['classId'] ?? '',
+      // D1 snake_case with camelCase fallback
+      teacherId: json['teacher_id'] ?? json['teacherId'] ?? '',
+      classId: json['class_id'] ?? json['classId'] ?? '',
       section: json['section'] ?? '',
-      assignedStudents: List<String>.from(json['assignedStudents'] ?? []),
-      dueDate:
-          DateTime.parse(json['dueDate'] ?? DateTime.now().toIso8601String()),
-      createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      attachments: List<String>.from(json['attachments'] ?? []),
+      assignedStudents:
+          parseList(json['assigned_students'] ?? json['assignedStudents']),
+      dueDate: parseDate(json['due_date'] ?? json['dueDate']),
+      createdAt: parseDate(json['created_at'] ?? json['createdAt']),
+      attachments: parseList(json['attachments']),
       priority: json['priority'] ?? 'medium',
-      totalMarks: json['totalMarks']?.toDouble(),
+      totalMarks: (json['total_marks'] ?? json['totalMarks'])?.toDouble(),
     );
   }
 
@@ -55,15 +77,15 @@ class HomeWorkModel {
       'title': title,
       'description': description,
       'subject': subject,
-      'teacherId': teacherId,
-      'classId': classId,
+      'teacher_id': teacherId,
+      'class_id': classId,
       'section': section,
-      'assignedStudents': assignedStudents,
-      'dueDate': dueDate.toIso8601String(),
-      'createdAt': createdAt.toIso8601String(),
-      'attachments': attachments,
+      'assigned_students': jsonEncode(assignedStudents),
+      'due_date': dueDate.millisecondsSinceEpoch ~/ 1000,
+      'created_at': createdAt.millisecondsSinceEpoch ~/ 1000,
+      'attachments': jsonEncode(attachments),
       'priority': priority,
-      'totalMarks': totalMarks,
+      if (totalMarks != null) 'total_marks': totalMarks,
     };
   }
 
