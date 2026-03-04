@@ -50,8 +50,9 @@ class HomeworkSubmissionController extends GetxController {
       isLoading.value = true;
 
       final updateData = {
-        'marksObtained': marksObtained,
+        'marks_obtained': marksObtained,
         'status': 'graded',
+        'graded_at': DateTime.now().millisecondsSinceEpoch ~/ 1000,
         if (feedback != null && feedback.isNotEmpty) 'feedback': feedback,
       };
 

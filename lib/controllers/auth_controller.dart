@@ -10,6 +10,7 @@ import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
 
 import 'package:campus_care/services/auth_service.dart';
+import 'package:campus_care/services/admin_service.dart';
 
 class AuthController extends GetxController {
   final _isLoading = false.obs;
@@ -263,7 +264,8 @@ class AuthController extends GetxController {
     try {
       _isLoading.value = true;
 
-      final success = await AuthService.changePassword(oldPassword, newPassword);
+      final success =
+          await AuthService.changePassword(oldPassword, newPassword);
 
       if (success) {
         Get.snackbar(
@@ -295,43 +297,40 @@ class AuthController extends GetxController {
     }
   }
 
-  // Future<void> updateProfile(Map<String, dynamic> profileData) async {
-  //   try {
-  //     _isLoading.value = true;
-  //
-  //     final success = await AuthService.updateProfile(profileData);
-  //
-  //     if (success) {
-  //       _currentUser.value = AuthService.getCurrentUser();
-  //
-  //       Get.snackbar(
-  //         'Success',
-  //         'Profile updated successfully.',
-  //         backgroundColor: Colors.green,
-  //         colorText: Colors.white,
-  //         snackPosition: SnackPosition.TOP,
-  //       );
-  //     } else {
-  //       Get.snackbar(
-  //         'Error',
-  //         'Failed to update profile.',
-  //         backgroundColor: Colors.red,
-  //         colorText: Colors.white,
-  //         snackPosition: SnackPosition.TOP,
-  //       );
-  //     }
-  //   } catch (e) {
-  //     Get.snackbar(
-  //       'Error',
-  //       'An error occurred while updating profile.',
-  //       backgroundColor: Colors.red,
-  //       colorText: Colors.white,
-  //       snackPosition: SnackPosition.TOP,
-  //     );
-  //   } finally {
-  //     _isLoading.value = false;
-  //   }
-  // }
+  Future<void> updateAdminProfile(Admin updatedAdmin) async {
+    try {
+      _isLoading.value = true;
+      final success = await AdminService.updateAdmin(updatedAdmin);
+      if (success) {
+        _currentAdmin.value = updatedAdmin;
+        Get.snackbar(
+          'Success',
+          'Profile updated successfully.',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+      } else {
+        Get.snackbar(
+          'Error',
+          'Failed to update profile.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'An error occurred while updating profile.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+    } finally {
+      _isLoading.value = false;
+    }
+  }
 
   // Demo login methods for quick testing
   void loginAsSuperAdmin() {
@@ -386,7 +385,8 @@ class AuthController extends GetxController {
 
   bool isAdmin() {
     if (currentRole != null) {
-      if (currentRole == AppConstants.roleAdmin || currentRole == AppConstants.roleSuperAdmin) {
+      if (currentRole == AppConstants.roleAdmin ||
+          currentRole == AppConstants.roleSuperAdmin) {
         return true;
       } else {
         return false;

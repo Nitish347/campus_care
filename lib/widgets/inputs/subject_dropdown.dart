@@ -46,24 +46,36 @@ class _SubjectDropdownState extends State<SubjectDropdown> {
     super.didUpdateWidget(oldWidget);
     // Update selected subject if initial value changes
     if (widget.initialValue != oldWidget.initialValue) {
-      setState(() {
-        selectedSubject = widget.initialValue;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            selectedSubject = widget.initialValue;
+          });
+        }
       });
     }
-    // Reset if class changes
+    // Reset selection if class changes
     if (widget.classId != oldWidget.classId) {
-      setState(() {
-        selectedSubject = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            selectedSubject = null;
+          });
+          widget.onChanged(null);
+        }
       });
-      widget.onChanged(null);
     }
   }
 
   List<Subject> _getFilteredSubjects() {
-    if (widget.classId != null && widget.classId!.isNotEmpty) {
-      return _subjectController.getSubjectsByClass(widget.classId!);
-    }
-    return _subjectController.subjects;
+    final List<Subject> all =
+        widget.classId != null && widget.classId!.isNotEmpty
+            ? _subjectController.getSubjectsByClass(widget.classId!)
+            : _subjectController.subjects;
+
+    // Deduplicate by subject name to avoid DropdownButton assertion crash
+    final seen = <String>{};
+    return all.where((s) => seen.add(s.name)).toList();
   }
 
   @override
@@ -96,8 +108,9 @@ class _SubjectDropdownState extends State<SubjectDropdown> {
                 ),
               ]
             : filteredSubjects.map((subject) {
+                // Use subject NAME as value (exam stores subject name, not ID)
                 return DropdownMenuItem(
-                  value: subject.id,
+                  value: subject.name,
                   child: Text('${subject.name} (${subject.code})'),
                 );
               }).toList(),

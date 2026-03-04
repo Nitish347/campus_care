@@ -1,7 +1,6 @@
 import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:campus_care/models/exam_type_model.dart';
 import 'package:campus_care/controllers/exam_type_controller.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
@@ -46,10 +45,8 @@ class AdminExamTypeScreen extends StatelessWidget {
           // Summary Header
           Obx(() {
             final examTypes = controller.examTypeList;
-            final ongoing =
-                examTypes.where((e) => e.isOngoing && e.isActive).length;
-            final upcoming =
-                examTypes.where((e) => e.isUpcoming && e.isActive).length;
+            final active = examTypes.where((e) => e.isActive).length;
+            final inactive = examTypes.length - active;
 
             return SummaryCard(
               child: Row(
@@ -69,10 +66,10 @@ class AdminExamTypeScreen extends StatelessWidget {
                   ),
                   _buildSummaryItem(
                     theme,
-                    Icons.pending_actions,
-                    '$ongoing',
-                    'Ongoing',
-                    Colors.orange,
+                    Icons.check_circle,
+                    '$active',
+                    'Active',
+                    Colors.green,
                   ),
                   Container(
                     width: 1,
@@ -81,10 +78,10 @@ class AdminExamTypeScreen extends StatelessWidget {
                   ),
                   _buildSummaryItem(
                     theme,
-                    Icons.upcoming,
-                    '$upcoming',
-                    'Upcoming',
-                    Colors.blue,
+                    Icons.cancel,
+                    '$inactive',
+                    'Inactive',
+                    Colors.grey,
                   ),
                 ],
               ),
@@ -208,80 +205,34 @@ class AdminExamTypeScreen extends StatelessWidget {
                               ],
                               const SizedBox(height: 16),
 
-                              // Date Range Row
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: theme
-                                      .colorScheme.surfaceContainerHighest
-                                      .withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_month,
-                                      size: 20,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Start Date',
-                                            style: theme.textTheme.labelSmall
-                                                ?.copyWith(
-                                              color: theme
-                                                  .colorScheme.onSurfaceVariant,
-                                            ),
-                                          ),
-                                          Text(
-                                            DateFormat('MMM dd, yyyy')
-                                                .format(examType.startDate),
-                                            style: theme.textTheme.bodyMedium
-                                                ?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
+                              // Weightage Row
+                              if (examType.weightage != null)
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: theme
+                                        .colorScheme.surfaceContainerHighest
+                                        .withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.percent,
+                                        size: 20,
+                                        color: theme.colorScheme.primary,
                                       ),
-                                    ),
-                                    Icon(
-                                      Icons.arrow_forward,
-                                      size: 16,
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'End Date',
-                                            style: theme.textTheme.labelSmall
-                                                ?.copyWith(
-                                              color: theme
-                                                  .colorScheme.onSurfaceVariant,
-                                            ),
-                                          ),
-                                          Text(
-                                            DateFormat('MMM dd, yyyy')
-                                                .format(examType.endDate),
-                                            style: theme.textTheme.bodyMedium
-                                                ?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Weightage: ${examType.weightage}%',
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
                               const SizedBox(height: 12),
 
                               // Action Buttons
@@ -352,9 +303,7 @@ class AdminExamTypeScreen extends StatelessWidget {
   }
 
   Color _getStatusColor(ExamTypeModel examType) {
-    if (examType.isOngoing) return Colors.orange;
-    if (examType.isUpcoming) return Colors.blue;
-    return Colors.green;
+    return examType.isActive ? Colors.green : Colors.grey;
   }
 
   void _showExamTypeDetails(BuildContext context, ExamTypeModel examType,
@@ -427,28 +376,18 @@ class AdminExamTypeScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Details
-            Row(
-              children: [
-                Icon(Icons.event, size: 20, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  'Start Date: ${DateFormat('EEEE, MMMM dd, yyyy').format(examType.startDate)}',
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.event_available,
-                    size: 20, color: theme.colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  'End Date: ${DateFormat('EEEE, MMMM dd, yyyy').format(examType.endDate)}',
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            ),
+            if (examType.weightage != null)
+              Row(
+                children: [
+                  Icon(Icons.percent,
+                      size: 20, color: theme.colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Weightage: ${examType.weightage}%',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
             const SizedBox(height: 12),
             Row(
               children: [

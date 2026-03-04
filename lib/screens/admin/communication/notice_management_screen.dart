@@ -32,12 +32,12 @@ class NoticeManagementScreen extends GetView<NoticeController> {
             onPressed: () => controller.loadNotices(),
             tooltip: 'Refresh',
           ),
-          if(authController.isAdmin())
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddEditDialog(context, null),
-            tooltip: 'Add Notice',
-          ),
+          if (authController.isAdmin())
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _showAddEditDialog(context, null),
+              tooltip: 'Add Notice',
+            ),
         ],
       ),
       body: Column(
@@ -90,7 +90,8 @@ class NoticeManagementScreen extends GetView<NoticeController> {
                   itemCount: controller.notices.length,
                   itemBuilder: (context, index) {
                     final notice = controller.notices[index];
-                    return _buildNoticeCard(context, theme, notice,authController.isAdmin());
+                    return _buildNoticeCard(
+                        context, theme, notice, authController.isAdmin());
                   },
                 ),
               );
@@ -211,38 +212,38 @@ class NoticeManagementScreen extends GetView<NoticeController> {
                   ],
                 ),
               ),
-              if(isAdmin)
-              PopupMenuButton(
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit),
-                        SizedBox(width: 8),
-                        Text('Edit'),
-                      ],
+              if (isAdmin)
+                PopupMenuButton(
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit),
+                          SizedBox(width: 8),
+                          Text('Edit'),
+                        ],
+                      ),
                     ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Delete', style: TextStyle(color: Colors.red)),
-                      ],
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Delete', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-                onSelected: (value) {
-                  if (value == 'edit') {
-                    _showAddEditDialog(context, notice);
-                  } else if (value == 'delete') {
-                    _showDeleteDialog(context, notice);
-                  }
-                },
-              ),
+                  ],
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _showAddEditDialog(context, notice);
+                    } else if (value == 'delete') {
+                      _showDeleteDialog(context, notice);
+                    }
+                  },
+                ),
             ],
           ),
         ),
@@ -320,7 +321,7 @@ class NoticeManagementScreen extends GetView<NoticeController> {
     final titleController = TextEditingController(text: notice?.title ?? '');
     final descriptionController =
         TextEditingController(text: notice?.description ?? '');
-    String selectedPriority = notice?.priority ?? 'medium';
+    String selectedPriority = notice?.priority ?? 'normal';
     DateTime? expiryDate = notice?.expiryDate;
 
     final formKey = GlobalKey<FormState>();
@@ -389,8 +390,8 @@ class NoticeManagementScreen extends GetView<NoticeController> {
                                     value: 'high',
                                     child: Text('High Priority')),
                                 DropdownMenuItem(
-                                    value: 'medium',
-                                    child: Text('Medium Priority')),
+                                    value: 'normal',
+                                    child: Text('Normal Priority')),
                                 DropdownMenuItem(
                                     value: 'low', child: Text('Low Priority')),
                               ],

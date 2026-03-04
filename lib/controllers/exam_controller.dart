@@ -115,23 +115,22 @@ class ExamController extends GetxController {
     };
   }
 
-  // Add new exam
+  // Add new exam — sends snake_case to match D1 schema
   Future<void> addExam(ExamModel exam) async {
     try {
       isLoading.value = true;
 
       final examData = {
-        'examTypeId': exam.examTypeId,
+        'exam_type_id': exam.examTypeId,
         'name': exam.name,
         'type': exam.type,
         'subject': exam.subject,
-        'classId': exam.classId,
+        'class_id': exam.classId,
         'section': exam.section,
-        'examDate': exam.examDate.toIso8601String(),
-        'startTime':
-            '${exam.examDate.hour.toString().padLeft(2, '0')}:${exam.examDate.minute.toString().padLeft(2, '0')}',
-        'duration': exam.durationMinutes,
-        'totalMarks': exam.totalMarks,
+        'total_marks': exam.totalMarks.toInt(),
+        'exam_date': exam.examDate.millisecondsSinceEpoch ~/ 1000,
+        if (exam.durationMinutes != null)
+          'duration_minutes': exam.durationMinutes,
         if (exam.instructions != null) 'instructions': exam.instructions,
         if (exam.syllabus != null) 'syllabus': exam.syllabus,
       };
@@ -163,23 +162,22 @@ class ExamController extends GetxController {
     }
   }
 
-  // Update exam
+  // Update exam — sends snake_case to match D1 schema
   Future<void> updateExam(ExamModel exam) async {
     try {
       isLoading.value = true;
 
       final examData = {
-        'examTypeId': exam.examTypeId,
+        'exam_type_id': exam.examTypeId,
         'name': exam.name,
         'type': exam.type,
         'subject': exam.subject,
-        'classId': exam.classId,
+        'class_id': exam.classId,
         'section': exam.section,
-        'examDate': exam.examDate.toIso8601String(),
-        'startTime':
-            '${exam.examDate.hour.toString().padLeft(2, '0')}:${exam.examDate.minute.toString().padLeft(2, '0')}',
-        'duration': exam.durationMinutes,
-        'totalMarks': exam.totalMarks,
+        'total_marks': exam.totalMarks.toInt(),
+        'exam_date': exam.examDate.millisecondsSinceEpoch ~/ 1000,
+        if (exam.durationMinutes != null)
+          'duration_minutes': exam.durationMinutes,
         if (exam.instructions != null) 'instructions': exam.instructions,
         if (exam.syllabus != null) 'syllabus': exam.syllabus,
       };

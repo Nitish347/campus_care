@@ -49,17 +49,17 @@ class ExamTypeController extends GetxController {
     }
   }
 
-  // Add new exam type
+  // Add new exam type — sends snake_case to match D1 schema
   Future<void> addExamType(ExamTypeModel examType) async {
     try {
       isLoading.value = true;
 
       final examTypeData = {
         'name': examType.name,
-        if (examType.description != null) 'description': examType.description,
-        'startDate': examType.startDate.toIso8601String(),
-        'endDate': examType.endDate.toIso8601String(),
-        'isActive': examType.isActive,
+        if (examType.description != null && examType.description!.isNotEmpty)
+          'description': examType.description,
+        if (examType.weightage != null) 'weightage': examType.weightage,
+        'is_active': examType.isActive ? 1 : 0,
       };
 
       final createdExamType = await _apiService.createExamType(examTypeData);
@@ -67,7 +67,7 @@ class ExamTypeController extends GetxController {
 
       Get.snackbar(
         'Success',
-        'Exam type created successfully',
+        'Exam schedule created successfully',
         snackPosition: SnackPosition.BOTTOM,
       );
     } on ApiException catch (e) {
@@ -80,7 +80,7 @@ class ExamTypeController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Failed to create exam type: $e',
+        'Failed to create exam schedule: $e',
         snackPosition: SnackPosition.BOTTOM,
       );
       rethrow;
@@ -89,17 +89,17 @@ class ExamTypeController extends GetxController {
     }
   }
 
-  // Update exam type
+  // Update exam type — sends snake_case to match D1 schema
   Future<void> updateExamType(ExamTypeModel examType) async {
     try {
       isLoading.value = true;
 
       final examTypeData = {
         'name': examType.name,
-        if (examType.description != null) 'description': examType.description,
-        'startDate': examType.startDate.toIso8601String(),
-        'endDate': examType.endDate.toIso8601String(),
-        'isActive': examType.isActive,
+        if (examType.description != null && examType.description!.isNotEmpty)
+          'description': examType.description,
+        if (examType.weightage != null) 'weightage': examType.weightage,
+        'is_active': examType.isActive ? 1 : 0,
       };
 
       final updatedExamType =
@@ -112,7 +112,7 @@ class ExamTypeController extends GetxController {
 
       Get.snackbar(
         'Success',
-        'Exam type updated successfully',
+        'Exam schedule updated successfully',
         snackPosition: SnackPosition.BOTTOM,
       );
     } on ApiException catch (e) {
@@ -125,7 +125,7 @@ class ExamTypeController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Failed to update exam type: $e',
+        'Failed to update exam schedule: $e',
         snackPosition: SnackPosition.BOTTOM,
       );
       rethrow;
@@ -143,7 +143,7 @@ class ExamTypeController extends GetxController {
 
       Get.snackbar(
         'Success',
-        'Exam type deleted successfully',
+        'Exam schedule deleted successfully',
         snackPosition: SnackPosition.BOTTOM,
       );
     } on ApiException catch (e) {
@@ -156,7 +156,7 @@ class ExamTypeController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'Error',
-        'Failed to delete exam type: $e',
+        'Failed to delete exam schedule: $e',
         snackPosition: SnackPosition.BOTTOM,
       );
       rethrow;

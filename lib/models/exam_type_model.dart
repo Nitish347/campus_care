@@ -2,8 +2,7 @@ class ExamTypeModel {
   final String id;
   final String name;
   final String? description;
-  final DateTime startDate;
-  final DateTime endDate;
+  final int? weightage; // percentage
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -12,27 +11,28 @@ class ExamTypeModel {
     required this.id,
     required this.name,
     this.description,
-    required this.startDate,
-    required this.endDate,
+    this.weightage,
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
   });
 
   factory ExamTypeModel.fromJson(Map<String, dynamic> json) {
+    DateTime parseTs(dynamic raw) {
+      if (raw == null) return DateTime.now();
+      if (raw is int) return DateTime.fromMillisecondsSinceEpoch(raw * 1000);
+      if (raw is String) return DateTime.tryParse(raw) ?? DateTime.now();
+      return DateTime.now();
+    }
+
     return ExamTypeModel(
-      id: json['_id'] ?? json['id'] ?? '',
+      id: json['id'] ?? json['_id'] ?? '',
       name: json['name'] ?? '',
       description: json['description'],
-      startDate:
-          DateTime.parse(json['startDate'] ?? DateTime.now().toIso8601String()),
-      endDate:
-          DateTime.parse(json['endDate'] ?? DateTime.now().toIso8601String()),
-      isActive: json['isActive'] ?? true,
-      createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+      weightage: json['weightage'] as int?,
+      isActive: (json['is_active'] ?? json['isActive'] ?? 1) == 1,
+      createdAt: parseTs(json['created_at'] ?? json['createdAt']),
+      updatedAt: parseTs(json['updated_at'] ?? json['updatedAt']),
     );
   }
 
@@ -41,11 +41,10 @@ class ExamTypeModel {
       'id': id,
       'name': name,
       'description': description,
-      'startDate': startDate.toIso8601String(),
-      'endDate': endDate.toIso8601String(),
-      'isActive': isActive,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      if (weightage != null) 'weightage': weightage,
+      'is_active': isActive ? 1 : 0,
+      'created_at': createdAt.millisecondsSinceEpoch ~/ 1000,
+      'updated_at': updatedAt.millisecondsSinceEpoch ~/ 1000,
     };
   }
 
@@ -53,8 +52,7 @@ class ExamTypeModel {
     String? id,
     String? name,
     String? description,
-    DateTime? startDate,
-    DateTime? endDate,
+    int? weightage,
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -63,27 +61,13 @@ class ExamTypeModel {
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
-      startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
+      weightage: weightage ?? this.weightage,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
-  // Helper getters
-  bool get isOngoing {
-    final now = DateTime.now();
-    return now.isAfter(startDate) && now.isBefore(endDate);
-  }
-
-  bool get isUpcoming => DateTime.now().isBefore(startDate);
-
-  bool get isCompleted => DateTime.now().isAfter(endDate);
-
-  String get status {
-    if (isOngoing) return 'Ongoing';
-    if (isUpcoming) return 'Upcoming';
-    return 'Completed';
-  }
+  // Helper getter
+  String get status => isActive ? 'Active' : 'Inactive';
 }

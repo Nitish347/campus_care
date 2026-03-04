@@ -1,3 +1,4 @@
+import 'package:campus_care/models/homework_model.dart';
 import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -5,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
+import 'package:campus_care/controllers/homework_controller.dart';
 
 class StudentHomeworkScreen extends StatefulWidget {
   const StudentHomeworkScreen({super.key});
@@ -16,121 +18,21 @@ class StudentHomeworkScreen extends StatefulWidget {
 class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final HomeworkController _controller = Get.put(HomeworkController());
   String _selectedFilter = 'All';
   final List<String> _filters = [
     'All',
     'Mathematics',
     'Science',
     'English',
-    'History'
-  ];
-
-  // Enhanced static UI data with more details
-  static final _activeHomework = [
-    {
-      'id': '1',
-      'title': 'Math Assignment - Algebra',
-      'description':
-          'Complete exercises 1-20 from chapter 5. Focus on quadratic equations and factorization.',
-      'subject': 'Mathematics',
-      'dueDate': DateTime.now().add(const Duration(days: 3)),
-      'priority': 'high',
-      'progress': 0.6,
-      'totalQuestions': 20,
-      'completedQuestions': 12,
-      'attachments': 2,
-      'teacher': 'Mr. Brown',
-    },
-    {
-      'id': '2',
-      'title': 'Science Project - Photosynthesis',
-      'description':
-          'Create a detailed presentation on the photosynthesis process with diagrams.',
-      'subject': 'Science',
-      'dueDate': DateTime.now().add(const Duration(days: 7)),
-      'priority': 'medium',
-      'progress': 0.3,
-      'totalQuestions': 1,
-      'completedQuestions': 0,
-      'attachments': 1,
-      'teacher': 'Ms. Johnson',
-    },
-    {
-      'id': '3',
-      'title': 'English Essay - My Favorite Book',
-      'description':
-          'Write a 500-word essay about your favorite book and explain why you like it.',
-      'subject': 'English',
-      'dueDate': DateTime.now().add(const Duration(days: 5)),
-      'priority': 'medium',
-      'progress': 0.8,
-      'totalQuestions': 1,
-      'completedQuestions': 0,
-      'attachments': 0,
-      'teacher': 'Ms. Smith',
-    },
-    {
-      'id': '4',
-      'title': 'History Timeline',
-      'description': 'Create a timeline of major events in World War II.',
-      'subject': 'History',
-      'dueDate': DateTime.now().add(const Duration(days: 2)),
-      'priority': 'high',
-      'progress': 0.4,
-      'totalQuestions': 1,
-      'completedQuestions': 0,
-      'attachments': 3,
-      'teacher': 'Mr. Davis',
-    },
-  ];
-
-  static final _completedHomework = [
-    {
-      'id': '5',
-      'title': 'History Assignment - Ancient Civilizations',
-      'description':
-          'Complete chapter 3 questions about ancient civilizations.',
-      'subject': 'History',
-      'dueDate': DateTime.now().subtract(const Duration(days: 5)),
-      'completedDate': DateTime.now().subtract(const Duration(days: 6)),
-      'priority': 'medium',
-      'progress': 1.0,
-      'grade': 'A',
-      'teacher': 'Mr. Davis',
-    },
-    {
-      'id': '6',
-      'title': 'Math Quiz - Geometry',
-      'description': 'Complete the geometry quiz from chapter 4.',
-      'subject': 'Mathematics',
-      'dueDate': DateTime.now().subtract(const Duration(days: 3)),
-      'completedDate': DateTime.now().subtract(const Duration(days: 4)),
-      'priority': 'low',
-      'progress': 1.0,
-      'grade': 'B+',
-      'teacher': 'Mr. Brown',
-    },
-  ];
-
-  static final _overdueHomework = [
-    {
-      'id': '7',
-      'title': 'Geography Project - World Map',
-      'description': 'Create a detailed map of continents with labels.',
-      'subject': 'Geography',
-      'dueDate': DateTime.now().subtract(const Duration(days: 2)),
-      'priority': 'high',
-      'progress': 0.2,
-      'totalQuestions': 1,
-      'completedQuestions': 0,
-      'teacher': 'Ms. Anderson',
-    },
+    'History',
   ];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _controller.fetchHomework();
   }
 
   @override
@@ -139,7 +41,20 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
     super.dispose();
   }
 
-  Color _getPriorityColor(String priority, ThemeData theme) {
+  // Categorize homework
+  List<HomeWorkModel> get _activeHomework => _controller.homeworkList
+      .where((hw) =>
+          !hw.dueDate.isBefore(DateTime.now()) &&
+          (_selectedFilter == 'All' || hw.subject == _selectedFilter))
+      .toList();
+
+  List<HomeWorkModel> get _overdueHomework => _controller.homeworkList
+      .where((hw) =>
+          hw.dueDate.isBefore(DateTime.now()) &&
+          (_selectedFilter == 'All' || hw.subject == _selectedFilter))
+      .toList();
+
+  Color _getPriorityColor(String priority) {
     switch (priority.toLowerCase()) {
       case 'high':
         return Colors.red;
@@ -148,7 +63,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
       case 'low':
         return Colors.green;
       default:
-        return theme.colorScheme.primary;
+        return Colors.blue;
     }
   }
 
@@ -169,7 +84,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
     }
   }
 
-  Color _getSubjectColor(String subject, ThemeData theme) {
+  Color _getSubjectColor(String subject) {
     switch (subject.toLowerCase()) {
       case 'mathematics':
         return Colors.blue;
@@ -182,7 +97,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
       case 'geography':
         return Colors.teal;
       default:
-        return theme.colorScheme.primary;
+        return Colors.orange;
     }
   }
 
@@ -211,12 +126,6 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
     }
   }
 
-  List<Map<String, dynamic>> _filterHomework(
-      List<Map<String, dynamic>> homework) {
-    if (_selectedFilter == 'All') return homework;
-    return homework.where((hw) => hw['subject'] == _selectedFilter).toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -235,145 +144,162 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
             onPressed: () => Get.toNamed(AppRoutes.studentNotifications),
             tooltip: 'Notifications',
           ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => _controller.fetchHomework(),
+            tooltip: 'Refresh',
+          ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Obx(() => TabBar(
+                controller: _tabController,
+                tabs: [
+                  Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Active'),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${_activeHomework.length}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Submitted'),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            '0',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Tab(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Overdue'),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${_overdueHomework.length}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              )),
+        ),
+      ),
+      body: Obx(() {
+        if (_controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return Column(
+          children: [
+            // Summary Stats Card
+            SummaryCard(
               child: Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  const Text('Active'),
-                  const SizedBox(width: 8),
+                  _buildStatItem(
+                    context,
+                    Icons.assignment_outlined,
+                    '${_activeHomework.length}',
+                    'Active',
+                    theme.colorScheme.primary,
+                  ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${_filterHomework(_activeHomework).length}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                    ),
+                    width: 1,
+                    height: 40,
+                    color: theme.colorScheme.outline.withOpacity(0.3),
+                  ),
+                  _buildStatItem(
+                    context,
+                    Icons.warning_amber_outlined,
+                    '${_overdueHomework.length}',
+                    'Overdue',
+                    Colors.red,
+                  ),
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: theme.colorScheme.outline.withOpacity(0.3),
+                  ),
+                  _buildStatItem(
+                    context,
+                    Icons.assignment_late_outlined,
+                    '${_controller.homeworkList.length}',
+                    'Total',
+                    Colors.purple,
                   ),
                 ],
               ),
             ),
-            Tab(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+
+            // TabBarView
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
                 children: [
-                  const Text('Completed'),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${_filterHomework(_completedHomework).length}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
+                  _buildHomeworkList(context, _activeHomework, 'active'),
+                  // Submitted tab — placeholder until submission tracking is done
+                  EmptyState(
+                    icon: Icons.check_circle_outline,
+                    title: 'Submitted Homework',
+                    message: 'Submission tracking coming soon',
                   ),
-                ],
-              ),
-            ),
-            Tab(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Overdue'),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${_filterHomework(_overdueHomework).length}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                      ),
-                    ),
-                  ),
+                  _buildHomeworkList(context, _overdueHomework, 'overdue'),
                 ],
               ),
             ),
           ],
-        ),
-      ),
-      body: Column(
-        children: [
-          // Summary Stats Card
-          SummaryCard(child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem(
-                  context,
-                  Icons.assignment_outlined,
-                  '${_activeHomework.length}',
-                  'Active',
-                  theme.colorScheme.primary,
-                ),
-                Container(
-                  width: 1,
-                  height: 40,
-                  color: theme.colorScheme.outline.withOpacity(0.3),
-                ),
-                _buildStatItem(
-                  context,
-                  Icons.check_circle_outline,
-                  '${_completedHomework.length}',
-                  'Completed',
-                  Colors.green,
-                ),
-                Container(
-                  width: 1,
-                  height: 40,
-                  color: theme.colorScheme.outline.withOpacity(0.3),
-                ),
-                _buildStatItem(
-                  context,
-                  Icons.warning_amber_outlined,
-                  '${_overdueHomework.length}',
-                  'Overdue',
-                  Colors.red,
-                ),
-              ],
-            ),
-          ),
-
-          // TabBarView
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildHomeworkList(
-                    context, _filterHomework(_activeHomework), 'active'),
-                _buildHomeworkList(
-                    context, _filterHomework(_completedHomework), 'completed'),
-                _buildHomeworkList(
-                    context, _filterHomework(_overdueHomework), 'overdue'),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      }),
     );
   }
 
@@ -408,19 +334,14 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
 
   Widget _buildHomeworkList(
     BuildContext context,
-    List<Map<String, dynamic>> homework,
+    List<HomeWorkModel> homework,
     String type,
   ) {
-    final theme = Theme.of(context);
-
     if (homework.isEmpty) {
       String message;
       switch (type) {
         case 'overdue':
           message = 'Great! You have no overdue homework';
-          break;
-        case 'completed':
-          message = 'No completed homework yet';
           break;
         default:
           message = 'You\'re all caught up!';
@@ -435,11 +356,10 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
 
     return ResponsivePadding(
       child: ListView.builder(
-        padding: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.only(top: 8, bottom: 16),
         itemCount: homework.length,
         itemBuilder: (context, index) {
-          final hw = homework[index];
-          return _buildHomeworkCard(context, hw, type);
+          return _buildHomeworkCard(context, homework[index], type);
         },
       ),
     );
@@ -447,17 +367,13 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
 
   Widget _buildHomeworkCard(
     BuildContext context,
-    Map<String, dynamic> hw,
+    HomeWorkModel hw,
     String type,
   ) {
     final theme = Theme.of(context);
-    final dueDate = hw['dueDate'] as DateTime;
-    final subject = hw['subject'] as String;
-    final priority = hw['priority'] as String;
-    final subjectColor = _getSubjectColor(subject, theme);
-    final priorityColor = _getPriorityColor(priority, theme);
+    final subjectColor = _getSubjectColor(hw.subject);
+    final priorityColor = _getPriorityColor(hw.priority);
     final isOverdue = type == 'overdue';
-    final isCompleted = type == 'completed';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -483,7 +399,6 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                 // Header Row
                 Row(
                   children: [
-                    // Subject Icon
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
@@ -491,20 +406,18 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
-                        _getSubjectIcon(subject),
+                        _getSubjectIcon(hw.subject),
                         color: subjectColor,
                         size: 24,
                       ),
                     ),
                     const SizedBox(width: 12),
-
-                    // Title and Subject
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            hw['title'] as String,
+                            hw.title,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -516,15 +429,13 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: subjectColor.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  subject,
+                                  hw.subject,
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     color: subjectColor,
                                     fontWeight: FontWeight.bold,
@@ -532,61 +443,35 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              if (!isCompleted)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: priorityColor.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.flag,
-                                        size: 12,
-                                        color: priorityColor,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        priority.toUpperCase(),
-                                        style: theme.textTheme.labelSmall
-                                            ?.copyWith(
-                                          color: priorityColor,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: priorityColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.flag,
+                                        size: 12, color: priorityColor),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      hw.priority.toUpperCase(),
+                                      style:
+                                          theme.textTheme.labelSmall?.copyWith(
+                                        color: priorityColor,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ],
                       ),
                     ),
-
-                    // Grade badge for completed
-                    if (isCompleted && hw['grade'] != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          hw['grade'] as String,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: Colors.green,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
                   ],
                 ),
 
@@ -594,7 +479,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
 
                 // Description
                 Text(
-                  hw['description'] as String,
+                  hw.description,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -604,131 +489,48 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
 
                 const SizedBox(height: 12),
 
-                // Progress bar for active homework
-                if (!isCompleted && hw['progress'] != null)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Progress',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            '${((hw['progress'] as double) * 100).toInt()}%',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: subjectColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: hw['progress'] as double,
-                          backgroundColor:
-                              theme.colorScheme.surfaceContainerHighest,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(subjectColor),
-                          minHeight: 6,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
-
                 // Footer Row
                 Row(
                   children: [
-                    // Teacher
-                    if (hw['teacher'] != null)
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.person_outline,
-                              size: 16,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                hw['teacher'] as String,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
+                    Icon(
+                      Icons.class_,
+                      size: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${hw.classId} - ${hw.section}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
-
-                    // Attachments
-                    if (!isCompleted &&
-                        hw['attachments'] != null &&
-                        hw['attachments'] > 0)
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.attach_file,
-                            size: 16,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${hw['attachments']}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                        ],
-                      ),
-
-                    // Due date
+                    ),
+                    const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
+                          horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: isOverdue
                             ? Colors.red.withOpacity(0.1)
-                            : isCompleted
-                                ? Colors.green.withOpacity(0.1)
-                                : theme.colorScheme.surfaceContainerHighest,
+                            : theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            isCompleted ? Icons.check_circle : Icons.schedule,
+                            Icons.schedule,
                             size: 14,
                             color: isOverdue
                                 ? Colors.red
-                                : isCompleted
-                                    ? Colors.green
-                                    : theme.colorScheme.onSurfaceVariant,
+                                : theme.colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            isCompleted
-                                ? 'Completed'
-                                : _getTimeRemaining(dueDate),
+                            _getTimeRemaining(hw.dueDate),
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: isOverdue
                                   ? Colors.red
-                                  : isCompleted
-                                      ? Colors.green
-                                      : theme.colorScheme.onSurfaceVariant,
+                                  : theme.colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -787,13 +589,12 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
 
   void _showHomeworkDetails(
     BuildContext context,
-    Map<String, dynamic> hw,
+    HomeWorkModel hw,
     String type,
   ) {
     final theme = Theme.of(context);
-    final subject = hw['subject'] as String;
-    final subjectColor = _getSubjectColor(subject, theme);
-    final isCompleted = type == 'completed';
+    final subjectColor = _getSubjectColor(hw.subject);
+    final isOverdue = type == 'overdue';
 
     showModalBottomSheet(
       context: context,
@@ -802,9 +603,9 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
+        initialChildSize: 0.6,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
         expand: false,
         builder: (context, scrollController) => Container(
           padding: const EdgeInsets.all(24),
@@ -834,7 +635,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
-                      _getSubjectIcon(subject),
+                      _getSubjectIcon(hw.subject),
                       color: subjectColor,
                       size: 32,
                     ),
@@ -845,13 +646,13 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          hw['title'] as String,
+                          hw.title,
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          subject,
+                          hw.subject,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: subjectColor,
                             fontWeight: FontWeight.bold,
@@ -863,111 +664,70 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                 ],
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Description
               Text(
                 'Description',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              Text(
-                hw['description'] as String,
-                style: theme.textTheme.bodyMedium,
-              ),
+              Text(hw.description, style: theme.textTheme.bodyMedium),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-              // Details
-              _buildDetailRow(
-                context,
-                Icons.person_outline,
-                'Teacher',
-                hw['teacher'] as String,
-              ),
-              const SizedBox(height: 12),
+              // Due date
               _buildDetailRow(
                 context,
                 Icons.calendar_today,
                 'Due Date',
-                DateFormat('MMMM dd, yyyy - hh:mm a')
-                    .format(hw['dueDate'] as DateTime),
+                DateFormat('MMMM dd, yyyy - hh:mm a').format(hw.dueDate),
               ),
-              if (isCompleted) ...[
+              const SizedBox(height: 12),
+              _buildDetailRow(
+                context,
+                Icons.class_,
+                'Class',
+                '${hw.classId} - ${hw.section}',
+              ),
+              const SizedBox(height: 12),
+              _buildDetailRow(
+                context,
+                Icons.flag,
+                'Priority',
+                hw.priority.toUpperCase(),
+              ),
+              if (hw.totalMarks != null) ...[
                 const SizedBox(height: 12),
                 _buildDetailRow(
                   context,
-                  Icons.check_circle,
-                  'Completed On',
-                  DateFormat('MMMM dd, yyyy')
-                      .format(hw['completedDate'] as DateTime),
+                  Icons.grade,
+                  'Total Marks',
+                  '${hw.totalMarks}',
                 ),
-                if (hw['grade'] != null) ...[
-                  const SizedBox(height: 12),
-                  _buildDetailRow(
-                    context,
-                    Icons.grade,
-                    'Grade',
-                    hw['grade'] as String,
-                  ),
-                ],
               ],
-
-              if (!isCompleted) ...[
-                const SizedBox(height: 12),
-                _buildDetailRow(
-                  context,
-                  Icons.flag,
-                  'Priority',
-                  (hw['priority'] as String).toUpperCase(),
-                ),
-                if (hw['attachments'] != null && hw['attachments'] > 0) ...[
-                  const SizedBox(height: 12),
-                  _buildDetailRow(
-                    context,
-                    Icons.attach_file,
-                    'Attachments',
-                    '${hw['attachments']} file${hw['attachments'] > 1 ? 's' : ''}',
+              if (isOverdue)
+                Container(
+                  margin: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
-              ],
-
-              const SizedBox(height: 24),
-
-              // Action buttons
-              if (!isCompleted)
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          // TODO: Mark as complete
-                        },
-                        icon: const Icon(Icons.check_circle_outline),
-                        label: const Text('Mark Complete'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning, color: Colors.red, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'This homework is overdue!',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          // TODO: Start homework
-                        },
-                        icon: const Icon(Icons.edit_outlined),
-                        label: const Text('Start Work'),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.all(16),
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
             ],
           ),
@@ -986,11 +746,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: theme.colorScheme.primary,
-        ),
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -1005,9 +761,8 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
               const SizedBox(height: 2),
               Text(
                 value,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
               ),
             ],
           ),

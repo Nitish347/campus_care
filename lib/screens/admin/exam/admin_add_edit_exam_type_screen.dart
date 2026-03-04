@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:campus_care/models/exam_type_model.dart';
 import 'package:campus_care/controllers/exam_type_controller.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
@@ -20,9 +19,8 @@ class _AdminAddEditExamTypeScreenState
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _weightageController = TextEditingController();
 
-  DateTime _startDate = DateTime.now();
-  DateTime _endDate = DateTime.now().add(const Duration(days: 7));
   bool _isActive = true;
 
   bool get _isEditing => widget.examType != null;
@@ -33,8 +31,7 @@ class _AdminAddEditExamTypeScreenState
     if (_isEditing) {
       _nameController.text = widget.examType!.name;
       _descriptionController.text = widget.examType!.description ?? '';
-      _startDate = widget.examType!.startDate;
-      _endDate = widget.examType!.endDate;
+      _weightageController.text = widget.examType!.weightage?.toString() ?? '';
       _isActive = widget.examType!.isActive;
     }
   }
@@ -43,58 +40,12 @@ class _AdminAddEditExamTypeScreenState
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    _weightageController.dispose();
     super.dispose();
-  }
-
-  Future<void> _selectStartDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _startDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 730)),
-    );
-
-    if (date != null) {
-      setState(() {
-        _startDate = date;
-        // Ensure end date is after start date
-        if (_endDate.isBefore(_startDate)) {
-          _endDate = _startDate.add(const Duration(days: 7));
-        }
-      });
-    }
-  }
-
-  Future<void> _selectEndDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _endDate.isBefore(_startDate)
-          ? _startDate.add(const Duration(days: 1))
-          : _endDate,
-      firstDate: _startDate,
-      lastDate: DateTime.now().add(const Duration(days: 730)),
-    );
-
-    if (date != null) {
-      setState(() {
-        _endDate = date;
-      });
-    }
   }
 
   Future<void> _saveExamType() async {
     if (_formKey.currentState!.validate()) {
-      if (_endDate.isBefore(_startDate)) {
-        Get.snackbar(
-          'Error',
-          'End date must be after start date',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return;
-      }
-
       final controller = Get.find<ExamTypeController>();
 
       final examType = ExamTypeModel(
@@ -105,8 +56,9 @@ class _AdminAddEditExamTypeScreenState
         description: _descriptionController.text.trim().isNotEmpty
             ? _descriptionController.text.trim()
             : null,
-        startDate: _startDate,
-        endDate: _endDate,
+        weightage: _weightageController.text.trim().isNotEmpty
+            ? int.tryParse(_weightageController.text.trim())
+            : null,
         isActive: _isActive,
         createdAt: _isEditing ? widget.examType!.createdAt : DateTime.now(),
         updatedAt: DateTime.now(),
@@ -115,11 +67,10 @@ class _AdminAddEditExamTypeScreenState
       try {
         if (_isEditing) {
           await controller.updateExamType(examType);
-          Get.back();
         } else {
           await controller.addExamType(examType);
-          Get.back();
         }
+        Get.back();
       } catch (e) {
         // Error already shown by controller
       }
@@ -169,7 +120,7 @@ class _AdminAddEditExamTypeScreenState
             ),
             const SizedBox(height: 32),
 
-            // Exam Schedule Name
+            // Name
             CustomTextField(
               labelText: 'Exam Schedule Name *',
               hintText: 'e.g., Semester 1 Final Exam',
@@ -194,41 +145,24 @@ class _AdminAddEditExamTypeScreenState
               prefixIcon: const Icon(Icons.description),
             ),
 
-            const SizedBox(height: 24),
-
-            // Date Range Section
-            Text(
-              'Exam Period',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Start Date
-            CustomTextField(
-              labelText: 'Start Date *',
-              hintText: 'Select start date',
-              controller: TextEditingController(
-                text: DateFormat('EEEE, MMMM dd, yyyy').format(_startDate),
-              ),
-              readOnly: true,
-              prefixIcon: const Icon(Icons.event),
-              onTap: _selectStartDate,
-            ),
-
             const SizedBox(height: 16),
 
-            // End Date
+            // Weightage
             CustomTextField(
-              labelText: 'End Date *',
-              hintText: 'Select end date',
-              controller: TextEditingController(
-                text: DateFormat('EEEE, MMMM dd, yyyy').format(_endDate),
-              ),
-              readOnly: true,
-              prefixIcon: const Icon(Icons.event_available),
-              onTap: _selectEndDate,
+              labelText: 'Weightage % (Optional)',
+              hintText: 'e.g., 30',
+              controller: _weightageController,
+              keyboardType: TextInputType.number,
+              prefixIcon: const Icon(Icons.percent),
+              validator: (value) {
+                if (value != null && value.trim().isNotEmpty) {
+                  final v = int.tryParse(value.trim());
+                  if (v == null || v < 0 || v > 100) {
+                    return 'Must be 0–100';
+                  }
+                }
+                return null;
+              },
             ),
 
             const SizedBox(height: 24),

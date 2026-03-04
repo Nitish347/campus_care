@@ -23,8 +23,6 @@ class StatCard extends StatelessWidget {
     final theme = Theme.of(context);
     final cardColor = color ?? theme.colorScheme.primary;
 
-
-
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -46,15 +44,16 @@ class StatCard extends StatelessWidget {
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: cardColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
@@ -62,14 +61,14 @@ class StatCard extends StatelessWidget {
                       child: Icon(
                         icon,
                         color: cardColor,
-                        size: 24,
+                        size: 20,
                       ),
                     ),
                     if (change != null)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: 6,
+                          vertical: 3,
                         ),
                         decoration: BoxDecoration(
                           color: (isPositiveChange ? Colors.green : Colors.red)
@@ -83,15 +82,19 @@ class StatCard extends StatelessWidget {
                               isPositiveChange
                                   ? Icons.arrow_upward
                                   : Icons.arrow_downward,
-                              size: 14,
-                              color: isPositiveChange ? Colors.green : Colors.red,
+                              size: 12,
+                              color:
+                                  isPositiveChange ? Colors.green : Colors.red,
                             ),
                             const SizedBox(width: 2),
                             Text(
                               change!,
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: isPositiveChange ? Colors.green : Colors.red,
+                                color: isPositiveChange
+                                    ? Colors.green
+                                    : Colors.red,
                                 fontWeight: FontWeight.w600,
+                                fontSize: 10,
                               ),
                             ),
                           ],
@@ -99,20 +102,27 @@ class StatCard extends StatelessWidget {
                       ),
                   ],
                 ),
-                const Spacer(),
-                Text(
-                  value,
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: cardColor,
+                const SizedBox(height: 10),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: cardColor,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   title,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 11,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ],
             ),

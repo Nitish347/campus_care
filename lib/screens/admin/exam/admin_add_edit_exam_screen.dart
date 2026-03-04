@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:campus_care/models/exam_model.dart';
 import 'package:campus_care/controllers/exam_controller.dart';
 import 'package:campus_care/controllers/exam_type_controller.dart';
+import 'package:campus_care/controllers/class_controller.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 import 'package:campus_care/widgets/inputs/subject_dropdown.dart';
@@ -393,12 +394,19 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
               color: theme.colorScheme.primaryContainer.withOpacity(0.3),
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Class: ${widget.classId} - Section ${widget.section}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: Builder(builder: (_) {
+                  final classCtrl = Get.find<ClassController>();
+                  final cls = classCtrl.classes.firstWhereOrNull(
+                    (c) => c.id == widget.classId,
+                  );
+                  final className = cls?.name ?? widget.classId;
+                  return Text(
+                    'Class: $className - Section ${widget.section}',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  );
+                }),
               ),
             ),
 
@@ -559,13 +567,20 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
                     Icon(Icons.class_, color: theme.colorScheme.primary),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        'Class ${widget.classId} - Section ${widget.section}',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
+                      child: Builder(builder: (_) {
+                        final classCtrl = Get.find<ClassController>();
+                        final cls = classCtrl.classes.firstWhereOrNull(
+                          (c) => c.id == widget.classId,
+                        );
+                        final className = cls?.name ?? widget.classId;
+                        return Text(
+                          'Class $className - Section ${widget.section}',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        );
+                      }),
                     ),
                   ],
                 ),

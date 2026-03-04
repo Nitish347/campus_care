@@ -1,10 +1,9 @@
-import 'package:campus_care/widgets/buttons/primary_button.dart';
-import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:campus_care/models/homework_model.dart';
+import 'package:campus_care/controllers/homework_controller.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 
@@ -21,9 +20,13 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _totalMarksController = TextEditingController();
 
   String? _selectedSubject;
+  String _selectedClass = '';
+  String _selectedSection = '';
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
+  String _selectedPriority = 'medium';
 
   final List<String> _subjects = [
     'Mathematics',
@@ -32,6 +35,8 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
     'History',
     'Computer Science',
   ];
+
+  final List<String> _priorities = ['low', 'medium', 'high'];
 
   bool get _isEditing => widget.homework != null;
 
@@ -43,6 +48,13 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
       _descriptionController.text = widget.homework!.description;
       _selectedSubject = widget.homework!.subject;
       _dueDate = widget.homework!.dueDate;
+      _selectedClass = widget.homework!.classId;
+      _selectedSection = widget.homework!.section;
+      _selectedPriority = widget.homework!.priority;
+      if (widget.homework!.totalMarks != null) {
+        _totalMarksController.text =
+            widget.homework!.totalMarks!.toStringAsFixed(0);
+      }
     }
   }
 
@@ -50,6 +62,7 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _totalMarksController.dispose();
     super.dispose();
   }
 
@@ -61,7 +74,7 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
 
-    if (date != null) {
+    if (date != null && mounted) {
       final time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(_dueDate),
@@ -81,19 +94,59 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
     }
   }
 
-  void _saveHomework() {
-    if (_formKey.currentState!.validate()) {
-      // TODO: Save homework to backend/storage
-      Get.back();
+  Future<void> _saveHomework() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedClass.isEmpty) {
       Get.snackbar(
-        'Success',
-        _isEditing
-            ? 'Homework updated successfully'
-            : 'Homework added successfully',
+        'Validation Error',
+        'Please select a class',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.red,
         colorText: Colors.white,
       );
+      return;
+    }
+
+    if (_selectedSection.isEmpty) {
+      Get.snackbar(
+        'Validation Error',
+        'Please select a section',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final controller = Get.find<HomeworkController>();
+
+    final homework = HomeWorkModel(
+      id: _isEditing ? widget.homework!.id : '',
+      title: _titleController.text.trim(),
+      description: _descriptionController.text.trim(),
+      subject: _selectedSubject!,
+      teacherId: _isEditing ? widget.homework!.teacherId : '',
+      classId: _selectedClass,
+      section: _selectedSection,
+      assignedStudents: _isEditing ? widget.homework!.assignedStudents : [],
+      dueDate: _dueDate,
+      createdAt: _isEditing ? widget.homework!.createdAt : DateTime.now(),
+      priority: _selectedPriority,
+      totalMarks: _totalMarksController.text.isNotEmpty
+          ? double.tryParse(_totalMarksController.text.trim())
+          : null,
+    );
+
+    try {
+      if (_isEditing) {
+        await controller.updateHomework(homework);
+      } else {
+        await controller.addHomework(homework);
+      }
+      if (mounted) Get.back();
+    } catch (_) {
+      // Error snackbar is shown in the controller
     }
   }
 
@@ -130,13 +183,21 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
                 ),
               ],
             ),
-            SizedBox(
-              height: 10,
-            ),
+            const SizedBox(height: 10),
+
+            // Class/Section Dropdown
             ClassSectionDropDown(
               padding: 0,
-              onChangedClass: (String classId) {},
-              onChangedSection: (String classId) {},
+              onChangedClass: (String classId) {
+                setState(() {
+                  _selectedClass = classId;
+                });
+              },
+              onChangedSection: (String section) {
+                setState(() {
+                  _selectedSection = section;
+                });
+              },
             ),
 
             const SizedBox(height: 24),
@@ -200,6 +261,28 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
 
             const SizedBox(height: 16),
 
+            // Priority
+            CustomDropdown<String>(
+              labelText: 'Priority',
+              value: _selectedPriority,
+              prefixIcon: const Icon(Icons.flag),
+              items: _priorities
+                  .map((p) => DropdownMenuItem(
+                        value: p,
+                        child: Text(p[0].toUpperCase() + p.substring(1)),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedPriority = value;
+                  });
+                }
+              },
+            ),
+
+            const SizedBox(height: 16),
+
             // Due Date
             CustomTextField(
               labelText: 'Due Date *',
@@ -212,15 +295,22 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
               prefixIcon: const Icon(Icons.calendar_today),
               onTap: _selectDueDate,
             ),
+
             const SizedBox(height: 16),
+
+            // Total Marks
             CustomTextField(
-              labelText: 'Total Marks *',
-              hintText: 'Enter total marks',
+              labelText: 'Total Marks',
+              hintText: 'Enter total marks (optional)',
+              controller: _totalMarksController,
               keyboardType: TextInputType.number,
               prefixIcon: const Icon(Icons.grade),
               validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter total marks';
+                if (value != null && value.isNotEmpty) {
+                  final parsed = double.tryParse(value);
+                  if (parsed == null || parsed <= 0) {
+                    return 'Enter a valid number greater than 0';
+                  }
                 }
                 return null;
               },
@@ -229,19 +319,31 @@ class _AddEditHomeworkScreenState extends State<AddEditHomeworkScreen> {
             const SizedBox(height: 32),
 
             // Save Button
-            SizedBox(
-              height: 50,
-              child: FilledButton.icon(
-                onPressed: _saveHomework,
-                icon: Icon(_isEditing ? Icons.update : Icons.add),
-                label: Text(_isEditing ? 'Update Homework' : 'Add Homework'),
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            Obx(() {
+              final controller = Get.find<HomeworkController>();
+              return SizedBox(
+                height: 50,
+                child: FilledButton.icon(
+                  onPressed: controller.isLoading.value ? null : _saveHomework,
+                  icon: controller.isLoading.value
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Icon(_isEditing ? Icons.update : Icons.add),
+                  label: Text(_isEditing ? 'Update Homework' : 'Add Homework'),
+                  style: FilledButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-              ),
-            ),
+              );
+            }),
           ],
         ),
       ),

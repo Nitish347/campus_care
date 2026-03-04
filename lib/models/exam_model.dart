@@ -36,47 +36,60 @@ class ExamModel {
   });
 
   factory ExamModel.fromJson(Map<String, dynamic> json) {
+    // exam_date comes as Unix timestamp (int) from D1
+    DateTime parseExamDate(dynamic raw) {
+      if (raw == null) return DateTime.now();
+      if (raw is int) return DateTime.fromMillisecondsSinceEpoch(raw * 1000);
+      if (raw is String) return DateTime.tryParse(raw) ?? DateTime.now();
+      return DateTime.now();
+    }
+
+    DateTime parseTs(dynamic raw) {
+      if (raw == null) return DateTime.now();
+      if (raw is int) return DateTime.fromMillisecondsSinceEpoch(raw * 1000);
+      if (raw is String) return DateTime.tryParse(raw) ?? DateTime.now();
+      return DateTime.now();
+    }
+
     return ExamModel(
-      id: json['_id'] ?? json['id'] ?? '',
-      examTypeId: json['examTypeId'] ?? '',
+      id: json['id'] ?? json['_id'] ?? '',
+      examTypeId: json['exam_type_id'] ?? json['examTypeId'] ?? '',
       name: json['name'] ?? '',
       type: json['type'] ?? 'quiz',
       subject: json['subject'] ?? '',
-      classId: json['classId'] ?? '',
+      classId: json['class_id'] ?? json['classId'] ?? '',
       section: json['section'] ?? '',
-      teacherId: json['teacherId'] ?? '',
-      totalMarks: (json['totalMarks'] ?? 0).toDouble(),
-      durationMinutes: json['durationMinutes'],
-      examDate: DateTime.parse(
-          json['examDate'] ?? json['date'] ?? DateTime.now().toIso8601String()),
+      teacherId: json['teacher_id'] ?? json['teacherId'] ?? '',
+      totalMarks:
+          ((json['total_marks'] ?? json['totalMarks'] ?? 0) as num).toDouble(),
+      durationMinutes: json['duration_minutes'] ?? json['durationMinutes'],
+      examDate: parseExamDate(json['exam_date'] ?? json['examDate']),
       instructions: json['instructions'],
       syllabus: json['syllabus'],
-      createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
-      isActive: json['isActive'] ?? true,
+      createdAt: parseTs(json['created_at'] ?? json['createdAt']),
+      updatedAt: parseTs(json['updated_at'] ?? json['updatedAt']),
+      isActive: (json['is_active'] ?? json['isActive'] ?? 1) == 1,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'examTypeId': examTypeId,
+      'exam_type_id': examTypeId,
       'name': name,
       'type': type,
       'subject': subject,
-      'classId': classId,
+      'class_id': classId,
       'section': section,
-      'teacherId': teacherId,
-      'totalMarks': totalMarks,
-      'durationMinutes': durationMinutes,
-      'examDate': examDate.toIso8601String(),
+      'teacher_id': teacherId,
+      'total_marks': totalMarks,
+      'duration_minutes': durationMinutes,
+      'exam_date': examDate.millisecondsSinceEpoch ~/ 1000,
       'instructions': instructions,
       'syllabus': syllabus,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-      'isActive': isActive,
+      'created_at': createdAt.millisecondsSinceEpoch ~/ 1000,
+      'updated_at': updatedAt.millisecondsSinceEpoch ~/ 1000,
+      'is_active': isActive ? 1 : 0,
     };
   }
 

@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/models/notice_model.dart';
 import 'package:campus_care/services/api/notice_api_service.dart';
 
@@ -39,19 +40,28 @@ class NoticeController extends GetxController {
     try {
       _isLoading.value = true;
 
-      // Don't send id and issuedDate, let backend handle those
+      // Get the logged-in admin's ID for author_id
+      final authController = Get.find<AuthController>();
+      final authorId = authController.getMarkedBy() ?? '';
+
       final noticeData = {
         'title': notice.title,
-        'description': notice.description,
-        'priority': notice.priority,
-        'targetedClassId': notice.targetedClassId,
-        'targetSections': notice.targetSections,
-        'expiryDate': notice.expiryDate?.toIso8601String(),
-        'attachment': notice.attachment,
+        'content': notice.description, // DB column: content
+        'author_id': authorId, // DB column: author_id (required)
+        'priority': notice.priority, // 'low', 'normal', 'high'
+        'publish_date': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        if (notice.expiryDate != null)
+          'expiry_date': notice.expiryDate!.millisecondsSinceEpoch ~/ 1000,
+        if (notice.targetedClassId != null)
+          'target_classes': notice.targetedClassId,
+        if (notice.targetSections != null)
+          'target_audience': notice.targetSections,
+        if (notice.attachment != null) 'attachments': notice.attachment,
+        'is_active': 1,
       };
 
       await _apiService.createNotice(noticeData);
-      await loadNotices(); // Refresh list
+      await loadNotices();
 
       Get.snackbar('Success', 'Notice created successfully');
       return true;
@@ -69,16 +79,19 @@ class NoticeController extends GetxController {
 
       final noticeData = {
         'title': notice.title,
-        'description': notice.description,
+        'content': notice.description, // DB column: content
         'priority': notice.priority,
-        'targetedClassId': notice.targetedClassId,
-        'targetSections': notice.targetSections,
-        'expiryDate': notice.expiryDate?.toIso8601String(),
-        'attachment': notice.attachment,
+        if (notice.expiryDate != null)
+          'expiry_date': notice.expiryDate!.millisecondsSinceEpoch ~/ 1000,
+        if (notice.targetedClassId != null)
+          'target_classes': notice.targetedClassId,
+        if (notice.targetSections != null)
+          'target_audience': notice.targetSections,
+        if (notice.attachment != null) 'attachments': notice.attachment,
       };
 
       await _apiService.updateNotice(id, noticeData);
-      await loadNotices(); // Refresh list
+      await loadNotices();
 
       Get.snackbar('Success', 'Notice updated successfully');
       return true;

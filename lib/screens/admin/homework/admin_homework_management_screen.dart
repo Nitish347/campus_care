@@ -6,6 +6,8 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:campus_care/models/homework_model.dart';
 import 'package:campus_care/controllers/homework_controller.dart';
+import 'package:campus_care/controllers/class_controller.dart';
+import 'package:campus_care/controllers/subject_controller.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/screens/admin/homework/admin_add_edit_homework_screen.dart';
@@ -13,9 +15,38 @@ import 'package:campus_care/screens/admin/homework/admin_add_edit_homework_scree
 class AdminHomeworkManagementScreen extends StatelessWidget {
   const AdminHomeworkManagementScreen({super.key});
 
+  /// Resolves a class ID to its display name (e.g. "Class 10").
+  /// Falls back to the raw ID if the class is not found.
+  String _getClassName(String classId) {
+    try {
+      final classController = Get.find<ClassController>();
+      final match =
+          classController.classes.firstWhereOrNull((c) => c.id == classId);
+      return match?.name ?? classId;
+    } catch (_) {
+      return classId;
+    }
+  }
+
+  /// Resolves a subject ID to its display name (e.g. "Mathematics").
+  /// Falls back to the raw ID if not found.
+  String _getSubjectName(String subjectId) {
+    try {
+      final subjectController = Get.find<SubjectController>();
+      final match =
+          subjectController.subjects.firstWhereOrNull((s) => s.id == subjectId);
+      return match?.name ?? subjectId;
+    } catch (_) {
+      return subjectId;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final HomeworkController controller = Get.put(HomeworkController());
+    // Ensure class/subject controllers are ready for name lookups
+    Get.put(ClassController());
+    Get.put(SubjectController());
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -200,7 +231,7 @@ class AdminHomeworkManagementScreen extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
-                                      homework.subject,
+                                      _getSubjectName(homework.subject),
                                       style:
                                           theme.textTheme.labelMedium?.copyWith(
                                         color: subjectColor,
@@ -309,7 +340,7 @@ class AdminHomeworkManagementScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '${homework.classId} - ${homework.section}',
+                                    '${_getClassName(homework.classId)} - ${homework.section}',
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: theme.colorScheme.onSurfaceVariant,
                                     ),
@@ -632,7 +663,7 @@ class AdminHomeworkManagementScreen extends StatelessWidget {
                 Icon(Icons.class_, size: 20, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
-                  'Class: ${homework.classId} - Section ${homework.section}',
+                  'Class: ${_getClassName(homework.classId)} - Section ${homework.section}',
                   style: theme.textTheme.bodyMedium,
                 ),
               ],

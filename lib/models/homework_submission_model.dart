@@ -1,13 +1,16 @@
+import 'dart:convert';
+
 class HomeworkSubmission {
   final String id;
   final String homeworkId;
   final String studentId;
-  final String status; // pending, submitted, graded
+  final String status; // pending, submitted, graded, late
   final DateTime? submittedAt;
   final String? submissionContent;
   final List<String> attachments;
   final double? marksObtained;
   final String? feedback;
+  final String? gradedBy;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -21,43 +24,71 @@ class HomeworkSubmission {
     this.attachments = const [],
     this.marksObtained,
     this.feedback,
+    this.gradedBy,
     required this.createdAt,
     required this.updatedAt,
   });
 
   factory HomeworkSubmission.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic val) {
+      if (val == null) return DateTime.now();
+      // D1 stores dates as unix seconds (int)
+      if (val is int) return DateTime.fromMillisecondsSinceEpoch(val * 1000);
+      if (val is String) return DateTime.tryParse(val) ?? DateTime.now();
+      return DateTime.now();
+    }
+
+    List<String> parseList(dynamic val) {
+      if (val == null) return [];
+      if (val is List) return List<String>.from(val);
+      if (val is String && val.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(val);
+          if (decoded is List) return List<String>.from(decoded);
+        } catch (_) {}
+      }
+      return [];
+    }
+
     return HomeworkSubmission(
       id: json['id'] ?? '',
-      homeworkId: json['homeworkId'] ?? '',
-      studentId: json['studentId'] ?? '',
+      // D1 snake_case with camelCase fallback
+      homeworkId: json['homework_id'] ?? json['homeworkId'] ?? '',
+      studentId: json['student_id'] ?? json['studentId'] ?? '',
       status: json['status'] ?? 'pending',
-      submittedAt: json['submittedAt'] != null
-          ? DateTime.parse(json['submittedAt'])
-          : null,
-      submissionContent: json['submissionContent'],
-      attachments: List<String>.from(json['attachments'] ?? []),
-      marksObtained: json['marksObtained']?.toDouble(),
+      submittedAt: json['submitted_at'] != null
+          ? parseDate(json['submitted_at'])
+          : json['submittedAt'] != null
+              ? parseDate(json['submittedAt'])
+              : null,
+      submissionContent: json['submission_text'] ??
+          json['submissionContent'] ??
+          json['submissionText'],
+      attachments: parseList(json['attachments']),
+      marksObtained:
+          (json['marks_obtained'] ?? json['marksObtained'])?.toDouble(),
       feedback: json['feedback'],
-      createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+      gradedBy: json['graded_by'] ?? json['gradedBy'],
+      createdAt: parseDate(json['created_at'] ?? json['createdAt']),
+      updatedAt: parseDate(json['updated_at'] ?? json['updatedAt']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'homeworkId': homeworkId,
-      'studentId': studentId,
+      'homework_id': homeworkId,
+      'student_id': studentId,
       'status': status,
-      'submittedAt': submittedAt?.toIso8601String(),
-      'submissionContent': submissionContent,
-      'attachments': attachments,
-      'marksObtained': marksObtained,
-      'feedback': feedback,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      if (submittedAt != null)
+        'submitted_at': submittedAt!.millisecondsSinceEpoch ~/ 1000,
+      if (submissionContent != null) 'submission_text': submissionContent,
+      'attachments': jsonEncode(attachments),
+      if (marksObtained != null) 'marks_obtained': marksObtained,
+      if (feedback != null) 'feedback': feedback,
+      if (gradedBy != null) 'graded_by': gradedBy,
+      'created_at': createdAt.millisecondsSinceEpoch ~/ 1000,
+      'updated_at': updatedAt.millisecondsSinceEpoch ~/ 1000,
     };
   }
 
@@ -71,6 +102,7 @@ class HomeworkSubmission {
     List<String>? attachments,
     double? marksObtained,
     String? feedback,
+    String? gradedBy,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -84,6 +116,7 @@ class HomeworkSubmission {
       attachments: attachments ?? this.attachments,
       marksObtained: marksObtained ?? this.marksObtained,
       feedback: feedback ?? this.feedback,
+      gradedBy: gradedBy ?? this.gradedBy,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

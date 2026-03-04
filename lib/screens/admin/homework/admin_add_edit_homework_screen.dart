@@ -24,6 +24,7 @@ class _AdminAddEditHomeworkScreenState
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _totalMarksController = TextEditingController();
+  final _dueDateDisplayController = TextEditingController();
 
   String? _selectedClass;
   String? _selectedSection;
@@ -49,6 +50,9 @@ class _AdminAddEditHomeworkScreenState
       _totalMarksController.text =
           widget.homework!.totalMarks?.toString() ?? '';
     }
+    // Always initialize the display controller to current _dueDate
+    _dueDateDisplayController.text =
+        DateFormat('EEEE, MMMM dd, yyyy - hh:mm a').format(_dueDate);
   }
 
   @override
@@ -56,6 +60,7 @@ class _AdminAddEditHomeworkScreenState
     _titleController.dispose();
     _descriptionController.dispose();
     _totalMarksController.dispose();
+    _dueDateDisplayController.dispose();
     super.dispose();
   }
 
@@ -82,6 +87,9 @@ class _AdminAddEditHomeworkScreenState
             time.hour,
             time.minute,
           );
+          // Update the display controller — do NOT create a new one
+          _dueDateDisplayController.text =
+              DateFormat('EEEE, MMMM dd, yyyy - hh:mm a').format(_dueDate);
         });
       }
     }
@@ -257,10 +265,7 @@ class _AdminAddEditHomeworkScreenState
             CustomTextField(
               labelText: 'Due Date *',
               hintText: 'Select due date and time',
-              controller: TextEditingController(
-                text: DateFormat('EEEE, MMMM dd, yyyy - hh:mm a')
-                    .format(_dueDate),
-              ),
+              controller: _dueDateDisplayController,
               readOnly: true,
               prefixIcon: const Icon(Icons.calendar_today),
               onTap: _selectDueDate,
