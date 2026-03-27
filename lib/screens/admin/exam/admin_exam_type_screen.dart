@@ -16,25 +16,7 @@ class AdminExamTypeScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Exam Schedules'),
-        actions: [
-          Obx(() => IconButton(
-                icon: Icon(controller.showOnlyActive.value
-                    ? Icons.check_circle
-                    : Icons.check_circle_outline),
-                onPressed: controller.toggleActiveFilter,
-                tooltip: controller.showOnlyActive.value
-                    ? 'Show All'
-                    : 'Show Active Only',
-              )),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: controller.refresh,
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
+      backgroundColor: Colors.transparent,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Get.to(() => const AdminAddEditExamTypeScreen()),
         icon: const Icon(Icons.add),
@@ -42,6 +24,34 @@ class AdminExamTypeScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
+          // Actions Row
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Obx(() => OutlinedButton.icon(
+                      onPressed: controller.toggleActiveFilter,
+                      icon: Icon(
+                        controller.showOnlyActive.value
+                            ? Icons.check_circle
+                            : Icons.check_circle_outline,
+                        size: 18,
+                      ),
+                      label: Text(
+                        controller.showOnlyActive.value ? 'Show All' : 'Active Only',
+                      ),
+                    )),
+                const SizedBox(width: 8),
+                IconButton.filledTonal(
+                  icon: const Icon(Icons.refresh, size: 20),
+                  onPressed: controller.refresh,
+                  tooltip: 'Refresh',
+                ),
+              ],
+            ),
+          ),
+          
           // Summary Header
           Obx(() {
             final examTypes = controller.examTypeList;

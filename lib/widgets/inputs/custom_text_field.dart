@@ -113,8 +113,8 @@ class CustomTextField extends StatelessWidget {
             ? theme.colorScheme.surface
             : theme.colorScheme.surfaceContainerHighest,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
+          horizontal: 12,
+          vertical: 12,
         ),
         labelStyle: TextStyle(
           color: theme.colorScheme.onSurfaceVariant,

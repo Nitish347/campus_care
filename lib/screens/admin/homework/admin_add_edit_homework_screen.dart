@@ -8,6 +8,7 @@ import 'package:campus_care/controllers/homework_controller.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class AdminAddEditHomeworkScreen extends StatefulWidget {
   final HomeWorkModel? homework;
 
@@ -146,7 +147,12 @@ class _AdminAddEditHomeworkScreenState
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        subtitle: 'Create and manage assignments',
+        icon: Icons.home_work,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Homework',
+        showBackButton: true,
         title: Text(_isEditing ? 'Edit Homework' : 'Add Homework'),
       ),
       body: Form(

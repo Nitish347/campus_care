@@ -13,6 +13,7 @@ import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class TimetableScreen extends GetView<TimetableController> {
   const TimetableScreen({super.key});
 
@@ -35,7 +36,12 @@ class TimetableScreen extends GetView<TimetableController> {
     final teacherController = Get.find<TeacherController>();
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        subtitle: 'View class schedules',
+        icon: Icons.calendar_month,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Timetable',
+        showBackButton: true,
         title: const Text('School Timetable'),
         actions: [
           IconButton(

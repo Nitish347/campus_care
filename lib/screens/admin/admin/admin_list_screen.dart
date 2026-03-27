@@ -8,6 +8,7 @@ import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/models/admin/admin.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class AdminListScreen extends GetView<AdminController> {
   const AdminListScreen({super.key});
 
@@ -23,7 +24,12 @@ class AdminListScreen extends GetView<AdminController> {
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        subtitle: 'Manage system administrators',
+        icon: Icons.admin_panel_settings,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Admins',
+        showBackButton: true,
         title: const Text('Admin List'),
         actions: [
           IconButton(

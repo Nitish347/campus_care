@@ -8,152 +8,138 @@ import 'package:campus_care/widgets/cards/dashboard_card.dart';
 import 'package:campus_care/widgets/responsive/responsive_grid.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
-import 'package:campus_care/widgets/common/institute_context_indicator.dart';
+import 'package:campus_care/widgets/admin/admin_app_bar.dart';
+import 'package:campus_care/widgets/admin/admin_sidebar.dart';
 
 import '../../controllers/admin_controller.dart';
-import '../../controllers/admin/admin_auth_controller.dart';
 import '../../controllers/class_controller.dart';
-import '../../controllers/theme_controller.dart';
-import '../../services/dummy_data_service.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
 
+  // Build sidebar sections (reused for both sidebar and drawer)
+  List<SidebarSection> _buildSidebarSections() {
+    return [
+      SidebarSection(
+        title: 'Main',
+        items: [
+          SidebarItem(
+            icon: Icons.home_rounded,
+            title: 'Home',
+            isSelected: true,
+            onTap: () {},
+          ),
+        ],
+      ),
+      SidebarSection(
+        title: 'Student Management',
+        items: [
+          SidebarItem(
+            icon: Icons.people_rounded,
+            title: 'Student List',
+            onTap: () => Get.toNamed(AppRoutes.studentList),
+          ),
+          SidebarItem(
+            icon: Icons.person_add_rounded,
+            title: 'Add Student',
+            onTap: () => Get.toNamed(AppRoutes.addStudent),
+          ),
+        ],
+      ),
+      SidebarSection(
+        title: 'Staff Management',
+        items: [
+          SidebarItem(
+            icon: Icons.badge_rounded,
+            title: 'Teacher List',
+            onTap: () => Get.toNamed(AppRoutes.teacherList),
+          ),
+          SidebarItem(
+            icon: Icons.person_add_alt_1_rounded,
+            title: 'Add Teacher',
+            onTap: () => Get.toNamed(AppRoutes.addTeacher),
+          ),
+          SidebarItem(
+            icon: Icons.admin_panel_settings_rounded,
+            title: 'Admin List',
+            onTap: () => Get.toNamed(AppRoutes.adminList),
+          ),
+        ],
+      ),
+      SidebarSection(
+        title: 'Academic',
+        items: [
+          SidebarItem(
+            icon: Icons.class_rounded,
+            title: 'Classes',
+            onTap: () => Get.toNamed(AppRoutes.classManagement),
+          ),
+          SidebarItem(
+            icon: Icons.book_rounded,
+            title: 'Subjects',
+            onTap: () => Get.toNamed(AppRoutes.subjectManagement),
+          ),
+          SidebarItem(
+            icon: Icons.schedule_rounded,
+            title: 'Timetable',
+            onTap: () => Get.toNamed(AppRoutes.timetable),
+          ),
+          SidebarItem(
+            icon: Icons.how_to_reg_rounded,
+            title: 'Attendance',
+            onTap: () => Get.toNamed(AppRoutes.adminAttendance),
+          ),
+          SidebarItem(
+            icon: Icons.restaurant_menu_rounded,
+            title: 'Lunch Management',
+            onTap: () => Get.toNamed(AppRoutes.adminLunchManagement),
+          ),
+          SidebarItem(
+            icon: Icons.assignment_rounded,
+            title: 'Homework',
+            onTap: () => Get.toNamed(AppRoutes.adminHomework),
+          ),
+          SidebarItem(
+            icon: Icons.assignment_rounded,
+            title: 'Examinations',
+            onTap: () => Get.toNamed(AppRoutes.adminExaminations),
+          ),
+        ],
+      ),
+      SidebarSection(
+        title: 'Communication',
+        items: [
+          SidebarItem(
+            icon: Icons.campaign_rounded,
+            title: 'Notices & Events',
+            onTap: () => Get.toNamed(AppRoutes.noticeManagement),
+          ),
+        ],
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
-    final authController = Get.find<AuthController>();
     final classController = Get.find<ClassController>();
     classController.fetchClasses();
-    final theme = Theme.of(context);
+
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 1200;
     final isTablet = size.width > 800 && size.width <= 1200;
+    final showDrawerButton = !isDesktop;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(
-              Icons.school_rounded,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            const Text('Campus Care Admin'),
-          ],
-        ),
-        actions: [
-          // Institute Context Indicator (shows when super admin is managing an institute)
-          GetBuilder<ThemeController>(
-            builder: (themeController) => IconButton(
-              icon: Icon(
-                theme.brightness == Brightness.dark
-                    ? Icons.light_mode
-                    : Icons.dark_mode,
-              ),
-              onPressed: () => themeController.toggleTheme(),
-              tooltip: 'Toggle theme',
-            ),
-          ),
-          const InstituteContextIndicator(),
-          // IconButton(
-          //   onPressed: () {
-          //     // Trigger dummy data generation
-          //     Get.defaultDialog(
-          //       title: 'Generate Dummy Data',
-          //       middleText:
-          //           'Are you sure you want to generate dummy data? This action cannot be undone.',
-          //       textConfirm: 'Generate',
-          //       textCancel: 'Cancel',
-          //       confirmTextColor: Colors.white,
-          //       onConfirm: () async {
-          //         Get.back(); // Close dialog
-          //         // Show loading indicator
-          //         Get.dialog(
-          //           const Center(child: CircularProgressIndicator()),
-          //           barrierDismissible: false,
-          //         );
-          //
-          //         try {
-          //           final dummyService = Get.put(
-          //               DummyDataService()); // Lazy put or just instance
-          //           await dummyService.generateDummyData();
-          //           Get.back(); // Close loading
-          //         } catch (e) {
-          //           Get.back(); // Close loading
-          //           Get.snackbar('Error', 'Failed to generate data: $e');
-          //         }
-          //       },
-          //     );
-          //   },
-          //   icon: const Icon(Icons.cloud_upload_outlined),
-          //   tooltip: 'Generate Dummy Data',
-          // ),
-          IconButton(
-            onPressed: () {
-              // TODO: Implement notifications
-            },
-            icon: const Icon(Icons.notifications_outlined),
-          ),
-          const SizedBox(width: 8),
-          Obx(() => PopupMenuButton<String>(
-                icon: CircleAvatar(
-                  backgroundColor: theme.colorScheme.primary,
-                  child: Text(
-                    authController.currentAdmin?.fullName
-                            .substring(0, 1)
-                            .toUpperCase() ??
-                        'A',
-                    style: TextStyle(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    child: Row(
-                      children: [
-                        Icon(Icons.person, color: theme.colorScheme.primary),
-                        const SizedBox(width: 8),
-                        const Text('Profile'),
-                      ],
-                    ),
-                    onTap: () {
-                      Get.toNamed(AppRoutes.adminProfile);
-                    },
-                  ),
-                  PopupMenuItem(
-                    child: Row(
-                      children: [
-                        Icon(Icons.settings, color: theme.colorScheme.primary),
-                        const SizedBox(width: 8),
-                        const Text('Settings'),
-                      ],
-                    ),
-                    onTap: () {
-                      // TODO: Navigate to settings
-                    },
-                  ),
-                  const PopupMenuDivider(),
-                  PopupMenuItem(
-                    child: Row(
-                      children: [
-                        Icon(Icons.logout, color: theme.colorScheme.error),
-                        const SizedBox(width: 8),
-                        const Text('Logout'),
-                      ],
-                    ),
-                    onTap: () => authController.logout(),
-                  ),
-                ],
-              )),
-          const SizedBox(width: 16),
-        ],
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+      appBar: AdminAppBar(
+        showMenuButton: showDrawerButton,
       ),
-      drawer: isDesktop ? null : _buildDrawer(context),
+      drawer: showDrawerButton
+          ? AdminDrawer(sections: _buildSidebarSections())
+          : null,
       body: Row(
         children: [
-          if (isDesktop) _buildSidebar(context),
+          if (isDesktop) AdminSidebar(sections: _buildSidebarSections()),
           Expanded(
             child: _buildMainContent(context, isDesktop, isTablet),
           ),
@@ -162,426 +148,259 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
-    return Drawer(
-      child: _buildSidebarContent(context),
-    );
-  }
-
-  Widget _buildSidebar(BuildContext context) {
-    return Container(
-      width: 280,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          right: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-          ),
-        ),
-      ),
-      child: _buildSidebarContent(context),
-    );
-  }
-
-  Widget _buildSidebarContent(BuildContext context) {
+  Widget _buildMainContent(
+      BuildContext context, bool isDesktop, bool isTablet) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Column(
-      children: [
-        const SizedBox(height: 24),
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Welcome Banner
+          Obx(() {
+            final adminName = Get.find<AuthController>().currentAdmin?.fullName ?? 'Admin';
+            return _WelcomeBanner(adminName: adminName, isDark: isDark);
+          }),
 
-        // Dashboard Header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              Icon(
-                Icons.dashboard_rounded,
-                color: theme.colorScheme.primary,
-                size: 28,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Dashboard',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            children: [
-              _buildSidebarItem(
-                context,
-                icon: Icons.home_outlined,
-                title: 'Home',
-                isSelected: true,
-                onTap: () {},
-              ),
-              const SizedBox(height: 8),
-              _buildSidebarSection('Student Management'),
-              _buildSidebarItem(
-                context,
-                icon: Icons.people_outlined,
-                title: 'Student List',
-                onTap: () => Get.toNamed(AppRoutes.studentList),
-              ),
-              _buildSidebarItem(
-                context,
-                icon: Icons.person_add_outlined,
-                title: 'Add Student',
-                onTap: () => Get.toNamed(AppRoutes.addStudent),
-              ),
-              const SizedBox(height: 16),
-              _buildSidebarSection('Staff Management'),
-              _buildSidebarItem(
-                context,
-                icon: Icons.person_outlined,
-                title: 'Teacher List',
-                onTap: () => Get.toNamed(AppRoutes.teacherList),
-              ),
-              _buildSidebarItem(
-                context,
-                icon: Icons.person_add_outlined,
-                title: 'Add Teacher',
-                onTap: () => Get.toNamed(AppRoutes.addTeacher),
-              ),
-              _buildSidebarItem(
-                context,
-                icon: Icons.admin_panel_settings_outlined,
-                title: 'Admin List',
-                onTap: () => Get.toNamed(AppRoutes.adminList),
-              ),
-              const SizedBox(height: 16),
-              _buildSidebarSection('Academic Management'),
-              _buildSidebarItem(
-                context,
-                icon: Icons.class_outlined,
-                title: 'Classes',
-                onTap: () => Get.toNamed(AppRoutes.classManagement),
-              ),
-              _buildSidebarItem(
-                context,
-                icon: Icons.book_outlined,
-                title: 'Subjects',
-                onTap: () => Get.toNamed(AppRoutes.subjectManagement),
-              ),
-              _buildSidebarItem(
-                context,
-                icon: Icons.schedule_outlined,
-                title: 'Timetable',
-                onTap: () => Get.toNamed(AppRoutes.timetable),
-              ),
-              _buildSidebarItem(
-                context,
-                icon: Icons.how_to_reg_outlined,
-                title: 'Attendance',
-                onTap: () => Get.toNamed(AppRoutes.adminAttendance),
-              ),
-              _buildSidebarItem(
-                context,
-                icon: Icons.restaurant_menu,
-                title: 'Lunch Management',
-                onTap: () => Get.toNamed(AppRoutes.adminLunchManagement),
-              ),
-              _buildSidebarItem(
-                context,
-                icon: Icons.assignment_outlined,
-                title: 'Homework',
-                onTap: () => Get.toNamed(AppRoutes.adminHomework),
-              ),
-              _buildSidebarItem(
-                context,
-                icon: Icons.event_note,
-                title: 'Exam Schedules',
-                onTap: () => Get.toNamed(AppRoutes.adminExamType),
-              ),
-              _buildSidebarItem(
-                context,
-                icon: Icons.table_chart,
-                title: 'Exam Timetable',
-                onTap: () => Get.toNamed(AppRoutes.adminExamTimetable),
-              ),
-              // const SizedBox(height: 16),
-              // _buildSidebarSection('Examination'),
-              // _buildSidebarItem(
-              //   context,
-              //   icon: Icons.quiz_outlined,
-              //   title: 'Exam Scheduler',
-              //   onTap: () => Get.toNamed(AppRoutes.examScheduler),
-              // ),
-              // const SizedBox(height: 16),
-              // _buildSidebarSection('Fee Management'),
-              // _buildSidebarItem(
-              //   context,
-              //   icon: Icons.payment_outlined,
-              //   title: 'Fee Management',
-              //   onTap: () => Get.toNamed(AppRoutes.feeManagement),
-              // ),
-              // const SizedBox(height: 16),
-              // _buildSidebarSection('Health & Medical'),
-              // _buildSidebarItem(
-              //   context,
-              //   icon: Icons.medical_services_outlined,
-              //   title: 'Medical Records',
-              //   onTap: () => Get.toNamed(AppRoutes.medicalDashboard),
-              // ),
-              const SizedBox(height: 16),
-              _buildSidebarSection('Communication'),
-              _buildSidebarItem(
-                context,
-                icon: Icons.announcement_outlined,
-                title: 'Notices & Events',
-                onTap: () => Get.toNamed(AppRoutes.noticeManagement),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSidebarSection(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey[600],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSidebarItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    bool isSelected = false,
-    VoidCallback? onTap,
-  }) {
-    final theme = Theme.of(context);
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 2),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? theme.colorScheme.primaryContainer
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
+          // Content
+          ResponsivePadding(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  icon,
-                  color: isSelected
-                      ? theme.colorScheme.onPrimaryContainer
-                      : theme.colorScheme.onSurfaceVariant,
-                  size: 20,
+                const SizedBox(height: 28),
+
+                // Quick Stats
+                SectionHeader(
+                  title: 'Quick Stats',
+                  subtitle: 'Overview of your institution',
                 ),
-                const SizedBox(width: 12),
-                Expanded(
+                const SizedBox(height: 16),
+                Obx(() {
+                  final stats = Get.find<AdminController>().dashboardStats;
+                  return ResponsiveGrid(
+                    childAspectRatio: kIsWeb ? 1.6 : 1.1,
+                    children: [
+                      StatCard(
+                        icon: Icons.people_rounded,
+                        title: 'Total Students',
+                        value: stats['students']?.toString() ?? '0',
+                        color: const Color(0xFF2563EB),
+                      ),
+                      StatCard(
+                        icon: Icons.badge_rounded,
+                        title: 'Total Teachers',
+                        value: stats['teachers']?.toString() ?? '0',
+                        color: const Color(0xFF059669),
+                      ),
+                      StatCard(
+                        icon: Icons.class_rounded,
+                        title: 'Total Classes',
+                        value: '24',
+                        color: const Color(0xFF7C3AED),
+                      ),
+                      StatCard(
+                        icon: Icons.event_rounded,
+                        title: "Today's Events",
+                        value: '0',
+                        color: const Color(0xFFF59E0B),
+                      ),
+                    ],
+                  );
+                }),
+
+                const SizedBox(height: 32),
+
+                // Quick Access
+                SectionHeader(
+                  title: 'Quick Access',
+                  subtitle: 'Navigate to key management areas',
+                ),
+                const SizedBox(height: 16),
+                ResponsiveGrid(
+                  childAspectRatio: kIsWeb ? 1.1 : 0.95,
+                  children: [
+                    DashboardCard(
+                      icon: Icons.people_rounded,
+                      title: 'Student Management',
+                      subtitle: 'Manage students',
+                      onTap: () => Get.toNamed(AppRoutes.studentList),
+                      iconColor: const Color(0xFF2563EB),
+                    ),
+                    DashboardCard(
+                      icon: Icons.badge_rounded,
+                      title: 'Teacher Management',
+                      subtitle: 'Manage teachers',
+                      onTap: () => Get.toNamed(AppRoutes.teacherList),
+                      iconColor: const Color(0xFF059669),
+                    ),
+                    DashboardCard(
+                      icon: Icons.class_rounded,
+                      title: 'Classes & Subjects',
+                      subtitle: 'Manage classes',
+                      onTap: () => Get.toNamed(AppRoutes.classManagement),
+                      iconColor: const Color(0xFF7C3AED),
+                    ),
+                    DashboardCard(
+                      icon: Icons.schedule_rounded,
+                      title: 'Timetable',
+                      subtitle: 'View schedule',
+                      onTap: () => Get.toNamed(AppRoutes.timetable),
+                      iconColor: const Color(0xFFF59E0B),
+                    ),
+                    DashboardCard(
+                      icon: Icons.how_to_reg_rounded,
+                      title: 'Attendance',
+                      subtitle: 'Manage attendance',
+                      onTap: () => Get.toNamed(AppRoutes.adminAttendance),
+                      iconColor: const Color(0xFF0D9488),
+                    ),
+                    DashboardCard(
+                      icon: Icons.restaurant_menu_rounded,
+                      title: 'Lunch Management',
+                      subtitle: 'Track student meals',
+                      onTap: () => Get.toNamed(AppRoutes.adminLunchManagement),
+                      iconColor: const Color(0xFF7C3AED),
+                    ),
+                    DashboardCard(
+                      icon: Icons.assignment_rounded,
+                      title: 'Homework',
+                      subtitle: 'Manage homework',
+                      onTap: () => Get.toNamed(AppRoutes.adminHomework),
+                      iconColor: const Color(0xFF4F46E5),
+                    ),
+                    DashboardCard(
+                      icon: Icons.assignment_rounded,
+                      title: 'Examinations',
+                      subtitle: 'Manage exams & timetables',
+                      onTap: () => Get.toNamed(AppRoutes.adminExaminations),
+                      iconColor: const Color(0xFFE11D48),
+                    ),
+                    DashboardCard(
+                      icon: Icons.campaign_rounded,
+                      title: 'Notices & Events',
+                      subtitle: 'Announcements',
+                      onTap: () => Get.toNamed(AppRoutes.noticeManagement),
+                      iconColor: const Color(0xFF0891B2),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Welcome banner shown at top of dashboard
+class _WelcomeBanner extends StatelessWidget {
+  final String adminName;
+  final bool isDark;
+
+  const _WelcomeBanner({required this.adminName, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(28, 28, 28, 28),
+      decoration: BoxDecoration(
+        gradient: isDark
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFF1E293B),
+                  const Color(0xFF0F172A),
+                ],
+              )
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF1E40AF),
+                  Color(0xFF3B82F6),
+                ],
+              ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Welcome back,',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '👋',
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  adminName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   child: Text(
-                    title,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: isSelected
-                          ? theme.colorScheme.onPrimaryContainer
-                          : theme.colorScheme.onSurface,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.normal,
+                    "Here's what's happening at your school today",
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMainContent(
-      BuildContext context, bool isDesktop, bool isTablet) {
-    final theme = Theme.of(context);
-
-    return SingleChildScrollView(
-      child: ResponsivePadding(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome Header
-            Obx(() => Text(
-                  'Welcome back, ${Get.find<AuthController>().currentAdmin?.fullName ?? 'Admin'}! 👋',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                )),
-            const SizedBox(height: 8),
-            Text(
-              'Here\'s what\'s happening at your school today',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20),
             ),
-
-            const SizedBox(height: 24),
-
-            // Quick Stats
-            SectionHeader(title: 'Quick Stats'),
-            const SizedBox(height: 12),
-            Obx(() {
-              final stats = Get.find<AdminController>().dashboardStats;
-              return ResponsiveGrid(
-                childAspectRatio: kIsWeb ? 1.6 : 1.1,
-                children: [
-                  StatCard(
-                    icon: Icons.people_outlined,
-                    title: 'Total Students',
-                    value: stats['students']?.toString() ?? '0',
-                    color: theme.colorScheme.primary,
-                  ),
-                  StatCard(
-                    icon: Icons.person_outlined,
-                    title: 'Total Teachers',
-                    value: stats['teachers']?.toString() ?? '0',
-                    color: theme.colorScheme.secondary,
-                  ),
-                  StatCard(
-                    icon: Icons.class_outlined,
-                    title: 'Total Classes',
-                    value: '24', // TODO: Implement Class stats API
-                    color: Colors.purple,
-                  ),
-                  StatCard(
-                    icon: Icons.event_outlined,
-                    title: 'Today\'s Events',
-                    value: '0', // TODO: Implement Events stats API
-                    color: Colors.orange,
-                  ),
-                ],
-              );
-            }),
-
-            const SizedBox(height: 24),
-
-            // Quick Access
-            SectionHeader(title: 'Quick Access'),
-            const SizedBox(height: 12),
-            ResponsiveGrid(
-              childAspectRatio: kIsWeb ? 1.1 : 0.95,
-              children: [
-                DashboardCard(
-                  icon: Icons.people_outlined,
-                  title: 'Student Management',
-                  subtitle: 'Manage students',
-                  onTap: () => Get.toNamed(AppRoutes.studentList),
-                  iconColor: theme.colorScheme.primary,
-                ),
-                DashboardCard(
-                  icon: Icons.person_outlined,
-                  title: 'Teacher Management',
-                  subtitle: 'Manage teachers',
-                  onTap: () => Get.toNamed(AppRoutes.teacherList),
-                  iconColor: theme.colorScheme.secondary,
-                ),
-                DashboardCard(
-                  icon: Icons.class_outlined,
-                  title: 'Classes & Subjects',
-                  subtitle: 'Manage classes',
-                  onTap: () => Get.toNamed(AppRoutes.classManagement),
-                  iconColor: Colors.purple,
-                ),
-                DashboardCard(
-                  icon: Icons.schedule_outlined,
-                  title: 'Timetable',
-                  subtitle: 'View schedule',
-                  onTap: () => Get.toNamed(AppRoutes.timetable),
-                  iconColor: Colors.orange,
-                ),
-                DashboardCard(
-                  icon: Icons.how_to_reg_outlined,
-                  title: 'Attendance',
-                  subtitle: 'Manage attendance',
-                  onTap: () => Get.toNamed(AppRoutes.adminAttendance),
-                  iconColor: Colors.teal,
-                ),
-                DashboardCard(
-                  icon: Icons.restaurant_menu,
-                  title: 'Lunch Management',
-                  subtitle: 'Track student meals',
-                  onTap: () => Get.toNamed(AppRoutes.adminLunchManagement),
-                  iconColor: Colors.deepPurple,
-                ),
-                DashboardCard(
-                  icon: Icons.assignment_outlined,
-                  title: 'Homework',
-                  subtitle: 'Manage homework',
-                  onTap: () => Get.toNamed(AppRoutes.adminHomework),
-                  iconColor: Colors.indigo,
-                ),
-                DashboardCard(
-                  icon: Icons.event_note,
-                  title: 'Exam Schedules',
-                  subtitle: 'Manage exam periods',
-                  onTap: () => Get.toNamed(AppRoutes.adminExamType),
-                  iconColor: Colors.purple,
-                ),
-                DashboardCard(
-                  icon: Icons.table_chart,
-                  title: 'Exam Timetable',
-                  subtitle: 'View & edit timetable',
-                  onTap: () => Get.toNamed(AppRoutes.adminExamTimetable),
-                  iconColor: Colors.deepOrange,
-                ),
-                // DashboardCard(
-                //   icon: Icons.quiz_outlined,
-                //   title: 'Examinations',
-                //   subtitle: 'Manage exams',
-                //   onTap: () => Get.toNamed(AppRoutes.examScheduler),
-                //   iconColor: Colors.red,
-                // ),
-                // DashboardCard(
-                //   icon: Icons.payment_outlined,
-                //   title: 'Fee Management',
-                //   subtitle: 'Manage fees',
-                //   onTap: () => Get.toNamed(AppRoutes.feeManagement),
-                //   iconColor: Colors.green,
-                // ),
-                // DashboardCard(
-                //   icon: Icons.medical_services_outlined,
-                //   title: 'Medical Records',
-                //   subtitle: 'Health records',
-                //   onTap: () => Get.toNamed(AppRoutes.medicalDashboard),
-                //   iconColor: Colors.pink,
-                // ),
-                DashboardCard(
-                  icon: Icons.announcement_outlined,
-                  title: 'Notices & Events',
-                  subtitle: 'Announcements',
-                  onTap: () => Get.toNamed(AppRoutes.noticeManagement),
-                  iconColor: Colors.teal,
-                ),
-              ],
+            child: const Icon(
+              Icons.dashboard_rounded,
+              color: Colors.white,
+              size: 32,
             ),
-
-            const SizedBox(height: 24),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -19,6 +19,11 @@ class HomeworkController extends GetxController {
   // Loading state
   final RxBool isLoading = false.obs;
 
+  // View toggle
+  final RxBool _isTableView = false.obs;
+  bool get isTableView => _isTableView.value;
+  void toggleViewMode() => _isTableView.value = !_isTableView.value;
+
   @override
   void onInit() {
     super.onInit();

@@ -7,6 +7,7 @@ import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
 import 'package:campus_care/widgets/buttons/primary_button.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -17,7 +18,12 @@ class SettingsScreen extends StatelessWidget {
     final themeController = Get.find<ThemeController>();
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        subtitle: 'Application preferences',
+        icon: Icons.settings,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Settings',
+        showBackButton: true,
         title: const Text('Settings'),
         actions: [
           TextButton(

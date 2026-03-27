@@ -9,6 +9,7 @@ import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class ExamSchedulerScreen extends StatefulWidget {
   const ExamSchedulerScreen({super.key});
 
@@ -125,7 +126,12 @@ class _ExamSchedulerScreenState extends State<ExamSchedulerScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
+        appBar: AdminPageHeader(
+        subtitle: 'Plan examination dates',
+        icon: Icons.calendar_today,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Exams',
+          showBackButton: true,
           title: const Text('Exam Scheduler'),
           bottom: const TabBar(
             tabs: [

@@ -8,6 +8,7 @@ import 'package:campus_care/widgets/buttons/primary_button.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class AddMedicalRecordScreen extends StatelessWidget {
   const AddMedicalRecordScreen({super.key});
 
@@ -25,7 +26,12 @@ class AddMedicalRecordScreen extends StatelessWidget {
     final controller = Get.put(MedicalRecordController());
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        subtitle: 'Update student health records',
+        icon: Icons.medical_services,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Medical',
+        showBackButton: true,
         title: const Text('Add Medical Record'),
       ),
       body: SingleChildScrollView(

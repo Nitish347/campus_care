@@ -9,6 +9,7 @@ import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 import 'package:campus_care/widgets/inputs/subject_dropdown.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class AdminAddEditExamScreen extends StatefulWidget {
   final ExamModel? exam;
   final String examTypeId;
@@ -380,7 +381,12 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
 
   Widget _buildEditMode(ThemeData theme) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        subtitle: 'Configure examination details',
+        icon: Icons.assignment,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Exams',
+        showBackButton: true,
         title: const Text('Edit Exam'),
       ),
       body: Form(
@@ -541,7 +547,8 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
         widget.existingExams != null && widget.existingExams!.isNotEmpty;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        showBackButton: true,
         title: Text(
             isEditMode ? 'Edit Exam Timetable' : 'Add Exams - Timetable Style'),
         actions: [

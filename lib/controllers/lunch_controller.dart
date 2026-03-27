@@ -18,9 +18,35 @@ class LunchController extends GetxController {
   final _selectedClass = Rxn<String>();
   final _selectedSection = Rxn<String>();
   final _selectedDate = Rx<DateTime>(DateTime.now());
+  final _searchQuery = ''.obs;
+  
+  // UI State toggles
+  final _isEditMode = false.obs;
+  final _isTableView = true.obs;
+
+  bool get isEditMode => _isEditMode.value;
+  bool get isTableView => _isTableView.value;
+
+  void toggleEditMode() => _isEditMode.value = !_isEditMode.value;
+  void toggleViewMode() => _isTableView.value = !_isTableView.value;
 
   bool get isLoading => _isLoading.value;
   List<Student> get students => _students;
+  
+  List<Student> get filteredStudents {
+    if (_searchQuery.value.isEmpty) {
+      return _students;
+    }
+    final query = _searchQuery.value.toLowerCase();
+    return _students.where((s) =>
+        s.fullName.toLowerCase().contains(query) ||
+        s.rollNumber.toLowerCase().contains(query) ||
+        s.enrollmentNumber.toLowerCase().contains(query)).toList();
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery.value = query;
+  }
   Map<String, LunchStatus> get lunchMap => _lunchMap;
   String? get selectedClass => _selectedClass.value;
   String? get selectedSection => _selectedSection.value;

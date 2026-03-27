@@ -55,6 +55,7 @@ import 'package:campus_care/screens/admin/academic/add_edit_subject_screen.dart'
 import '../../screens/admin/exam/admin_add_edit_exam_type_screen.dart';
 import '../../screens/admin/exam/admin_exam_timetable_screen.dart';
 import '../../screens/admin/exam/admin_exam_type_screen.dart';
+import '../../screens/admin/exam/admin_examination_management_screen.dart';
 import '../../screens/admin/homework/admin_add_edit_homework_screen.dart';
 import '../../screens/admin/homework/admin_homework_management_screen.dart';
 import '../../screens/super_admin/add_edit_institute_screen.dart';
@@ -137,6 +138,7 @@ class AppRoutes {
   static const String editSubject = '/admin/subjects/edit';
 
   // Admin Exam Routes
+  static const String adminExaminations = '/admin/examinations';
   static const String adminExamType = '/admin/exam-type';
   static const String adminAddExamType = '/admin/exam-type/add';
   static const String adminEditExamType = '/admin/exam-type/edit';
@@ -325,6 +327,13 @@ class AppRoutes {
       middlewares: [SchoolAdminMiddleware()],
     ),
 
+    // Admin Exam Management
+    GetPage(
+      name: adminExaminations,
+      page: () => const AdminExaminationManagementScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    
     // Admin Exam Type Management
     GetPage(
       name: adminExamType,

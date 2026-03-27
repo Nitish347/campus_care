@@ -36,30 +36,7 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
         _selectedSection != null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Exam Timetable'),
-        actions: [
-          if (canAddExam)
-            IconButton(
-              icon: Icon(_isTableView ? Icons.view_list : Icons.table_chart),
-              onPressed: () {
-                setState(() {
-                  _isTableView = !_isTableView;
-                });
-              },
-              tooltip: _isTableView ? 'List View' : 'Table View',
-            ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              if (canAddExam) {
-                _examController.fetchExams();
-              }
-            },
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
+      backgroundColor: Colors.transparent,
       floatingActionButton: canAddExam
           ? Obx(() {
               // Filter exams by selected exam type
@@ -98,11 +75,44 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Select Filters',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Select Filters',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        if (canAddExam)
+                          IconButton.filledTonal(
+                            icon: Icon(
+                                _isTableView
+                                    ? Icons.view_list
+                                    : Icons.table_chart,
+                                size: 20),
+                            onPressed: () {
+                              setState(() {
+                                _isTableView = !_isTableView;
+                              });
+                            },
+                            tooltip: _isTableView ? 'List View' : 'Table View',
+                          ),
+                        const SizedBox(width: 8),
+                        IconButton.filledTonal(
+                          icon: const Icon(Icons.refresh, size: 20),
+                          onPressed: () {
+                            if (canAddExam) {
+                              _examController.fetchExams();
+                            }
+                          },
+                          tooltip: 'Refresh',
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
 

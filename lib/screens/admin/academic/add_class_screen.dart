@@ -7,6 +7,7 @@ import 'package:campus_care/widgets/buttons/primary_button.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class AddClassScreen extends StatefulWidget {
   final SchoolClass? schoolClass;
 
@@ -60,7 +61,12 @@ class _AddClassScreenState extends State<AddClassScreen> {
     final ClassController classController = Get.find<ClassController>();
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        subtitle: 'Manage class details',
+        icon: Icons.class_,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Classes',
+        showBackButton: true,
         title: Text(isEditMode ? 'Edit Class' : 'Add New Class'),
       ),
       body: SingleChildScrollView(

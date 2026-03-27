@@ -9,6 +9,7 @@ import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class FeeManagementScreen extends StatefulWidget {
   const FeeManagementScreen({super.key});
 
@@ -118,7 +119,12 @@ class _FeeManagementScreenState extends State<FeeManagementScreen> {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: AppBar(
+        appBar: AdminPageHeader(
+        subtitle: 'Track student fee collections',
+        icon: Icons.payments,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Fees',
+          showBackButton: true,
           title: const Text('Fee Management'),
           bottom: const TabBar(
             tabs: [

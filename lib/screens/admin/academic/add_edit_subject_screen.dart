@@ -10,6 +10,7 @@ import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class AddEditSubjectScreen extends StatefulWidget {
   final Subject? subject;
 
@@ -87,7 +88,12 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        subtitle: 'Manage subject details',
+        icon: Icons.book,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Subjects',
+        showBackButton: true,
         title: Text(isEditMode ? 'Edit Subject' : 'Add Subject'),
       ),
       body: ResponsivePadding(

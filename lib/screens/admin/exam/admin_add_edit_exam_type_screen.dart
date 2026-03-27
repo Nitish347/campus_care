@@ -4,6 +4,7 @@ import 'package:campus_care/models/exam_type_model.dart';
 import 'package:campus_care/controllers/exam_type_controller.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class AdminAddEditExamTypeScreen extends StatefulWidget {
   final ExamTypeModel? examType;
 
@@ -82,7 +83,12 @@ class _AdminAddEditExamTypeScreenState
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        subtitle: 'Manage exam types',
+        icon: Icons.category,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Exam Types',
+        showBackButton: true,
         title: Text(_isEditing ? 'Edit Exam Schedule' : 'Add Exam Schedule'),
       ),
       body: Form(

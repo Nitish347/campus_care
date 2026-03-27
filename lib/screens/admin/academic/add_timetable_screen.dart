@@ -14,6 +14,7 @@ import 'package:campus_care/widgets/common/section_header.dart';
 import '../../../widgets/inputs/class_section_dropdown.dart';
 import '../../../widgets/inputs/subject_dropdown.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class AddTimetableScreen extends StatefulWidget {
   final TimeTableModel? timetable;
 
@@ -192,7 +193,12 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        subtitle: 'Manage class timetable',
+        icon: Icons.schedule,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Timetable',
+        showBackButton: true,
         title: Text(isEditMode ? 'Edit Timetable' : 'Add Timetable'),
       ),
       body: SingleChildScrollView(

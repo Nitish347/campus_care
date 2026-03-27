@@ -22,8 +22,33 @@ class AttendanceController extends GetxController {
   final _selectedSection = Rxn<String>();
   final _selectedDate = Rx<DateTime>(DateTime.now());
 
+  // UI State toggles
+  final _isEditMode = false.obs;
+  final _isTableView = true.obs;
+  final _searchQuery = ''.obs;
+
+  bool get isEditMode => _isEditMode.value;
+  bool get isTableView => _isTableView.value;
+  String get searchQuery => _searchQuery.value;
+
+  void toggleEditMode() => _isEditMode.value = !_isEditMode.value;
+  void toggleViewMode() => _isTableView.value = !_isTableView.value;
+  void setSearchQuery(String query) => _searchQuery.value = query;
+
   bool get isLoading => _isLoading.value;
   List<Student> get students => _students;
+
+  List<Student> get filteredStudents {
+    if (_searchQuery.value.isEmpty) {
+      return _students;
+    }
+    return _students.where((student) {
+      final query = _searchQuery.value.toLowerCase();
+      return student.fullName.toLowerCase().contains(query) ||
+             student.rollNumber.toLowerCase().contains(query);
+    }).toList();
+  }
+
   Map<String, AttendanceStatus> get attendanceMap => _attendanceMap;
   String? get selectedClass => _selectedClass.value;
   String? get selectedSection => _selectedSection.value;

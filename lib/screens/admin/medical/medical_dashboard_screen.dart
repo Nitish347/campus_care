@@ -7,6 +7,7 @@ import 'package:campus_care/widgets/common/info_card.dart';
 import 'package:campus_care/widgets/common/icon_label_tile.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class MedicalDashboardScreen extends StatelessWidget {
   const MedicalDashboardScreen({super.key});
 
@@ -61,7 +62,12 @@ class MedicalDashboardScreen extends StatelessWidget {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: AppBar(
+        appBar: AdminPageHeader(
+        subtitle: 'Clinic health overview',
+        icon: Icons.health_and_safety,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Medical',
+          showBackButton: true,
           title: const Text('Medical Records'),
           bottom: const TabBar(
             tabs: [

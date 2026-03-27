@@ -6,6 +6,7 @@ import 'package:campus_care/widgets/buttons/primary_button.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class ChangePasswordScreen extends StatelessWidget {
   const ChangePasswordScreen({super.key});
 
@@ -14,7 +15,12 @@ class ChangePasswordScreen extends StatelessWidget {
     final controller = Get.put(PasswordController());
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        subtitle: 'Update your security credentials',
+        icon: Icons.password,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Security',
+        showBackButton: true,
         title: const Text('Change Password'),
       ),
       body: SingleChildScrollView(

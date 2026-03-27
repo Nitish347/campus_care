@@ -10,6 +10,7 @@ import 'package:campus_care/widgets/common/info_card.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class NoticeManagementScreen extends GetView<NoticeController> {
   const NoticeManagementScreen({super.key});
 
@@ -24,7 +25,12 @@ class NoticeManagementScreen extends GetView<NoticeController> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        subtitle: 'Broadcast announcements',
+        icon: Icons.campaign,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Notices',
+        showBackButton: true,
         title: const Text('Notice Management'),
         actions: [
           IconButton(

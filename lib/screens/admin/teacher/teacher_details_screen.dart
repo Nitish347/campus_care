@@ -4,6 +4,7 @@ import 'package:campus_care/models/teacher/teacher.dart';
 import 'package:campus_care/services/api/timetable_api_service.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 class TeacherDetailsScreen extends StatefulWidget {
   final Teacher teacher;
 
@@ -67,7 +68,12 @@ class _TeacherDetailsScreenState extends State<TeacherDetailsScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AdminPageHeader(
+        subtitle: 'View teacher profile details',
+        icon: Icons.person,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Teachers',
+        showBackButton: true,
         title: const Text('Teacher Details'),
         actions: [
           IconButton(
