@@ -47,6 +47,7 @@ class CustomTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isSingleLine = (maxLines ?? 1) == 1;
 
     return TextFormField(
       controller: controller,
@@ -64,12 +65,21 @@ class CustomTextField extends StatelessWidget {
       textInputAction: textInputAction,
       style: theme.textTheme.bodyLarge,
       decoration: InputDecoration(
+        isDense: isSingleLine,
         labelText: labelText,
         hintText: hintText,
         helperText: helperText,
         errorText: errorText,
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 40,
+          minHeight: 40,
+        ),
+        suffixIconConstraints: const BoxConstraints(
+          minWidth: 40,
+          minHeight: 40,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
@@ -114,7 +124,7 @@ class CustomTextField extends StatelessWidget {
             : theme.colorScheme.surfaceContainerHighest,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
-          vertical: 12,
+          vertical: 10,
         ),
         labelStyle: TextStyle(
           color: theme.colorScheme.onSurfaceVariant,
@@ -126,4 +136,3 @@ class CustomTextField extends StatelessWidget {
     );
   }
 }
-

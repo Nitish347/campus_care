@@ -127,6 +127,7 @@ class ApiClient {
       ),
     );
     final headers = await _getHeaders(includeAuth: includeAuth);
+    log('API GET: $uri');
 
     return _executeRequest(() => _client.get(uri, headers: headers));
   }
@@ -139,6 +140,7 @@ class ApiClient {
   }) async {
     final uri = Uri.parse(_getUrl(endpoint));
     final headers = await _getHeaders(includeAuth: includeAuth);
+    log('API POST: $uri');
 
     return _executeRequest(
       () => _client.post(
@@ -157,6 +159,7 @@ class ApiClient {
   }) async {
     final uri = Uri.parse(_getUrl(endpoint));
     final headers = await _getHeaders(includeAuth: includeAuth);
+    log('API PUT: $uri');
 
     return _executeRequest(
       () => _client.put(
@@ -175,6 +178,7 @@ class ApiClient {
   }) async {
     final uri = Uri.parse(_getUrl(endpoint));
     final headers = await _getHeaders(includeAuth: includeAuth);
+    log('API PATCH: $uri');
 
     return _executeRequest(
       () => _client.patch(
@@ -192,6 +196,7 @@ class ApiClient {
   }) async {
     final uri = Uri.parse(_getUrl(endpoint));
     final headers = await _getHeaders(includeAuth: includeAuth);
+    log('API DELETE: $uri');
 
     return _executeRequest(() => _client.delete(uri, headers: headers));
   }

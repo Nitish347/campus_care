@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
+import 'package:campus_care/controllers/class_controller.dart';
 import 'package:campus_care/controllers/timetable_controller.dart';
 import 'package:campus_care/models/timetable_model.dart';
 import 'package:campus_care/models/teacher/teacher.dart';
@@ -15,6 +16,7 @@ import '../../../widgets/inputs/class_section_dropdown.dart';
 import '../../../widgets/inputs/subject_dropdown.dart';
 
 import 'package:campus_care/widgets/admin/admin_page_header.dart';
+
 class AddTimetableScreen extends StatefulWidget {
   final TimeTableModel? timetable;
 
@@ -27,6 +29,7 @@ class AddTimetableScreen extends StatefulWidget {
 class _AddTimetableScreenState extends State<AddTimetableScreen> {
   final _formKey = GlobalKey<FormState>();
   final _controller = Get.put(TimetableController());
+  late final ClassController _classController;
 
   String? _selectedClass;
   String? _selectedSection;
@@ -55,6 +58,10 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
   @override
   void initState() {
     super.initState();
+    _classController = Get.isRegistered<ClassController>()
+        ? Get.find<ClassController>()
+        : Get.put(ClassController());
+
     for (var day in _days) {
       _weeklySchedule[day] = [];
     }
@@ -78,6 +85,22 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
       });
     }
     _loadTeachers();
+    _classController.fetchClasses().then((_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  String _getSelectedClassLabel() {
+    if (_selectedClass == null || _selectedClass!.isEmpty) {
+      return 'Not selected';
+    }
+    final cls = _classController.classes.firstWhereOrNull(
+      (c) => c.id == _selectedClass,
+    );
+    if (cls == null) return _selectedClass!;
+    return '${cls.name} (Grade ${cls.grade})';
   }
 
   Future<void> _loadTeachers() async {
@@ -213,27 +236,73 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
                 if (isEditMode)
                   // Show selected class/section in edit mode (read-only)
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer
-                          .withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                        color:
+                            theme.colorScheme.primary.withValues(alpha: 0.25),
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.class_,
-                          color: theme.colorScheme.primary,
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.school_rounded,
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
                         const SizedBox(width: 12),
-                        Text(
-                          'Class: $_selectedClass, Section: $_selectedSection',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.onSurface,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Selected Class',
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _getSelectedClassLabel(),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            'Section ${_selectedSection ?? '-'}',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
                         ),
                       ],
@@ -321,72 +390,82 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
 
     if (isFirst) {
       // Monday - Always expanded
-      return Card(
+      return Container(
         margin: const EdgeInsets.only(bottom: 16),
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.22)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  day,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
                     color: theme.colorScheme.primary,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    day,
-                    style: theme.textTheme.titleLarge?.copyWith(
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${periods.length} periods',
+                    style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.primary,
                     ),
                   ),
-                  const Spacer(),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${periods.length} periods',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                    ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (periods.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'No periods added',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              if (periods.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    'No periods added',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                )
-              else
-                ...periods.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final period = entry.value;
-                  return _buildPeriodCard(theme, day, index, period);
-                }),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: () => _addPeriod(day),
-                icon: const Icon(Icons.add),
-                label: const Text('Add Period'),
-              ),
-            ],
-          ),
+                  textAlign: TextAlign.center,
+                ),
+              )
+            else
+              ...periods.asMap().entries.map((entry) {
+                final index = entry.key;
+                final period = entry.value;
+                return _buildPeriodCard(theme, day, index, period);
+              }),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: () => _addPeriod(day),
+              icon: const Icon(Icons.add),
+              label: const Text('Add Period'),
+            ),
+          ],
         ),
       );
     } else {
@@ -451,7 +530,14 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
   ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+      color: theme.colorScheme.surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withValues(alpha: 0.16),
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

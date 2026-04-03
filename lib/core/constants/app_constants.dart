@@ -30,12 +30,23 @@ class AppConstants {
   static const String keyTimetables = 'timetables_data';
 
   // API Configuration
-  // For emulator: use 'http://10.0.2.2:5000' (Android) or 'http://localhost:5000' (iOS/Web)
-  // For physical device: use 'http://YOUR_COMPUTER_IP:5000'
-  // static const String baseUrl = 'https://campus-care-ymlr.onrender.com';
-  // static const String baseUrl = 'http://localhost:5000';
-  // static const String baseUrl = 'https://campus-care-api.nitishchaurasiya3470.workers.dev';
-  static const String baseUrl = 'http://127.0.0.1:8787';
+  // Preferred: pass API_BASE_URL using --dart-define
+  // Example:
+  // flutter run -d chrome --dart-define=API_BASE_URL=https://your-domain.com
+  //
+  // Default fallback when API_BASE_URL is not provided:
+  // deployed Cloudflare Worker endpoint
+  static const String _baseUrlFromEnv =
+      String.fromEnvironment('API_BASE_URL', defaultValue: '');
+
+  static String get baseUrl {
+    // return "http://127.0.0.1:8787";
+    // if (_baseUrlFromEnv.isNotEmpty) {
+    //   return _baseUrlFromEnv;
+    // }
+    return 'https://campus-care-api.nitishchaurasiya3470.workers.dev';
+  }
+
   static const String apiVersion = '/api/v1';
 
   // API Endpoints
@@ -57,6 +68,7 @@ class AppConstants {
   static const String noticesEndpoint = '/notices';
   static const String timetablesEndpoint = '/timetables';
   static const String medicalRecordsEndpoint = '/medical-records';
+  static const String transportEndpoint = '/transport';
   static const String institutesEndpoint = '/institutes';
 
   // Storage Keys for API

@@ -95,6 +95,11 @@ class AdminDashboard extends StatelessWidget {
             onTap: () => Get.toNamed(AppRoutes.adminLunchManagement),
           ),
           SidebarItem(
+            icon: Icons.directions_bus_rounded,
+            title: 'Transport',
+            onTap: () => Get.toNamed(AppRoutes.adminTransportManagement),
+          ),
+          SidebarItem(
             icon: Icons.assignment_rounded,
             title: 'Homework',
             onTap: () => Get.toNamed(AppRoutes.adminHomework),
@@ -159,7 +164,8 @@ class AdminDashboard extends StatelessWidget {
         children: [
           // Welcome Banner
           Obx(() {
-            final adminName = Get.find<AuthController>().currentAdmin?.fullName ?? 'Admin';
+            final adminName =
+                Get.find<AuthController>().currentAdmin?.fullName ?? 'Admin';
             return _WelcomeBanner(adminName: adminName, isDark: isDark);
           }),
 
@@ -261,6 +267,14 @@ class AdminDashboard extends StatelessWidget {
                       subtitle: 'Track student meals',
                       onTap: () => Get.toNamed(AppRoutes.adminLunchManagement),
                       iconColor: const Color(0xFF7C3AED),
+                    ),
+                    DashboardCard(
+                      icon: Icons.directions_bus_rounded,
+                      title: 'Transport',
+                      subtitle: 'Manage routes & vans',
+                      onTap: () =>
+                          Get.toNamed(AppRoutes.adminTransportManagement),
+                      iconColor: const Color(0xFF0EA5E9),
                     ),
                     DashboardCard(
                       icon: Icons.assignment_rounded,

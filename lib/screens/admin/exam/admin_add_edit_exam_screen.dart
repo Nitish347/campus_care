@@ -10,6 +10,7 @@ import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 import 'package:campus_care/widgets/inputs/subject_dropdown.dart';
 
 import 'package:campus_care/widgets/admin/admin_page_header.dart';
+
 class AdminAddEditExamScreen extends StatefulWidget {
   final ExamModel? exam;
   final String examTypeId;
@@ -49,6 +50,7 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
 
   bool get _isEditing => widget.exam != null;
   bool _hasInitialized = false;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -160,6 +162,7 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
   }
 
   Future<void> _saveExam() async {
+    if (_isSaving) return;
     if (_formKey.currentState!.validate()) {
       if (_selectedSubject == null) {
         Get.snackbar(
@@ -207,16 +210,24 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
         updatedAt: DateTime.now(),
       );
 
+      setState(() => _isSaving = true);
       try {
         await controller.updateExam(exam);
-        Get.back();
+        if (mounted) {
+          Get.back();
+        }
       } catch (e) {
         // Error already shown by controller
+      } finally {
+        if (mounted) {
+          setState(() => _isSaving = false);
+        }
       }
     }
   }
 
   Future<void> _saveBulkExams() async {
+    if (_isSaving) return;
     // Filter out empty entries and validate
     final validEntries = <ExamEntry>[];
     final errors = <String>[];
@@ -282,6 +293,7 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
     int addCount = 0;
     int updateCount = 0;
 
+    setState(() => _isSaving = true);
     try {
       for (var entry in validEntries) {
         // Ensure examDate is properly constructed
@@ -326,7 +338,9 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
         await Future.delayed(const Duration(milliseconds: 100));
       }
 
-      Get.back();
+      if (mounted) {
+        Get.back();
+      }
 
       // Show appropriate success message
       String message;
@@ -365,7 +379,23 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
           colorText: Colors.white,
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
+  }
+
+  String _getClassDisplayName() {
+    final classCtrl = Get.find<ClassController>();
+    final cls = classCtrl.classes.firstWhereOrNull(
+      (c) => c.id == widget.classId,
+    );
+    final className = cls?.name.trim();
+    if (className == null || className.isEmpty) {
+      return widget.classId;
+    }
+    return className;
   }
 
   @override
@@ -397,22 +427,15 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
             // Context Card
             Card(
               elevation: 0,
-              color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Builder(builder: (_) {
-                  final classCtrl = Get.find<ClassController>();
-                  final cls = classCtrl.classes.firstWhereOrNull(
-                    (c) => c.id == widget.classId,
-                  );
-                  final className = cls?.name ?? widget.classId;
-                  return Text(
-                    'Class: $className - Section ${widget.section}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  );
-                }),
+                child: Text(
+                  '${_getClassDisplayName()} - Section ${widget.section}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
 
@@ -531,9 +554,18 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
             SizedBox(
               height: 50,
               child: FilledButton.icon(
-                onPressed: _saveExam,
-                icon: const Icon(Icons.update),
-                label: const Text('Update Exam'),
+                onPressed: _isSaving ? null : _saveExam,
+                icon: _isSaving
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      )
+                    : const Icon(Icons.update),
+                label: Text(_isSaving ? 'Updating...' : 'Update Exam'),
               ),
             ),
           ],
@@ -548,136 +580,189 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
 
     return Scaffold(
       appBar: AdminPageHeader(
+        subtitle: isEditMode
+            ? 'Review and update each scheduled exam'
+            : 'Create a complete exam schedule for this class',
+        icon: Icons.event_note_rounded,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Exams',
         showBackButton: true,
-        title: Text(
-            isEditMode ? 'Edit Exam Timetable' : 'Add Exams - Timetable Style'),
+        title:
+            Text(isEditMode ? 'Edit Exam Timetable' : 'Create Exam Timetable'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _addEmptyEntry,
-            tooltip: 'Add Row',
+          HeaderActionButton(
+            icon: Icons.add_rounded,
+            label: 'Add Row',
+            onPressed: () {
+              if (!_isSaving) {
+                _addEmptyEntry();
+              }
+            },
           ),
         ],
       ),
       body: Column(
         children: [
-          // Context Header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.class_, color: theme.colorScheme.primary),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Builder(builder: (_) {
-                        final classCtrl = Get.find<ClassController>();
-                        final cls = classCtrl.classes.firstWhereOrNull(
-                          (c) => c.id == widget.classId,
-                        );
-                        final className = cls?.name ?? widget.classId;
-                        return Text(
-                          'Class $className - Section ${widget.section}',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
                 ),
-                const SizedBox(height: 8),
-                Obx(() {
-                  final examType = Get.find<ExamTypeController>()
-                      .examTypeList
-                      .firstWhereOrNull((e) => e.id == widget.examTypeId);
-                  return Row(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
                     children: [
-                      Icon(Icons.event_note,
-                          size: 18, color: theme.colorScheme.primary),
-                      const SizedBox(width: 8),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          Icons.school_rounded,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Class',
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _getClassDisplayName(),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
                         child: Text(
-                          'Exam: ${examType?.name ?? "Loading..."}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
+                          'Section ${widget.section}',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
                     ],
-                  );
-                }),
-              ],
+                  ),
+                  const SizedBox(height: 12),
+                  Obx(() {
+                    final examType = Get.find<ExamTypeController>()
+                        .examTypeList
+                        .firstWhereOrNull((e) => e.id == widget.examTypeId);
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer
+                            .withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.event_note_rounded,
+                            size: 18,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Exam: ${examType?.name ?? "Loading..."}',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
             ),
           ),
-
-          // Table Header with horizontal scroll
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: Container(
-              constraints: BoxConstraints(
-                minWidth: MediaQuery.of(context).size.width,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
-                border: Border(
-                  bottom: BorderSide(
-                    color: theme.colorScheme.outline.withOpacity(0.3),
-                  ),
-                ),
+                color:
+                    theme.colorScheme.primaryContainer.withValues(alpha: 0.28),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  const SizedBox(width: 40), // For delete button space
-                  SizedBox(
-                    width: 180,
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 18,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
                     child: Text(
-                      'Subject *',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      'Add subject, date, time and marks for each exam row.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                  SizedBox(
-                    width: 140,
-                    child: Text(
-                      'Date *',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
                     ),
-                  ),
-                  SizedBox(
-                    width: 100,
-                    child: Text(
-                      'Time *',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(999),
                     ),
-                  ),
-                  SizedBox(
-                    width: 100,
                     child: Text(
-                      'Marks *',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 100,
-                    child: Text(
-                      'Duration (min)',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      '${_examEntries.length} rows',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -685,49 +770,65 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
               ),
             ),
           ),
-
-          // Exam Entries List
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
+            child: ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
               itemCount: _examEntries.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 return _buildExamEntryRow(theme, index);
               },
             ),
           ),
-
-          // Save Button
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest,
               border: Border(
                 top: BorderSide(
-                  color: theme.colorScheme.outline.withOpacity(0.3),
+                  color: theme.colorScheme.outline.withValues(alpha: 0.22),
                 ),
               ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => Get.back(),
-                    icon: const Icon(Icons.close),
-                    label: const Text('Cancel'),
+            child: SafeArea(
+              top: false,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _isSaving ? null : () => Get.back(),
+                      icon: const Icon(Icons.close_rounded),
+                      label: const Text('Cancel'),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 2,
-                  child: FilledButton.icon(
-                    onPressed: _saveBulkExams,
-                    icon: Icon(isEditMode ? Icons.update : Icons.save),
-                    label: Text(
-                        isEditMode ? 'Update Timetable' : 'Save All Exams'),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: FilledButton.icon(
+                      onPressed: _isSaving ? null : _saveBulkExams,
+                      icon: _isSaving
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: theme.colorScheme.onPrimary,
+                              ),
+                            )
+                          : Icon(isEditMode
+                              ? Icons.update_rounded
+                              : Icons.save_rounded),
+                      label: Text(
+                        _isSaving
+                            ? (isEditMode ? 'Updating...' : 'Saving...')
+                            : (isEditMode
+                                ? 'Update Timetable'
+                                : 'Save All Exams'),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -740,139 +841,126 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 700;
+        final isWide = constraints.maxWidth >= 880;
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: theme.colorScheme.outlineVariant),
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.18),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: isWide
-                ? _buildWideLayout(entry, index, theme)
-                : _buildNarrowLayout(entry, index, theme),
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        'Exam ${index + 1}',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    if (entry.examId != null) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.tertiaryContainer
+                              .withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'Existing',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onTertiaryContainer,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                      onPressed: _examEntries.length > 1 && !_isSaving
+                          ? () => _removeEntry(index)
+                          : null,
+                      color: theme.colorScheme.error,
+                      tooltip: 'Remove row',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                isWide
+                    ? _buildWideLayout(entry, theme)
+                    : _buildNarrowLayout(entry, theme),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildWideLayout(ExamEntry entry, int index, ThemeData theme) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Delete Button
-        IconButton(
-          icon: const Icon(Icons.delete_outline, size: 20),
-          onPressed: _examEntries.length > 1 ? () => _removeEntry(index) : null,
-          color: Colors.red,
-          tooltip: 'Remove',
-        ),
-        const SizedBox(width: 8),
-
-        // Subject
-        Expanded(
-          flex: 2,
-          child: SubjectDropdown(
-            initialValue: entry.subject,
-            labelText: 'Subject *',
-            classId: widget.classId,
-            onChanged: (value) {
-              setState(() {
-                entry.subject = value;
-              });
-            },
-          ),
-        ),
-        const SizedBox(width: 8),
-
-        // Date
-        Expanded(
-          flex: 2,
-          child: _buildDateField(entry),
-        ),
-        const SizedBox(width: 8),
-
-        // Time
-        Expanded(
-          child: _buildTimeField(entry),
-        ),
-        const SizedBox(width: 8),
-
-        // Marks
-        Expanded(
-          child: _buildMarksField(entry),
-        ),
-        const SizedBox(width: 8),
-
-        // Duration
-        Expanded(
-          child: _buildDurationField(entry),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNarrowLayout(ExamEntry entry, int index, ThemeData theme) {
+  Widget _buildWideLayout(ExamEntry entry, ThemeData theme) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Header with delete button
         Row(
           children: [
-            Icon(Icons.assignment, size: 18, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                'Exam ${index + 1}',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                ),
+              flex: 3,
+              child: SubjectDropdown(
+                initialValue: entry.subject,
+                labelText: 'Subject *',
+                classId: widget.classId,
+                onChanged: (value) {
+                  setState(() {
+                    entry.subject = value;
+                  });
+                },
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, size: 20),
-              onPressed:
-                  _examEntries.length > 1 ? () => _removeEntry(index) : null,
-              color: Colors.red,
-              tooltip: 'Remove',
+            const SizedBox(width: 10),
+            Expanded(
+              flex: 2,
+              child: _buildDateField(entry),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              flex: 2,
+              child: _buildTimeField(entry),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-
-        // Subject dropdown
-        SubjectDropdown(
-          initialValue: entry.subject,
-          labelText: 'Subject *',
-          classId: widget.classId,
-          onChanged: (value) {
-            setState(() {
-              entry.subject = value;
-            });
-          },
-        ),
-        const SizedBox(height: 8),
-
-        // Date and Time row
-        Row(
-          children: [
-            Expanded(child: _buildDateField(entry)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildTimeField(entry)),
-          ],
-        ),
-        const SizedBox(height: 8),
-
-        // Marks and Duration row
+        const SizedBox(height: 10),
         Row(
           children: [
             Expanded(child: _buildMarksField(entry)),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Expanded(child: _buildDurationField(entry)),
           ],
         ),
@@ -880,22 +968,68 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
     );
   }
 
+  Widget _buildNarrowLayout(ExamEntry entry, ThemeData theme) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final shouldStack = constraints.maxWidth < 440;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SubjectDropdown(
+              initialValue: entry.subject,
+              labelText: 'Subject *',
+              classId: widget.classId,
+              onChanged: (value) {
+                setState(() {
+                  entry.subject = value;
+                });
+              },
+            ),
+            const SizedBox(height: 10),
+            if (shouldStack) ...[
+              _buildDateField(entry),
+              const SizedBox(height: 10),
+              _buildTimeField(entry),
+              const SizedBox(height: 10),
+              _buildMarksField(entry),
+              const SizedBox(height: 10),
+              _buildDurationField(entry),
+            ] else ...[
+              Row(
+                children: [
+                  Expanded(child: _buildDateField(entry)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _buildTimeField(entry)),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(child: _buildMarksField(entry)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _buildDurationField(entry)),
+                ],
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildDateField(ExamEntry entry) {
-    return TextField(
+    return CustomTextField(
       controller: entry.dateController,
       readOnly: true,
-      decoration: const InputDecoration(
-        isDense: true,
-        labelText: 'Date',
-        hintText: 'Select date',
-        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.calendar_today, size: 18),
-      ),
+      labelText: 'Date *',
+      hintText: 'Select date',
+      prefixIcon: const Icon(Icons.calendar_month_rounded),
       onTap: () async {
         final date = await showDatePicker(
           context: context,
-          initialDate: DateTime.now().add(const Duration(days: 7)),
+          initialDate:
+              entry.selectedDate ?? DateTime.now().add(const Duration(days: 7)),
           firstDate: DateTime.now(),
           lastDate: DateTime.now().add(const Duration(days: 365)),
         );
@@ -910,21 +1044,17 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
   }
 
   Widget _buildTimeField(ExamEntry entry) {
-    return TextField(
+    return CustomTextField(
       controller: entry.timeController,
       readOnly: true,
-      decoration: const InputDecoration(
-        isDense: true,
-        labelText: 'Time',
-        hintText: 'Select time',
-        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.access_time, size: 18),
-      ),
+      labelText: 'Time *',
+      hintText: 'Select time',
+      prefixIcon: const Icon(Icons.access_time_rounded),
       onTap: () async {
         final time = await showTimePicker(
           context: context,
-          initialTime: const TimeOfDay(hour: 9, minute: 0),
+          initialTime:
+              entry.selectedTime ?? const TimeOfDay(hour: 9, minute: 0),
         );
         if (time != null) {
           setState(() {
@@ -937,32 +1067,22 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
   }
 
   Widget _buildMarksField(ExamEntry entry) {
-    return TextField(
+    return CustomTextField(
       controller: entry.marksController,
       keyboardType: TextInputType.number,
-      decoration: const InputDecoration(
-        isDense: true,
-        labelText: 'Marks',
-        hintText: '100',
-        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.grade, size: 18),
-      ),
+      labelText: 'Marks *',
+      hintText: '100',
+      prefixIcon: const Icon(Icons.grade_rounded),
     );
   }
 
   Widget _buildDurationField(ExamEntry entry) {
-    return TextField(
+    return CustomTextField(
       controller: entry.durationController,
       keyboardType: TextInputType.number,
-      decoration: const InputDecoration(
-        isDense: true,
-        labelText: 'Duration (min)',
-        hintText: '120',
-        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        border: OutlineInputBorder(),
-        prefixIcon: Icon(Icons.timer, size: 18),
-      ),
+      labelText: 'Duration (min)',
+      hintText: '120',
+      prefixIcon: const Icon(Icons.timer_outlined),
     );
   }
 }

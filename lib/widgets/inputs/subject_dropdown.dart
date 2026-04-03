@@ -73,20 +73,51 @@ class _SubjectDropdownState extends State<SubjectDropdown> {
             ? _subjectController.getSubjectsByClass(widget.classId!)
             : _subjectController.subjects;
 
-    // Deduplicate by subject name to avoid DropdownButton assertion crash
+    // Deduplicate by normalized subject name to avoid DropdownButton assertion crash
     final seen = <String>{};
-    return all.where((s) => seen.add(s.name)).toList();
+    return all.where((s) => seen.add(s.name.trim().toLowerCase())).toList();
+  }
+
+  String? _resolveSafeSelectedValue(List<Subject> subjects) {
+    final raw = selectedSubject?.trim();
+    if (raw == null || raw.isEmpty) return null;
+
+    // Existing selected value is already a subject name
+    final byName = subjects.where((s) => s.name == raw).toList();
+    if (byName.length == 1) {
+      return byName.first.name;
+    }
+
+    // Backward compatibility: existing selected value may be subject ID
+    final byId = subjects.where((s) => s.id == raw).toList();
+    if (byId.length == 1) {
+      return byId.first.name;
+    }
+
+    // Invalid/stale selected value
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final filteredSubjects = _getFilteredSubjects();
+      final safeValue = _resolveSafeSelectedValue(filteredSubjects);
+
+      if (safeValue != selectedSubject) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              selectedSubject = safeValue;
+            });
+          }
+        });
+      }
 
       return CustomDropdown<String>(
         labelText: widget.labelText ?? 'Subject',
         hintText: widget.hintText ?? 'Select Subject',
-        value: selectedSubject,
+        value: safeValue,
         enabled: widget.enabled,
         onChanged: (val) {
           setState(() {
@@ -108,7 +139,7 @@ class _SubjectDropdownState extends State<SubjectDropdown> {
                 ),
               ]
             : filteredSubjects.map((subject) {
-                // Use subject NAME as value (exam stores subject name, not ID)
+                // Use subject name as dropdown value for compatibility with exam/homework flows
                 return DropdownMenuItem(
                   value: subject.name,
                   child: Text('${subject.name} (${subject.code})'),

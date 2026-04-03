@@ -25,16 +25,25 @@ class CustomDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final matchCount =
+        value == null ? 0 : items.where((item) => item.value == value).length;
+    final safeValue = matchCount == 1 ? value : null;
 
     return DropdownButtonFormField<T>(
-      value: value,
+      value: safeValue,
+      isDense: true,
       items: items,
       onChanged: enabled ? onChanged : null,
       validator: validator,
       decoration: InputDecoration(
+        isDense: true,
         labelText: labelText,
         hintText: hintText,
         prefixIcon: prefixIcon,
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 40,
+          minHeight: 40,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
@@ -78,8 +87,8 @@ class CustomDropdown<T> extends StatelessWidget {
             ? theme.colorScheme.surface
             : theme.colorScheme.surfaceContainerHighest,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
+          horizontal: 12,
+          vertical: 10,
         ),
         labelStyle: TextStyle(
           color: theme.colorScheme.onSurfaceVariant,
@@ -97,4 +106,3 @@ class CustomDropdown<T> extends StatelessWidget {
     );
   }
 }
-
