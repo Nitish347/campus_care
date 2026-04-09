@@ -8,12 +8,10 @@ import 'package:campus_care/controllers/timetable_controller.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/screens/admin/academic/add_timetable_screen.dart';
 import 'package:campus_care/models/timetable_model.dart';
-import 'package:campus_care/widgets/common/info_card.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
-import 'package:campus_care/widgets/responsive/responsive_padding.dart';
-import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 
 import 'package:campus_care/widgets/admin/admin_page_header.dart';
+
 class TimetableScreen extends GetView<TimetableController> {
   const TimetableScreen({super.key});
 
@@ -37,26 +35,28 @@ class TimetableScreen extends GetView<TimetableController> {
 
     return Scaffold(
       appBar: AdminPageHeader(
+        title: 'School Timetable',
         subtitle: 'View class schedules',
         icon: Icons.calendar_month,
         showBreadcrumb: true,
         breadcrumbLabel: 'Timetable',
         showBackButton: true,
-        title: const Text('School Timetable'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
+          HeaderActionButton(
+            icon: Icons.refresh_rounded,
+            label: 'Refresh',
             onPressed: () {
               controller.loadTimetables();
               // Also refresh subjects and teachers to ensure fresh data for mapping
               subjectController.fetchSubjects();
               teacherController.loadTeachers();
             },
-            tooltip: 'Refresh',
           ),
-          if (authController.isAdmin())
-            IconButton(
-              icon: const Icon(Icons.add),
+          if (authController.isAdmin()) ...[
+            const SizedBox(width: 8),
+            HeaderActionButton(
+              icon: Icons.add_rounded,
+              label: 'Add Timetable',
               onPressed: () async {
                 await Get.toNamed(AppRoutes.addTimetable);
                 // Refresh when returning from add screen
@@ -65,8 +65,8 @@ class TimetableScreen extends GetView<TimetableController> {
                   section: controller.selectedSection,
                 );
               },
-              tooltip: 'Add Timetable',
             ),
+          ],
         ],
       ),
       body: Obx(

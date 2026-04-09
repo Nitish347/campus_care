@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/class_controller.dart';
+import 'package:campus_care/controllers/subject_controller.dart';
 import 'package:campus_care/models/class.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/buttons/primary_button.dart';
@@ -8,6 +9,7 @@ import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
 
 import 'package:campus_care/widgets/admin/admin_page_header.dart';
+
 class AddClassScreen extends StatefulWidget {
   final SchoolClass? schoolClass;
 
@@ -25,6 +27,7 @@ class _AddClassScreenState extends State<AddClassScreen> {
   late final TextEditingController sectionController;
   late final TextEditingController teacherController;
   late final RxList<String> selectedSubjects;
+  late final SubjectController _subjectController;
 
   @override
   void initState() {
@@ -41,10 +44,14 @@ class _AddClassScreenState extends State<AddClassScreen> {
     teacherController = TextEditingController(
       text: isEditMode ? (widget.schoolClass!.teacherId ?? '') : '',
     );
-    selectedSubjects = (isEditMode
-            ? (widget.schoolClass!.subjects?.cast<String>() ?? <String>[])
-            : <String>[])
-        .obs;
+    selectedSubjects =
+        (isEditMode ? widget.schoolClass!.subjects.cast<String>() : <String>[])
+            .obs;
+
+    _subjectController = Get.isRegistered<SubjectController>()
+        ? Get.find<SubjectController>()
+        : Get.put(SubjectController());
+    _subjectController.fetchSubjects();
   }
 
   @override
@@ -110,30 +117,52 @@ class _AddClassScreenState extends State<AddClassScreen> {
               const SizedBox(height: 16),
               SectionHeader(title: 'Subjects'),
               const SizedBox(height: 12),
-              Obx(() => Wrap(
-                    spacing: 8,
-                    children: [
-                      'Mathematics',
-                      'Science',
-                      'English',
-                      'History',
-                      'Geography',
-                      'Hindi',
-                      'Computer'
-                    ]
-                        .map((subject) => FilterChip(
-                              label: Text(subject),
-                              selected: selectedSubjects.contains(subject),
-                              onSelected: (selected) {
-                                if (selected) {
-                                  selectedSubjects.add(subject);
-                                } else {
-                                  selectedSubjects.remove(subject);
-                                }
-                              },
-                            ))
-                        .toList(),
-                  )),
+              Obx(() {
+                final fetchedSubjects = _subjectController.subjects
+                    .map((s) => s.name.trim())
+                    .where((name) => name.isNotEmpty)
+                    .toSet();
+
+                final availableSubjects = {
+                  ...fetchedSubjects,
+                  ...selectedSubjects,
+                }.toList()
+                  ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+                if (_subjectController.isLoading.value &&
+                    availableSubjects.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (availableSubjects.isEmpty) {
+                  return Text(
+                    'No subjects found. Please add subjects first from Subject Management.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  );
+                }
+
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: availableSubjects
+                      .map(
+                        (subject) => FilterChip(
+                          label: Text(subject),
+                          selected: selectedSubjects.contains(subject),
+                          onSelected: (selected) {
+                            if (selected) {
+                              if (!selectedSubjects.contains(subject)) {
+                                selectedSubjects.add(subject);
+                              }
+                            } else {
+                              selectedSubjects.remove(subject);
+                            }
+                          },
+                        ),
+                      )
+                      .toList(),
+                );
+              }),
               const SizedBox(height: 24),
               Obx(() => PrimaryButton(
                     onPressed: classController.isLoading.value

@@ -1,4 +1,6 @@
 import 'package:campus_care/utils/app_utils.dart';
+import 'package:campus_care/utils/upload_url_utils.dart';
+import 'package:campus_care/widgets/common/file_display_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -22,13 +24,14 @@ class _NotificationPopupContent extends StatelessWidget {
   final NoticeModel notice;
 
   const _NotificationPopupContent({
-    super.key,
     required this.notice,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final imageAttachments = _getImageAttachmentCandidates(notice.attachment);
+    final nonImageAttachments = _getNonImageAttachments(notice.attachment);
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 600),
@@ -39,8 +42,9 @@ class _NotificationPopupContent extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppUtils.getPriorityColor(notice.priority)
-                  .withOpacity(0.1),
+              color: AppUtils.getPriorityColor(
+                notice.priority,
+              ).withValues(alpha: 0.1),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
@@ -51,8 +55,9 @@ class _NotificationPopupContent extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppUtils.getPriorityColor(notice.priority)
-                        .withOpacity(0.2),
+                    color: AppUtils.getPriorityColor(
+                      notice.priority,
+                    ).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -79,14 +84,17 @@ class _NotificationPopupContent extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppUtils.getPriorityColor(notice.priority,)
-                              .withOpacity(0.2),
+                          color: AppUtils.getPriorityColor(
+                            notice.priority,
+                          ).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           notice.priority.toUpperCase(),
                           style: theme.textTheme.labelSmall?.copyWith(
-                            color: AppUtils.getPriorityColor(notice.priority,),
+                            color: AppUtils.getPriorityColor(
+                              notice.priority,
+                            ),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -114,13 +122,45 @@ class _NotificationPopupContent extends StatelessWidget {
                     'Description',
                     notice.description,
                   ),
+                  if (imageAttachments.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Images',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...imageAttachments.map((imageUrls) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: FileDisplayWidget(
+                          fileUrls: imageUrls,
+                          width: double.infinity,
+                          height: 180,
+                          fit: BoxFit.cover,
+                          borderRadius: BorderRadius.circular(10),
+                          enablePreview: true,
+                          previewTitle: notice.title,
+                          errorWidget: Container(
+                            height: 100,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text('Unable to load image'),
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
                   const SizedBox(height: 16),
                   _buildDetailRow(
                     context,
                     Icons.calendar_today,
                     'Issued Date',
-                    DateFormat('EEEE, MMMM dd, yyyy')
-                        .format(notice.issuedDate),
+                    DateFormat('EEEE, MMMM dd, yyyy').format(notice.issuedDate),
                   ),
                   if (notice.expiryDate != null) ...[
                     const SizedBox(height: 16),
@@ -132,8 +172,7 @@ class _NotificationPopupContent extends StatelessWidget {
                           .format(notice.expiryDate!),
                     ),
                   ],
-                  if (notice.attachment != null &&
-                      notice.attachment!.isNotEmpty) ...[
+                  if (nonImageAttachments.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     Text(
                       'Attachments',
@@ -142,7 +181,7 @@ class _NotificationPopupContent extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    ...notice.attachment!.map((attachment) {
+                    ...nonImageAttachments.map((attachment) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: InkWell(
@@ -192,7 +231,7 @@ class _NotificationPopupContent extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(
-                  color: theme.colorScheme.outline.withOpacity(0.2),
+                  color: theme.colorScheme.outline.withValues(alpha: 0.2),
                 ),
               ),
             ),
@@ -211,10 +250,12 @@ class _NotificationPopupContent extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(BuildContext context,
-      IconData icon,
-      String label,
-      String value,) {
+  Widget _buildDetailRow(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String value,
+  ) {
     final theme = Theme.of(context);
 
     return Row(
@@ -247,5 +288,38 @@ class _NotificationPopupContent extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  List<List<String>> _getImageAttachmentCandidates(List<String>? attachments) {
+    if (attachments == null || attachments.isEmpty) return const [];
+
+    final results = <List<String>>[];
+    for (final attachment in attachments) {
+      if (_isImageAttachment(attachment)) {
+        final candidates = UploadUrlUtils.buildCandidateUrls(attachment);
+        if (candidates.isNotEmpty) {
+          results.add(candidates);
+        }
+      }
+    }
+    return results;
+  }
+
+  List<String> _getNonImageAttachments(List<String>? attachments) {
+    if (attachments == null || attachments.isEmpty) return const [];
+
+    return attachments.where((item) => !_isImageAttachment(item)).toList();
+  }
+
+  bool _isImageAttachment(String value) {
+    final normalized = value.trim().toLowerCase();
+    if (normalized.isEmpty) return false;
+
+    final withoutQuery = normalized.split('?').first;
+    return withoutQuery.endsWith('.png') ||
+        withoutQuery.endsWith('.jpg') ||
+        withoutQuery.endsWith('.jpeg') ||
+        withoutQuery.endsWith('.webp') ||
+        withoutQuery.endsWith('.gif');
   }
 }

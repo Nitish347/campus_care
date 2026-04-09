@@ -20,6 +20,7 @@ class CustomTextField extends StatelessWidget {
   final void Function(String)? onSubmitted;
   final FocusNode? focusNode;
   final TextInputAction? textInputAction;
+  final double? fieldHeight;
 
   const CustomTextField({
     super.key,
@@ -42,6 +43,7 @@ class CustomTextField extends StatelessWidget {
     this.onSubmitted,
     this.focusNode,
     this.textInputAction,
+    this.fieldHeight,
   });
 
   @override
@@ -49,7 +51,7 @@ class CustomTextField extends StatelessWidget {
     final theme = Theme.of(context);
     final isSingleLine = (maxLines ?? 1) == 1;
 
-    return TextFormField(
+    final textField = TextFormField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
@@ -134,5 +136,11 @@ class CustomTextField extends StatelessWidget {
         ),
       ),
     );
+
+    if (fieldHeight != null) {
+      return SizedBox(height: fieldHeight, child: textField);
+    }
+
+    return textField;
   }
 }

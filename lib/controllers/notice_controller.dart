@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/models/notice_model.dart';
 import 'package:campus_care/services/api/notice_api_service.dart';
+import 'package:campus_care/services/upload_service.dart';
 
 class NoticeController extends GetxController {
   final NoticeApiService _apiService = NoticeApiService();
@@ -36,13 +37,33 @@ class NoticeController extends GetxController {
     }
   }
 
-  Future<bool> createNotice(NoticeModel notice) async {
+  Future<bool> createNotice(
+    NoticeModel notice, {
+    List<int>? imageBytes,
+    String? imageFileName,
+  }) async {
     try {
       _isLoading.value = true;
 
       // Get the logged-in admin's ID for author_id
       final authController = Get.find<AuthController>();
       final authorId = authController.getMarkedBy() ?? '';
+      final attachments = List<String>.from(notice.attachment ?? const []);
+
+      if (imageBytes != null &&
+          imageFileName != null &&
+          imageFileName.trim().isNotEmpty) {
+        final uploadedImageUrl = await UploadService.uploadNoticeImage(
+          fileBytes: imageBytes,
+          fileName: imageFileName,
+        );
+        if (uploadedImageUrl.isNotEmpty) {
+          attachments.removeWhere(
+            (item) => item.trim().isEmpty || _isImageAttachment(item),
+          );
+          attachments.insert(0, uploadedImageUrl);
+        }
+      }
 
       final noticeData = {
         'title': notice.title,
@@ -56,7 +77,8 @@ class NoticeController extends GetxController {
           'target_classes': notice.targetedClassId,
         if (notice.targetSections != null)
           'target_audience': notice.targetSections,
-        if (notice.attachment != null) 'attachments': notice.attachment,
+        if (attachments.isNotEmpty || notice.attachment != null)
+          'attachments': attachments,
         'is_active': 1,
       };
 
@@ -73,9 +95,30 @@ class NoticeController extends GetxController {
     }
   }
 
-  Future<bool> updateNotice(String id, NoticeModel notice) async {
+  Future<bool> updateNotice(
+    String id,
+    NoticeModel notice, {
+    List<int>? imageBytes,
+    String? imageFileName,
+  }) async {
     try {
       _isLoading.value = true;
+      final attachments = List<String>.from(notice.attachment ?? const []);
+
+      if (imageBytes != null &&
+          imageFileName != null &&
+          imageFileName.trim().isNotEmpty) {
+        final uploadedImageUrl = await UploadService.uploadNoticeImage(
+          fileBytes: imageBytes,
+          fileName: imageFileName,
+        );
+        if (uploadedImageUrl.isNotEmpty) {
+          attachments.removeWhere(
+            (item) => item.trim().isEmpty || _isImageAttachment(item),
+          );
+          attachments.insert(0, uploadedImageUrl);
+        }
+      }
 
       final noticeData = {
         'title': notice.title,
@@ -87,7 +130,8 @@ class NoticeController extends GetxController {
           'target_classes': notice.targetedClassId,
         if (notice.targetSections != null)
           'target_audience': notice.targetSections,
-        if (notice.attachment != null) 'attachments': notice.attachment,
+        if (attachments.isNotEmpty || notice.attachment != null)
+          'attachments': attachments,
       };
 
       await _apiService.updateNotice(id, noticeData);
@@ -134,5 +178,17 @@ class NoticeController extends GetxController {
             notice.description.toLowerCase().contains(searchLower);
       }).toList();
     }
+  }
+
+  bool _isImageAttachment(String value) {
+    final normalized = value.trim().toLowerCase();
+    if (normalized.isEmpty) return false;
+
+    final withoutQuery = normalized.split('?').first;
+    return withoutQuery.endsWith('.png') ||
+        withoutQuery.endsWith('.jpg') ||
+        withoutQuery.endsWith('.jpeg') ||
+        withoutQuery.endsWith('.webp') ||
+        withoutQuery.endsWith('.gif');
   }
 }

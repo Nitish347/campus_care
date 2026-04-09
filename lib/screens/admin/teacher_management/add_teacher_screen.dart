@@ -1,12 +1,17 @@
+import 'dart:typed_data';
+
 import 'package:campus_care/widgets/admin/admin_page_header.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:campus_care/models/teacher/teacher.dart';
 import 'package:campus_care/controllers/teacher_controller.dart';
+import 'package:campus_care/services/upload_service.dart';
+import 'package:campus_care/utils/upload_url_utils.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/buttons/primary_button.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddTeacherScreen extends StatefulWidget {
   final Teacher? teacher;
@@ -27,7 +32,13 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
   final _departmentController = TextEditingController();
 
   final TeacherController _teacherController = Get.find<TeacherController>();
+  final ImagePicker _imagePicker = ImagePicker();
   DateTime? _hireDate;
+  Uint8List? _profileImageBytes;
+  String? _profileImageFileName;
+  String? _existingProfileImageUrl;
+  bool _isUploadingProfileImage = false;
+  bool _isSaving = false;
 
   bool get isEditMode => widget.teacher != null;
 
@@ -45,6 +56,7 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
     _addressController.text = t.address ?? '';
     _departmentController.text = t.department ?? '';
     _hireDate = t.hireDate;
+    _existingProfileImageUrl = t.profileImageUrl;
   }
 
   @override
@@ -58,6 +70,18 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
     super.dispose();
   }
 
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
+      ),
+    );
+  }
+
   Future<void> _selectHireDate(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
@@ -68,37 +92,154 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
     if (picked != null) setState(() => _hireDate = picked);
   }
 
+  Future<void> _pickProfileImage() async {
+    final file = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1400,
+    );
+    if (file == null) return;
+
+    final bytes = await file.readAsBytes();
+    if (!mounted) return;
+
+    setState(() {
+      _profileImageBytes = bytes;
+      _profileImageFileName = file.name;
+    });
+  }
+
+  Future<String?> _uploadProfileImageForTeacher(String teacherId) async {
+    if (_profileImageBytes == null || _profileImageFileName == null) {
+      return _existingProfileImageUrl;
+    }
+
+    try {
+      setState(() => _isUploadingProfileImage = true);
+      final uploadedUrl = await UploadService.uploadTeacherProfileImage(
+        teacherId: teacherId,
+        fileBytes: _profileImageBytes!,
+        fileName: _profileImageFileName!,
+      );
+
+      if (!mounted) return uploadedUrl;
+      setState(() {
+        if (uploadedUrl.isNotEmpty) {
+          _existingProfileImageUrl = uploadedUrl;
+        }
+      });
+      return uploadedUrl.isEmpty ? _existingProfileImageUrl : uploadedUrl;
+    } catch (e) {
+      _showSnackBar(
+        'Upload failed: ${e.toString().replaceFirst('Exception: ', '')}',
+        isError: true,
+      );
+      return _existingProfileImageUrl;
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingProfileImage = false);
+      }
+    }
+  }
+
   Future<void> _saveTeacher() async {
+    if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
 
     final nameParts = _nameController.text.trim().split(' ');
     final firstName = nameParts.isNotEmpty ? nameParts.first : '';
     final lastName =
         nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '-';
 
-    final teacher = Teacher(
-      id: isEditMode ? widget.teacher!.id : '',
-      firstName: firstName,
-      lastName: lastName,
-      email: _emailController.text,
-      password:
-          _passwordController.text.isNotEmpty ? _passwordController.text : null,
-      phone: _phoneController.text.isNotEmpty ? _phoneController.text : null,
-      address:
-          _addressController.text.isNotEmpty ? _addressController.text : null,
-      department: _departmentController.text.isNotEmpty
-          ? _departmentController.text
-          : null,
-      hireDate: _hireDate,
-      institute: isEditMode ? widget.teacher!.institute : '',
-      createdAt: isEditMode ? widget.teacher!.createdAt : DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+    try {
+      String? profileImageUrl = _existingProfileImageUrl;
 
-    if (isEditMode) {
-      await _teacherController.updateTeacher(teacher);
-    } else {
-      await _teacherController.addTeacher(teacher);
+      if (isEditMode && _profileImageBytes != null) {
+        profileImageUrl =
+            await _uploadProfileImageForTeacher(widget.teacher!.id);
+      }
+
+      final teacher = Teacher(
+        id: isEditMode ? widget.teacher!.id : '',
+        firstName: firstName,
+        lastName: lastName,
+        email: _emailController.text,
+        password: _passwordController.text.isNotEmpty
+            ? _passwordController.text
+            : null,
+        phone: _phoneController.text.isNotEmpty ? _phoneController.text : null,
+        address:
+            _addressController.text.isNotEmpty ? _addressController.text : null,
+        department: _departmentController.text.isNotEmpty
+            ? _departmentController.text
+            : null,
+        profileImageUrl: profileImageUrl,
+        hireDate: _hireDate,
+        institute: isEditMode ? widget.teacher!.institute : '',
+        createdAt: isEditMode ? widget.teacher!.createdAt : DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      if (isEditMode) {
+        await _teacherController.updateTeacher(teacher);
+        return;
+      }
+
+      final createdTeacherId = await _teacherController.addTeacher(
+        teacher,
+        popOnSuccess: false,
+        showSnackbar: false,
+      );
+
+      if (createdTeacherId == null || createdTeacherId.isEmpty) {
+        return;
+      }
+
+      if (_profileImageBytes != null) {
+        final uploadedUrl =
+            await _uploadProfileImageForTeacher(createdTeacherId);
+        if ((uploadedUrl ?? '').isNotEmpty) {
+          Teacher? createdTeacher;
+          for (final item in _teacherController.teachers) {
+            if (item.id == createdTeacherId) {
+              createdTeacher = item;
+              break;
+            }
+          }
+
+          if (createdTeacher == null) {
+            if (!mounted) return;
+            Get.back();
+            _showSnackBar(
+              'Teacher added, but profile image could not be linked automatically.',
+              isError: true,
+            );
+            return;
+          }
+
+          await _teacherController.updateTeacher(
+            teacher.copyWith(
+              id: createdTeacherId,
+              institute: createdTeacher.institute,
+              createdAt: createdTeacher.createdAt,
+              profileImageUrl: uploadedUrl,
+              updatedAt: DateTime.now(),
+            ),
+            popOnSuccess: false,
+            showSnackbar: false,
+          );
+        }
+      }
+
+      if (!mounted) return;
+      Get.back();
+      _showSnackBar('Teacher added successfully');
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
@@ -118,6 +259,7 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
             icon: isEditMode ? Icons.edit_rounded : Icons.person_add_rounded,
             showBreadcrumb: true,
             breadcrumbLabel: isEditMode ? 'Edit Teacher' : 'Add Teacher',
+            showBackButton: true,
             actions: [
               HeaderActionButton(
                 icon: Icons.save_rounded,
@@ -136,6 +278,16 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        _FormCard(
+                          title: 'Profile Photo',
+                          icon: Icons.image_rounded,
+                          accentColor: const Color(0xFF0EA5E9),
+                          children: [
+                            _buildProfileImageEditor(theme),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
                         // Personal Information Card
                         _FormCard(
                           title: 'Personal Information',
@@ -174,15 +326,13 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
                                   ? 'Enter new password to change'
                                   : 'Min. 6 characters',
                               obscureText: true,
-                              prefixIcon: const Icon(Icons.lock_outline_rounded),
+                              prefixIcon:
+                                  const Icon(Icons.lock_outline_rounded),
                               validator: (v) {
-                                if (!isEditMode &&
-                                    (v == null || v.isEmpty)) {
+                                if (!isEditMode && (v == null || v.isEmpty)) {
                                   return 'Required';
                                 }
-                                if (v != null &&
-                                    v.isNotEmpty &&
-                                    v.length < 6) {
+                                if (v != null && v.isNotEmpty && v.length < 6) {
                                   return 'Min. 6 characters';
                                 }
                                 return null;
@@ -227,7 +377,8 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
                               labelText: 'Hire Date',
                               hintText: _hireDate == null
                                   ? 'Select hire date'
-                                  : DateFormat('MMM dd, yyyy').format(_hireDate!),
+                                  : DateFormat('MMM dd, yyyy')
+                                      .format(_hireDate!),
                               prefixIcon:
                                   const Icon(Icons.calendar_today_rounded),
                               onTap: () => _selectHireDate(context),
@@ -238,6 +389,7 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
 
                         PrimaryButton(
                           onPressed: _saveTeacher,
+                          isLoading: _isSaving || _isUploadingProfileImage,
                           prefixIcon: isEditMode
                               ? Icons.save_rounded
                               : Icons.add_rounded,
@@ -259,6 +411,97 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildProfileImageEditor(ThemeData theme) {
+    final normalizedExistingProfileImageUrl =
+        UploadUrlUtils.normalizeToApiBase(_existingProfileImageUrl);
+
+    final ImageProvider<Object>? imageProvider = _profileImageBytes != null
+        ? MemoryImage(_profileImageBytes!)
+        : (normalizedExistingProfileImageUrl != null
+            ? NetworkImage(normalizedExistingProfileImageUrl)
+            : null);
+
+    final teacherName = _nameController.text.trim();
+    final initial = teacherName.isNotEmpty ? teacherName[0].toUpperCase() : 'T';
+
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 36,
+          backgroundColor: theme.colorScheme.primaryContainer,
+          foregroundImage: imageProvider,
+          child: imageProvider == null
+              ? Text(
+                  initial,
+                  style: TextStyle(
+                    color: theme.colorScheme.onPrimaryContainer,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                  ),
+                )
+              : null,
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Upload teacher profile picture',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Optional. JPG/PNG image from gallery.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: (_isSaving || _isUploadingProfileImage)
+                        ? null
+                        : _pickProfileImage,
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Choose Photo'),
+                  ),
+                  if (_profileImageBytes != null ||
+                      (_existingProfileImageUrl ?? '').isNotEmpty)
+                    TextButton.icon(
+                      onPressed: (_isSaving || _isUploadingProfileImage)
+                          ? null
+                          : () {
+                              setState(() {
+                                _profileImageBytes = null;
+                                _profileImageFileName = null;
+                                if (!isEditMode) {
+                                  _existingProfileImageUrl = null;
+                                }
+                              });
+                            },
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Remove'),
+                    ),
+                ],
+              ),
+              if (_isUploadingProfileImage)
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: LinearProgressIndicator(minHeight: 3),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -283,8 +526,8 @@ class _FormCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.1)),
+        border:
+            Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -299,16 +542,15 @@ class _FormCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [
                   accentColor.withValues(alpha: 0.1),
                   accentColor.withValues(alpha: 0.04),
                 ]),
                 border: Border(
-                    bottom: BorderSide(
-                        color: accentColor.withValues(alpha: 0.12))),
+                    bottom:
+                        BorderSide(color: accentColor.withValues(alpha: 0.12))),
               ),
               child: Row(
                 children: [

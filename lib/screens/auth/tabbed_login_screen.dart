@@ -1,4 +1,5 @@
 import 'package:campus_care/controllers/auth_controller.dart';
+import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/utils/validators.dart';
 import 'package:campus_care/widgets/buttons/primary_button.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +31,13 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
   final _studentEmailController = TextEditingController();
   final _studentPasswordController = TextEditingController();
 
+  final Map<String, bool> _passwordVisibility = {
+    AppConstants.roleSuperAdmin: false,
+    AppConstants.roleAdmin: false,
+    AppConstants.roleTeacher: false,
+    AppConstants.roleStudent: false,
+  };
+
   final _isLoading = false.obs;
 
   @override
@@ -45,6 +53,12 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
         _currentTabIndex = _tabController.index;
       });
     }
+  }
+
+  void _togglePasswordVisibility(String role) {
+    setState(() {
+      _passwordVisibility[role] = !(_passwordVisibility[role] ?? false);
+    });
   }
 
   @override
@@ -327,6 +341,7 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
               formKey: current.formKey,
               emailController: current.emailController,
               passwordController: current.passwordController,
+              role: current.role,
               userType: current.userType,
               onLogin: current.onLogin,
               demoEmail: current.demoEmail,
@@ -351,6 +366,7 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
     return [
       _RoleConfig(
         tabLabel: 'Super',
+        role: AppConstants.roleSuperAdmin,
         userType: 'Super Admin',
         icon: Icons.shield_rounded,
         color: Colors.purple,
@@ -363,6 +379,7 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
       ),
       _RoleConfig(
         tabLabel: 'Admin',
+        role: AppConstants.roleAdmin,
         userType: 'Admin',
         icon: Icons.admin_panel_settings_rounded,
         color: theme.colorScheme.primary,
@@ -375,6 +392,7 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
       ),
       _RoleConfig(
         tabLabel: 'Teacher',
+        role: AppConstants.roleTeacher,
         userType: 'Teacher',
         icon: Icons.person_rounded,
         color: theme.colorScheme.secondary,
@@ -387,6 +405,7 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
       ),
       _RoleConfig(
         tabLabel: 'Student',
+        role: AppConstants.roleStudent,
         userType: 'Student',
         icon: Icons.school_rounded,
         color: theme.colorScheme.tertiary,
@@ -405,6 +424,7 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
     required GlobalKey<FormState> formKey,
     required TextEditingController emailController,
     required TextEditingController passwordController,
+    required String role,
     required String userType,
     required VoidCallback onLogin,
     required String demoEmail,
@@ -412,6 +432,7 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
     required Color color,
   }) {
     final theme = Theme.of(context);
+    final isPasswordVisible = _passwordVisibility[role] ?? false;
 
     return Form(
       key: formKey,
@@ -421,12 +442,12 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
         children: [
           TextFormField(
             controller: emailController,
-            keyboardType: TextInputType.emailAddress,
-            validator: Validators.validateEmail,
+            keyboardType: TextInputType.text,
+            validator: Validators.validateEmailOrPhone,
             decoration: InputDecoration(
-              labelText: 'Email Address',
-              hintText: 'Enter your email',
-              prefixIcon: Icon(Icons.email_outlined, color: color),
+              labelText: 'Email or Phone',
+              hintText: 'Enter email or phone',
+              prefixIcon: Icon(Icons.person_outline_rounded, color: color),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -439,12 +460,21 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
           const SizedBox(height: 14),
           TextFormField(
             controller: passwordController,
-            obscureText: true,
+            obscureText: !isPasswordVisible,
             validator: Validators.validatePassword,
             decoration: InputDecoration(
               labelText: 'Password',
               hintText: 'Enter your password',
               prefixIcon: Icon(Icons.lock_outline, color: color),
+              suffixIcon: IconButton(
+                onPressed: () => _togglePasswordVisibility(role),
+                icon: Icon(
+                  isPasswordVisible
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: color,
+                ),
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -454,6 +484,21 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
               ),
             ),
           ),
+          if (role != AppConstants.roleSuperAdmin)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => _showForgotPasswordDialog(
+                  role: role,
+                  userType: userType,
+                  color: color,
+                  initialIdentifier: emailController.text,
+                  loginIdentifierController: emailController,
+                  loginPasswordController: passwordController,
+                ),
+                child: const Text('Forgot Password?'),
+              ),
+            ),
           const SizedBox(height: 20),
           Obx(
             () => PrimaryButton(
@@ -498,6 +543,246 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
     );
   }
 
+  Future<void> _showForgotPasswordDialog({
+    required String role,
+    required String userType,
+    required Color color,
+    required String initialIdentifier,
+    required TextEditingController loginIdentifierController,
+    required TextEditingController loginPasswordController,
+  }) async {
+    final authController = Get.find<AuthController>();
+    final identifierController =
+        TextEditingController(text: initialIdentifier.trim());
+    final otpController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+
+    bool otpSent = false;
+    bool isBusy = false;
+    String email = '';
+
+    try {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: !isBusy,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              Future<void> sendOtp() async {
+                final identifier = identifierController.text.trim();
+                if (identifier.isEmpty) {
+                  Get.snackbar('Required', 'Enter your email or phone');
+                  return;
+                }
+
+                if (!identifier.contains('@')) {
+                  Get.snackbar(
+                    'Phone Reset Not Available',
+                    'Please contact your institute to reset password by phone number.',
+                  );
+                  return;
+                }
+
+                final emailValidation = Validators.validateEmail(identifier);
+                if (emailValidation != null) {
+                  Get.snackbar('Invalid Email', emailValidation);
+                  return;
+                }
+
+                setDialogState(() => isBusy = true);
+                try {
+                  await authController.requestPasswordResetOtp(
+                    role: role,
+                    identifier: identifier,
+                  );
+                  email = identifier.toLowerCase();
+                  setDialogState(() => otpSent = true);
+                  Get.snackbar(
+                    'OTP Sent',
+                    'If your email exists, OTP has been sent.',
+                  );
+                } catch (e) {
+                  Get.snackbar(
+                    'Failed',
+                    e.toString().replaceAll('Exception: ', ''),
+                  );
+                } finally {
+                  setDialogState(() => isBusy = false);
+                }
+              }
+
+              Future<void> resetPassword() async {
+                final otp = otpController.text.trim();
+                final newPassword = newPasswordController.text;
+                final confirmPassword = confirmPasswordController.text;
+
+                if (email.isEmpty) {
+                  Get.snackbar('Required', 'Send OTP first');
+                  return;
+                }
+                if (otp.length != 6) {
+                  Get.snackbar('Invalid OTP', 'Please enter the 6-digit OTP');
+                  return;
+                }
+
+                final passwordValidation =
+                    Validators.validatePassword(newPassword);
+                if (passwordValidation != null) {
+                  Get.snackbar('Invalid Password', passwordValidation);
+                  return;
+                }
+
+                if (newPassword != confirmPassword) {
+                  Get.snackbar(
+                    'Password Mismatch',
+                    'New password and confirm password must match',
+                  );
+                  return;
+                }
+
+                setDialogState(() => isBusy = true);
+                try {
+                  await authController.resetPasswordWithOtp(
+                    role: role,
+                    email: email,
+                    otp: otp,
+                    newPassword: newPassword,
+                  );
+                  loginIdentifierController.text = email;
+                  loginPasswordController.clear();
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                  }
+                  Get.snackbar(
+                    'Password Updated',
+                    'Password reset successful. Please login with new password.',
+                  );
+                } catch (e) {
+                  Get.snackbar(
+                    'Reset Failed',
+                    e.toString().replaceAll('Exception: ', ''),
+                  );
+                } finally {
+                  if (context.mounted) {
+                    setDialogState(() => isBusy = false);
+                  }
+                }
+              }
+
+              return AlertDialog(
+                title: Text('Reset $userType Password'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextFormField(
+                        controller: identifierController,
+                        enabled: !otpSent && !isBusy,
+                        keyboardType: TextInputType.text,
+                        decoration: InputDecoration(
+                          labelText: 'Email or Phone',
+                          hintText: 'Enter email or phone',
+                          prefixIcon: Icon(Icons.person_outline, color: color),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Phone reset is not available. Contact your institute for phone-based reset.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color:
+                                  Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                      const SizedBox(height: 14),
+                      if (otpSent) ...[
+                        TextFormField(
+                          controller: otpController,
+                          keyboardType: TextInputType.number,
+                          maxLength: 6,
+                          decoration: InputDecoration(
+                            labelText: 'OTP',
+                            hintText: 'Enter 6-digit OTP',
+                            counterText: '',
+                            prefixIcon:
+                                Icon(Icons.pin_outlined, color: color),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: newPasswordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            labelText: 'New Password',
+                            prefixIcon:
+                                Icon(Icons.lock_outline_rounded, color: color),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: confirmPasswordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            labelText: 'Confirm Password',
+                            prefixIcon:
+                                Icon(Icons.lock_reset_rounded, color: color),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: isBusy
+                        ? null
+                        : () {
+                            Navigator.of(context).pop();
+                          },
+                    child: const Text('Cancel'),
+                  ),
+                  if (!otpSent)
+                    FilledButton(
+                      onPressed: isBusy ? null : sendOtp,
+                      child: isBusy
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Send OTP'),
+                    ),
+                  if (otpSent)
+                    TextButton(
+                      onPressed: isBusy ? null : sendOtp,
+                      child: const Text('Resend OTP'),
+                    ),
+                  if (otpSent)
+                    FilledButton(
+                      onPressed: isBusy ? null : resetPassword,
+                      child: isBusy
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Verify & Reset'),
+                    ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      identifierController.dispose();
+      otpController.dispose();
+      newPasswordController.dispose();
+      confirmPasswordController.dispose();
+    }
+  }
+
   Future<void> _loginSuperAdmin() async {
     if (!_superAdminFormKey.currentState!.validate()) return;
 
@@ -505,7 +790,7 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
     try {
       final authController = Get.find<AuthController>();
       await authController.loginWithCredentials(
-        email: _superAdminEmailController.text,
+        identifier: _superAdminEmailController.text,
         password: _superAdminPasswordController.text,
         role: 'super_admin',
       );
@@ -521,7 +806,7 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
     try {
       final authController = Get.find<AuthController>();
       await authController.loginWithCredentials(
-        email: _adminEmailController.text,
+        identifier: _adminEmailController.text,
         password: _adminPasswordController.text,
         role: 'admin',
       );
@@ -537,7 +822,7 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
     try {
       final authController = Get.find<AuthController>();
       await authController.loginWithCredentials(
-        email: _teacherEmailController.text,
+        identifier: _teacherEmailController.text,
         password: _teacherPasswordController.text,
         role: 'teacher',
       );
@@ -553,7 +838,7 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
     try {
       final authController = Get.find<AuthController>();
       await authController.loginWithCredentials(
-        email: _studentEmailController.text,
+        identifier: _studentEmailController.text,
         password: _studentPasswordController.text,
         role: 'student',
       );
@@ -565,6 +850,7 @@ class _TabbedLoginScreenState extends State<TabbedLoginScreen>
 
 class _RoleConfig {
   final String tabLabel;
+  final String role;
   final String userType;
   final IconData icon;
   final Color color;
@@ -577,6 +863,7 @@ class _RoleConfig {
 
   const _RoleConfig({
     required this.tabLabel,
+    required this.role,
     required this.userType,
     required this.icon,
     required this.color,

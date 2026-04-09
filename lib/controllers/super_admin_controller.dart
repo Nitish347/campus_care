@@ -48,30 +48,56 @@ class SuperAdminController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadDashboardStats();
-    loadAllSchools();
+    refreshDashboardData();
+  }
+
+  Future<void> refreshDashboardData() async {
+    await Future.wait([
+      loadAllSchools(showLoader: false),
+      loadAllStudents(showLoader: false),
+      loadAllTeachers(showLoader: false),
+    ]);
+    await loadDashboardStats();
+  }
+
+  void _syncDashboardStats() {
+    _dashboardStats.value = {
+      'schools': _schools.length,
+      'students': _students.length,
+      'teachers': _teachers.length,
+      'activeSchools': _schools.where((school) => school.isActive).length,
+      'inactiveSchools': _schools.where((school) => !school.isActive).length,
+    };
   }
 
   // Dashboard
   Future<void> loadDashboardStats() async {
     try {
       final stats = await SuperAdminService.getDashboardStats();
-      _dashboardStats.value = stats;
+      _dashboardStats.value = {
+        ..._dashboardStats,
+        ...stats,
+      };
     } catch (e) {
-      print('Error loading dashboard stats: $e');
+      _syncDashboardStats();
     }
   }
 
   // School Management
-  Future<void> loadAllSchools() async {
+  Future<void> loadAllSchools({bool showLoader = true}) async {
     try {
-      _isLoading.value = true;
+      if (showLoader) {
+        _isLoading.value = true;
+      }
       final schools = await SuperAdminService.getAllSchools();
       _schools.assignAll(schools);
+      _syncDashboardStats();
     } catch (e) {
       Get.snackbar('Error', 'Failed to load schools: $e');
     } finally {
-      _isLoading.value = false;
+      if (showLoader) {
+        _isLoading.value = false;
+      }
     }
   }
 
@@ -100,24 +126,25 @@ class SuperAdminController extends GetxController {
     _schoolTeachers.clear();
   }
 
-  Future<void> updateSchool(String id, Admin school) async {
+  Future<bool> updateSchool(String id, Map<String, dynamic> schoolData) async {
     try {
       _isLoading.value = true;
-      await SuperAdminService.updateSchool(id, school);
+      await SuperAdminService.updateSchool(id, schoolData);
       await loadAllSchools();
       if (_selectedSchool.value?.id == id) {
         await loadSchoolById(id);
       }
-      Get.back();
       Get.snackbar('Success', 'School updated successfully');
+      return true;
     } catch (e) {
       Get.snackbar('Error', 'Failed to update school: $e');
+      return false;
     } finally {
       _isLoading.value = false;
     }
   }
 
-  Future<void> deleteSchool(String id) async {
+  Future<bool> deleteSchool(String id) async {
     try {
       _isLoading.value = true;
       await SuperAdminService.deleteSchool(id);
@@ -126,8 +153,10 @@ class SuperAdminController extends GetxController {
         clearSelectedSchool();
       }
       Get.snackbar('Success', 'School deleted successfully');
+      return true;
     } catch (e) {
       Get.snackbar('Error', 'Failed to delete school: $e');
+      return false;
     } finally {
       _isLoading.value = false;
     }
@@ -137,30 +166,36 @@ class SuperAdminController extends GetxController {
     _searchQuery.value = query;
   }
 
-  Future<void> createSchool(Admin school) async {
+  Future<bool> createSchool(Map<String, dynamic> schoolData) async {
     try {
       _isLoading.value = true;
-      await SuperAdminService.createSchool(school);
+      await SuperAdminService.createSchool(schoolData);
       await loadAllSchools();
-      Get.back();
       Get.snackbar('Success', 'School created successfully');
+      return true;
     } catch (e) {
       Get.snackbar('Error', 'Failed to create school: $e');
+      return false;
     } finally {
       _isLoading.value = false;
     }
   }
 
   // Student Management
-  Future<void> loadAllStudents() async {
+  Future<void> loadAllStudents({bool showLoader = true}) async {
     try {
-      _isLoading.value = true;
+      if (showLoader) {
+        _isLoading.value = true;
+      }
       final students = await SuperAdminService.getAllStudents();
       _students.assignAll(students);
+      _syncDashboardStats();
     } catch (e) {
       Get.snackbar('Error', 'Failed to load students: $e');
     } finally {
-      _isLoading.value = false;
+      if (showLoader) {
+        _isLoading.value = false;
+      }
     }
   }
 
@@ -226,15 +261,20 @@ class SuperAdminController extends GetxController {
   }
 
   // Teacher Management
-  Future<void> loadAllTeachers() async {
+  Future<void> loadAllTeachers({bool showLoader = true}) async {
     try {
-      _isLoading.value = true;
+      if (showLoader) {
+        _isLoading.value = true;
+      }
       final teachers = await SuperAdminService.getAllTeachers();
       _teachers.assignAll(teachers);
+      _syncDashboardStats();
     } catch (e) {
       Get.snackbar('Error', 'Failed to load teachers: $e');
     } finally {
-      _isLoading.value = false;
+      if (showLoader) {
+        _isLoading.value = false;
+      }
     }
   }
 

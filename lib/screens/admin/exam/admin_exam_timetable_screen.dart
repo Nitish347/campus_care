@@ -10,6 +10,7 @@ import 'package:campus_care/controllers/exam_type_controller.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/screens/admin/exam/admin_add_edit_exam_screen.dart';
+import 'package:campus_care/widgets/admin/admin_page_header.dart';
 
 class AdminExamTimetableScreen extends StatefulWidget {
   const AdminExamTimetableScreen({super.key});
@@ -28,6 +29,45 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
   String? _selectedSection;
   bool _isTableView = false; // Toggle between list and table view
 
+  List<ExamModel> _getSelectedExams() {
+    if (_selectedExamTypeId == null ||
+        _selectedClass == null ||
+        _selectedSection == null) {
+      return const <ExamModel>[];
+    }
+
+    return _examController.examList
+        .where((exam) =>
+            exam.examTypeId == _selectedExamTypeId &&
+            exam.classId == _selectedClass &&
+            exam.section == _selectedSection)
+        .toList();
+  }
+
+  void _openExamEditor({List<ExamModel>? existingExams}) {
+    if (_selectedExamTypeId == null ||
+        _selectedClass == null ||
+        _selectedSection == null) {
+      Get.snackbar(
+        'Selection required',
+        'Please select exam schedule, class and section first',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    Get.to(
+      () => AdminAddEditExamScreen(
+        examTypeId: _selectedExamTypeId!,
+        classId: _selectedClass!,
+        section: _selectedSection!,
+        existingExams: existingExams != null && existingExams.isNotEmpty
+            ? existingExams
+            : null,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -36,25 +76,47 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
         _selectedSection != null;
 
     return Scaffold(
+      appBar: AdminPageHeader(
+        title: 'Exam Timetable',
+        subtitle: 'Add exam schedule and create exam timetable',
+        icon: Icons.assignment_turned_in_rounded,
+        showBreadcrumb: true,
+        breadcrumbLabel: 'Exam Timetable',
+        showBackButton: true,
+        actions: [
+          HeaderActionButton(
+            icon: Icons.refresh_rounded,
+            label: 'Refresh',
+            onPressed: () {
+              if (canAddExam) {
+                _examController.fetchExams();
+              } else {
+                _examTypeController.fetchExamTypes();
+              }
+            },
+          ),
+          const SizedBox(width: 8),
+          HeaderActionButton(
+            icon: Icons.add_task_rounded,
+            label: 'Add Exam',
+            onPressed: () =>
+                _openExamEditor(existingExams: _getSelectedExams()),
+          ),
+        ],
+      ),
       backgroundColor: Colors.transparent,
       floatingActionButton: canAddExam
           ? Obx(() {
-              // Filter exams by selected exam type
-              final filteredExams = _examController.examList
-                  .where((exam) => exam.examTypeId == _selectedExamTypeId)
-                  .toList();
+              final filteredExams = _getSelectedExams();
 
               final hasExams = filteredExams.isNotEmpty;
 
               return FloatingActionButton.extended(
-                onPressed: () => Get.to(() => AdminAddEditExamScreen(
-                      examTypeId: _selectedExamTypeId!,
-                      classId: _selectedClass!,
-                      section: _selectedSection!,
-                      existingExams: hasExams ? filteredExams : null,
-                    )),
-                icon: Icon(hasExams ? Icons.edit : Icons.add),
-                label: Text(hasExams ? 'Edit Timetable' : 'Add Exams'),
+                onPressed: () => _openExamEditor(existingExams: filteredExams),
+                icon: Icon(hasExams
+                    ? Icons.edit_calendar_rounded
+                    : Icons.add_task_rounded),
+                label: Text(hasExams ? 'Edit Timetable' : 'Create Timetable'),
               );
             })
           : null,
@@ -180,7 +242,7 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
                           Icons.filter_list,
                           size: 64,
                           color: theme.colorScheme.onSurfaceVariant
-                              .withOpacity(0.5),
+                              .withValues(alpha: 0.5),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -194,7 +256,7 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
                           'to view and manage exams',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant
-                                .withOpacity(0.7),
+                                .withValues(alpha: 0.7),
                           ),
                         ),
                       ],
@@ -272,7 +334,7 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
                   Container(
                     width: 1,
                     height: 40,
-                    color: theme.colorScheme.outline.withOpacity(0.3),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.3),
                   ),
                   _buildSummaryItem(
                     theme,
@@ -308,8 +370,8 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color:
-                            theme.colorScheme.primaryContainer.withOpacity(0.5),
+                        color: theme.colorScheme.primaryContainer
+                            .withValues(alpha: 0.5),
                         borderRadius: const BorderRadius.vertical(
                           top: Radius.circular(16),
                         ),
@@ -336,7 +398,8 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.2),
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -371,9 +434,9 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: subjectColor.withOpacity(0.1),
+          color: subjectColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: subjectColor.withOpacity(0.3)),
+          border: Border.all(color: subjectColor.withValues(alpha: 0.3)),
         ),
         child: Icon(
           _getSubjectIcon(exam.subject),
@@ -395,7 +458,7 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: _getExamTypeColor(exam.type).withOpacity(0.1),
+              color: _getExamTypeColor(exam.type).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -644,7 +707,7 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
                   Container(
                     width: 1,
                     height: 40,
-                    color: theme.colorScheme.outline.withOpacity(0.3),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.3),
                   ),
                   _buildSummaryItem(
                     theme,
@@ -673,7 +736,8 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
                     ),
                     child: DataTable(
                       headingRowColor: WidgetStateProperty.all(
-                        theme.colorScheme.primaryContainer.withOpacity(0.5),
+                        theme.colorScheme.primaryContainer
+                            .withValues(alpha: 0.5),
                       ),
                       border: TableBorder(
                         horizontalInside: BorderSide(
@@ -886,7 +950,7 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
                                         style: TextStyle(
                                           color: theme
                                               .colorScheme.onSurfaceVariant
-                                              .withOpacity(0.3),
+                                              .withValues(alpha: 0.3),
                                         ),
                                       ),
                               ),
@@ -898,7 +962,7 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
                                     horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: _getExamTypeColor(exam.type)
-                                      .withOpacity(0.1),
+                                      .withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(

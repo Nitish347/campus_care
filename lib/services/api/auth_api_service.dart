@@ -3,59 +3,57 @@ import 'dart:developer';
 import 'package:campus_care/core/api_client.dart';
 import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/services/storage_service.dart';
-import 'package:campus_care/models/user.dart';
 
 /// API service for authentication operations
 class AuthApiService {
   final ApiClient _apiClient = ApiClient();
 
+  String _rolePath(String role) {
+    switch (role) {
+      case AppConstants.roleSuperAdmin:
+        return 'super-admin';
+      case AppConstants.roleAdmin:
+        return 'admin';
+      case AppConstants.roleTeacher:
+        return 'teacher';
+      case AppConstants.roleStudent:
+        return 'student';
+      default:
+        return 'student';
+    }
+  }
+
   /// Login with role-specific endpoint
   /// Returns user data and token on success
   Future<Map<String, dynamic>> login({
-    required String email,
+    required String identifier,
     required String password,
     required String role,
   }) async {
     // Determine the login endpoint based on role
-    String loginEndpoint;
-    switch (role) {
-      case AppConstants.roleStudent:
-        loginEndpoint = '${AppConstants.authEndpoint}/login/student';
-        break;
-      case AppConstants.roleTeacher:
-        loginEndpoint = '${AppConstants.authEndpoint}/login/teacher';
-        break;
-      case AppConstants.roleSuperAdmin:
-        loginEndpoint = '${AppConstants.authEndpoint}/login/super-admin';
-        break;
-      case AppConstants.roleAdmin:
-        loginEndpoint = '${AppConstants.authEndpoint}/login/admin';
-        break;
-      default:
-        loginEndpoint = '${AppConstants.authEndpoint}/login/student';
-    }
+    final loginEndpoint = '${AppConstants.authEndpoint}/login/${_rolePath(role)}';
 
     log('=== ABOUT TO CALL API ===');
     log('Login endpoint: $loginEndpoint');
-    log('Email: $email');
+    log('Identifier: $identifier');
     log('Role: $role');
     log('========================');
 
     final response = await _apiClient.post(
       loginEndpoint,
       body: {
-        'email': email,
+        'identifier': identifier,
         'password': password,
       },
       includeAuth: false,
     );
 
     // Debug logging
-    print('=== LOGIN RESPONSE ===');
-    print('Full response: $response');
-    print('Success: ${response['success']}');
-    print('Data: ${response['data']}');
-    print('====================');
+    log('=== LOGIN RESPONSE ===');
+    log('Full response: $response');
+    log('Success: ${response['success']}');
+    log('Data: ${response['data']}');
+    log('====================');
 
     // Extract token and user data from response
     if (response['success'] == true && response['data'] != null) {
@@ -74,8 +72,42 @@ class AuthApiService {
       };
     }
 
-    print('Login failed - throwing exception');
+    log('Login failed - throwing exception');
     throw Exception('Invalid login response');
+  }
+
+  /// Send forgot-password OTP to email.
+  Future<void> requestPasswordResetOtp({
+    required String role,
+    required String identifier,
+  }) async {
+    final endpoint =
+        '${AppConstants.authEndpoint}/forgot-password/${_rolePath(role)}/request';
+    await _apiClient.post(
+      endpoint,
+      body: {'identifier': identifier},
+      includeAuth: false,
+    );
+  }
+
+  /// Reset password using email + OTP.
+  Future<void> resetPasswordWithOtp({
+    required String role,
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    final endpoint =
+        '${AppConstants.authEndpoint}/forgot-password/${_rolePath(role)}/reset';
+    await _apiClient.post(
+      endpoint,
+      body: {
+        'email': email,
+        'otp': otp,
+        'new_password': newPassword,
+      },
+      includeAuth: false,
+    );
   }
 
   /// Register a new student

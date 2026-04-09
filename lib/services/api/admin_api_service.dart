@@ -1,12 +1,34 @@
 import 'package:campus_care/core/api_client.dart';
+import 'package:campus_care/core/constants/app_constants.dart';
+import 'package:campus_care/services/institute_context_service.dart';
+import 'package:campus_care/services/storage_service.dart';
+import 'package:get/get.dart';
 
 class AdminApiService {
   final ApiClient _apiClient = ApiClient();
 
   /// Get admin dashboard statistics
   Future<Map<String, dynamic>> getDashboardStats() async {
-    final response = await _apiClient.get('/admin/dashboard/stats');
-    return response['data'];
+    final queryParams = <String, dynamic>{};
+
+    try {
+      if (StorageService.userRole == AppConstants.roleSuperAdmin &&
+          Get.isRegistered<InstituteContextService>()) {
+        final instituteId =
+            Get.find<InstituteContextService>().currentInstituteId;
+        if (instituteId != null && instituteId.trim().isNotEmpty) {
+          queryParams['admin_id'] = instituteId.trim();
+        }
+      }
+    } catch (_) {
+      // No-op fallback: request global stats for super admin when context is unavailable.
+    }
+
+    final response = await _apiClient.get(
+      '/admins/dashboard/stats',
+      queryParameters: queryParams.isEmpty ? null : queryParams,
+    );
+    return Map<String, dynamic>.from(response['data'] ?? {});
   }
 
   /// Get all admins (superadmin only)

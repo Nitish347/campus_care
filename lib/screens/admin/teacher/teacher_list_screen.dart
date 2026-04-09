@@ -1,6 +1,5 @@
 import 'package:campus_care/widgets/admin/admin_page_header.dart';
 import 'package:campus_care/widgets/admin/confirm_dialog.dart';
-import 'package:campus_care/widgets/admin/detail_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
@@ -9,7 +8,7 @@ import 'package:campus_care/screens/admin/teacher_management/add_teacher_screen.
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/models/teacher/teacher.dart';
-import 'package:intl/intl.dart';
+import 'package:campus_care/widgets/common/file_display_widget.dart';
 
 class TeacherListScreen extends GetView<TeacherController> {
   const TeacherListScreen({super.key});
@@ -86,6 +85,7 @@ class TeacherListScreen extends GetView<TeacherController> {
               Expanded(
                 child: CustomTextField(
                   hintText: 'Search teachers by name, ID, or email...',
+                  fieldHeight: 37,
                   prefixIcon: Icon(Icons.search_rounded,
                       color: theme.colorScheme.onSurfaceVariant),
                   onChanged: controller.searchTeachers,
@@ -133,7 +133,7 @@ class TeacherListScreen extends GetView<TeacherController> {
         return _TeacherMobileCard(
           teacher: teacher,
           theme: theme,
-          onView: () => _showTeacherDetails(context, teacher),
+          onView: () => _openTeacherDetails(teacher),
           onEdit: () => Get.to(() => AddTeacherScreen(teacher: teacher)),
           onDelete: () => _showDeleteDialog(context, teacher),
         );
@@ -185,7 +185,8 @@ class TeacherListScreen extends GetView<TeacherController> {
                     _TableHeaderCell('Email', flex: 3),
                     _TableHeaderCell('Phone', flex: 2),
                     _TableHeaderCell('Department', flex: 2),
-                    _TableHeaderCell('Actions', flex: 1, align: TextAlign.center),
+                    _TableHeaderCell('Actions',
+                        flex: 1, align: TextAlign.center),
                   ],
                 ),
               ),
@@ -198,8 +199,9 @@ class TeacherListScreen extends GetView<TeacherController> {
                   teacher: teacher,
                   isEven: isEven,
                   theme: theme,
-                  onView: () => _showTeacherDetails(context, teacher),
-                  onEdit: () => Get.to(() => AddTeacherScreen(teacher: teacher)),
+                  onView: () => _openTeacherDetails(teacher),
+                  onEdit: () =>
+                      Get.to(() => AddTeacherScreen(teacher: teacher)),
                   onDelete: () => _showDeleteDialog(context, teacher),
                 );
               }),
@@ -210,58 +212,10 @@ class TeacherListScreen extends GetView<TeacherController> {
     );
   }
 
-  void _showTeacherDetails(BuildContext context, Teacher teacher) {
-    showDialog(
-      context: context,
-      builder: (context) => DetailDialog(
-        avatarInitial: teacher.fullName.substring(0, 1),
-        title: teacher.fullName,
-        subtitle: 'ID: ${teacher.id}',
-        accentColor: const Color(0xFF059669), // Green for teachers
-        sections: [
-          DetailSection(
-            title: 'Personal Information',
-            rows: [
-              DetailRow(
-                  icon: Icons.person_rounded,
-                  label: 'Full Name',
-                  value: teacher.fullName),
-              DetailRow(
-                  icon: Icons.badge_rounded,
-                  label: 'Teacher ID',
-                  value: teacher.id),
-              DetailRow(
-                  icon: Icons.email_rounded,
-                  label: 'Email',
-                  value: teacher.email),
-              DetailRow(
-                  icon: Icons.phone_rounded,
-                  label: 'Phone',
-                  value: teacher.phone ?? 'Not provided'),
-              if (teacher.address != null && teacher.address!.isNotEmpty)
-                DetailRow(
-                    icon: Icons.location_on_rounded,
-                    label: 'Address',
-                    value: teacher.address!),
-            ],
-          ),
-          DetailSection(
-            title: 'Professional Information',
-            rows: [
-              DetailRow(
-                  icon: Icons.business_rounded,
-                  label: 'Department',
-                  value: teacher.department ?? 'N/A'),
-              if (teacher.hireDate != null)
-                DetailRow(
-                  icon: Icons.calendar_today_rounded,
-                  label: 'Hire Date',
-                  value: DateFormat('MMM dd, yyyy').format(teacher.hireDate!),
-                ),
-            ],
-          ),
-        ],
-      ),
+  void _openTeacherDetails(Teacher teacher) {
+    Get.toNamed(
+      AppRoutes.teacherDetails,
+      arguments: {'teacher': teacher},
     );
   }
 
@@ -293,7 +247,8 @@ class _TeacherCountBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
@@ -304,8 +259,7 @@ class _TeacherCountBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.badge_rounded,
-              size: 16, color: theme.colorScheme.primary),
+          Icon(Icons.badge_rounded, size: 16, color: theme.colorScheme.primary),
           const SizedBox(width: 6),
           Text(
             '$count',
@@ -358,29 +312,12 @@ class _TeacherMobileCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  // Avatar
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          theme.colorScheme.primary,
-                          theme.colorScheme.primary.withValues(alpha: 0.7),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Center(
-                      child: Text(
-                        teacher.fullName.substring(0, 1).toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
+                  _ProfileAvatar(
+                    size: 50,
+                    initial:
+                        teacher.fullName.isNotEmpty ? teacher.fullName[0] : 'T',
+                    imageUrl: teacher.profileImageUrl,
+                    theme: theme,
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -443,8 +380,7 @@ class _TeacherMobileCard extends StatelessWidget {
                               size: 18, color: theme.colorScheme.error),
                           const SizedBox(width: 10),
                           Text('Delete',
-                              style:
-                                  TextStyle(color: theme.colorScheme.error)),
+                              style: TextStyle(color: theme.colorScheme.error)),
                         ]),
                       ),
                     ],
@@ -594,31 +530,13 @@ class _DesktopTeacherRowState extends State<_DesktopTeacherRow> {
                   flex: 3,
                   child: Row(
                     children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              widget.theme.colorScheme.primary,
-                              widget.theme.colorScheme.primary
-                                  .withValues(alpha: 0.7),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            widget.teacher.fullName
-                                .substring(0, 1)
-                                .toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
+                      _ProfileAvatar(
+                        size: 36,
+                        initial: widget.teacher.fullName.isNotEmpty
+                            ? widget.teacher.fullName[0]
+                            : 'T',
+                        imageUrl: widget.teacher.profileImageUrl,
+                        theme: widget.theme,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -675,8 +593,8 @@ class _DesktopTeacherRowState extends State<_DesktopTeacherRow> {
                 Expanded(
                   flex: 2,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: widget.theme.colorScheme.primaryContainer
                           .withValues(alpha: 0.3),
@@ -723,6 +641,41 @@ class _DesktopTeacherRowState extends State<_DesktopTeacherRow> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  final double size;
+  final String initial;
+  final String? imageUrl;
+  final ThemeData theme;
+
+  const _ProfileAvatar({
+    required this.size,
+    required this.initial,
+    this.imageUrl,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ProfileAvatarWidget(
+      size: size,
+      imageUrl: imageUrl,
+      displayName: initial,
+      enablePreview: true,
+      backgroundGradient: LinearGradient(
+        colors: [
+          theme.colorScheme.primary,
+          theme.colorScheme.primary.withValues(alpha: 0.7),
+        ],
+      ),
+      textStyle: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+        fontSize: size > 45 ? 20 : 14,
       ),
     );
   }

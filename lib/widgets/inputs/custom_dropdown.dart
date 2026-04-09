@@ -9,6 +9,7 @@ class CustomDropdown<T> extends StatelessWidget {
   final String? Function(T?)? validator;
   final Widget? prefixIcon;
   final bool enabled;
+  final double? fieldHeight;
 
   const CustomDropdown({
     super.key,
@@ -20,6 +21,7 @@ class CustomDropdown<T> extends StatelessWidget {
     this.validator,
     this.prefixIcon,
     this.enabled = true,
+    this.fieldHeight,
   });
 
   @override
@@ -29,8 +31,8 @@ class CustomDropdown<T> extends StatelessWidget {
         value == null ? 0 : items.where((item) => item.value == value).length;
     final safeValue = matchCount == 1 ? value : null;
 
-    return DropdownButtonFormField<T>(
-      value: safeValue,
+    final dropdown = DropdownButtonFormField<T>(
+      initialValue: safeValue,
       isDense: true,
       items: items,
       onChanged: enabled ? onChanged : null,
@@ -104,5 +106,11 @@ class CustomDropdown<T> extends StatelessWidget {
         color: theme.colorScheme.onSurfaceVariant,
       ),
     );
+
+    if (fieldHeight != null) {
+      return SizedBox(height: fieldHeight, child: dropdown);
+    }
+
+    return dropdown;
   }
 }

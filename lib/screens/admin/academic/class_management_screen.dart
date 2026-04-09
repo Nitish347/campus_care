@@ -105,6 +105,7 @@ class ClassManagementScreen extends StatelessWidget {
             icon: Icons.class_rounded,
             showBreadcrumb: true,
             breadcrumbLabel: 'Classes',
+            showBackButton: true,
             actions: [
               HeaderActionButton(
                 icon: Icons.add_rounded,
@@ -139,8 +140,8 @@ class ClassManagementScreen extends StatelessWidget {
                     return _ClassCard(
                       schoolClass: schoolClass,
                       theme: theme,
-                      onEdit: () =>
-                          Get.to(() => AddClassScreen(schoolClass: schoolClass)),
+                      onEdit: () => Get.to(
+                          () => AddClassScreen(schoolClass: schoolClass)),
                       onDelete: () => _showDeleteDialog(
                         context,
                         schoolClass.id,
@@ -182,8 +183,8 @@ class _ClassCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.1)),
+        border:
+            Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -195,8 +196,7 @@ class _ClassCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: ExpansionTile(
-          tilePadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           leading: Container(
             width: 44,
             height: 44,
@@ -206,8 +206,8 @@ class _ClassCard extends StatelessWidget {
               ),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.class_rounded,
-                color: Colors.white, size: 20),
+            child:
+                const Icon(Icons.class_rounded, color: Colors.white, size: 20),
           ),
           title: Text(
             '${schoolClass.name} — Grade ${schoolClass.grade}',

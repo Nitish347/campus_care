@@ -46,42 +46,65 @@ class TeacherController extends GetxController {
     _searchQuery.value = query;
   }
 
-  Future<void> addTeacher(Teacher teacher) async {
+  Future<String?> addTeacher(
+    Teacher teacher, {
+    bool popOnSuccess = true,
+    bool showSnackbar = true,
+  }) async {
     try {
       _isLoading.value = true;
-      await TeacherService.addTeacher(teacher);
+      final createdId = await TeacherService.addTeacher(teacher);
       await loadTeachers();
       _isLoading.value = false;
-      Get.back();
-      // Show snackbar after navigation completes
-      Future.delayed(const Duration(milliseconds: 300), () {
-        Get.snackbar('Success', 'Teacher added successfully');
-      });
+      if (popOnSuccess) {
+        Get.back();
+      }
+      if (showSnackbar) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          Get.snackbar('Success', 'Teacher added successfully');
+        });
+      }
+      return createdId.isEmpty ? null : createdId;
     } catch (e) {
       _isLoading.value = false;
-      Future.delayed(const Duration(milliseconds: 300), () {
-        Get.snackbar('Error', 'Failed to add teacher: ${e.toString()}');
-      });
+      if (showSnackbar) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          Get.snackbar('Error', 'Failed to add teacher: ${e.toString()}');
+        });
+      }
+      return null;
     }
   }
 
-  Future<void> updateTeacher(Teacher teacher) async {
+  Future<bool> updateTeacher(
+    Teacher teacher, {
+    bool popOnSuccess = true,
+    bool showSnackbar = true,
+  }) async {
     try {
       _isLoading.value = true;
       final success = await TeacherService.updateTeacher(teacher);
       if (success) {
         await loadTeachers();
-        Get.back(); // Close edit screen/dialog
-        Future.delayed(const Duration(milliseconds: 300), () {
-          Get.snackbar('Success', 'Teacher updated successfully');
-        });
+        if (popOnSuccess) {
+          Get.back();
+        }
+        if (showSnackbar) {
+          Future.delayed(const Duration(milliseconds: 300), () {
+            Get.snackbar('Success', 'Teacher updated successfully');
+          });
+        }
+        return true;
       } else {
         throw Exception('Update failed');
       }
     } catch (e) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        Get.snackbar('Error', 'Failed to update teacher: ${e.toString()}');
-      });
+      if (showSnackbar) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          Get.snackbar('Error', 'Failed to update teacher: ${e.toString()}');
+        });
+      }
+      return false;
     } finally {
       _isLoading.value = false;
     }

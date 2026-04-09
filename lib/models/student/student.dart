@@ -61,6 +61,8 @@ class Student {
   final DateTime? admissionDate;
   final String institute; // Institute ID reference
   final String? teacher; // Teacher ID reference (optional)
+  final String? routeId; // Transport route ID reference (optional)
+  final String? profileImageUrl;
   final bool isEmailVerified;
   final String? otp;
   final DateTime? otpExpiry;
@@ -85,6 +87,8 @@ class Student {
     this.admissionDate,
     required this.institute,
     this.teacher,
+    this.routeId,
+    this.profileImageUrl,
     this.isEmailVerified = false,
     this.otp,
     this.otpExpiry,
@@ -131,6 +135,11 @@ class Student {
       admissionDate: _parseDate(getValue('admissionDate', 'admission_date')),
       institute: getValue('institute', 'institute_id') ?? '',
       teacher: getValue('teacher', 'teacher_id'),
+      routeId: getValue('routeId', 'route_id') ??
+          (json['transport_route'] is Map<String, dynamic>
+              ? (json['transport_route']['id']?.toString())
+              : null),
+      profileImageUrl: getValue('profileImageUrl', 'profile_image_url'),
       isEmailVerified:
           _parseBool(getValue('isEmailVerified', 'is_email_verified')),
       otp: json['otp'],
@@ -175,16 +184,15 @@ class Student {
       'section': section,
       'gender': gender,
       'address': address,
-      'date_of_birth':
-          dateOfBirth != null ? dateOfBirth!.millisecondsSinceEpoch : null,
-      'admission_date':
-          admissionDate != null ? admissionDate!.millisecondsSinceEpoch : null,
+      'date_of_birth': dateOfBirth?.millisecondsSinceEpoch,
+      'admission_date': admissionDate?.millisecondsSinceEpoch,
       'institute_id': institute,
       'teacher_id': teacher,
+      'route_id': (routeId == null || routeId!.isEmpty) ? null : routeId,
+      'profile_image_url': profileImageUrl,
       'is_email_verified': isEmailVerified ? 1 : 0,
       'otp': otp,
-      'otp_expiry':
-          otpExpiry != null ? otpExpiry!.millisecondsSinceEpoch : null,
+      'otp_expiry': otpExpiry?.millisecondsSinceEpoch,
     };
 
     // Only include password if it's not null and not empty
@@ -223,6 +231,8 @@ class Student {
     DateTime? admissionDate,
     String? institute,
     String? teacher,
+    String? routeId,
+    String? profileImageUrl,
     bool? isEmailVerified,
     String? otp,
     DateTime? otpExpiry,
@@ -247,6 +257,8 @@ class Student {
       admissionDate: admissionDate ?? this.admissionDate,
       institute: institute ?? this.institute,
       teacher: teacher ?? this.teacher,
+      routeId: routeId ?? this.routeId,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       otp: otp ?? this.otp,
       otpExpiry: otpExpiry ?? this.otpExpiry,

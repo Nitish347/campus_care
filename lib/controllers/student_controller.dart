@@ -102,37 +102,61 @@ class StudentController extends GetxController {
     _searchQuery.value = '';
   }
 
-  Future<void> addStudent(Student student) async {
+  Future<String?> addStudent(
+    Student student, {
+    bool popOnSuccess = true,
+    bool showSnackbar = true,
+  }) async {
     try {
       _isLoading.value = true;
-      await StudentService.addStudent(student);
+      final createdId = await StudentService.addStudent(student);
       await loadStudents();
-      Get.back();
-      Get.snackbar('Success', 'Student added successfully');
+      if (popOnSuccess) {
+        Get.back();
+      }
+      if (showSnackbar) {
+        Get.snackbar('Success', 'Student added successfully');
+      }
+      return createdId.isEmpty ? null : createdId;
     } catch (e) {
-      Get.snackbar('Error', 'Failed to add student');
+      if (showSnackbar) {
+        Get.snackbar('Error', 'Failed to add student');
+      }
+      return null;
     } finally {
       _isLoading.value = false;
     }
   }
 
-  Future<void> updateStudent(Student student) async {
+  Future<bool> updateStudent(
+    Student student, {
+    bool popOnSuccess = true,
+    bool showSnackbar = true,
+  }) async {
     try {
       _isLoading.value = true;
       final success = await StudentService.updateStudent(student);
       if (success) {
         await loadStudents();
-        Get.back(); // Close edit screen/dialog
-        Future.delayed(const Duration(milliseconds: 300), () {
-          Get.snackbar('Success', 'Student updated successfully');
-        });
+        if (popOnSuccess) {
+          Get.back();
+        }
+        if (showSnackbar) {
+          Future.delayed(const Duration(milliseconds: 300), () {
+            Get.snackbar('Success', 'Student updated successfully');
+          });
+        }
+        return true;
       } else {
         throw Exception('Update failed');
       }
     } catch (e) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        Get.snackbar('Error', 'Failed to update student: ${e.toString()}');
-      });
+      if (showSnackbar) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          Get.snackbar('Error', 'Failed to update student: ${e.toString()}');
+        });
+      }
+      return false;
     } finally {
       _isLoading.value = false;
     }

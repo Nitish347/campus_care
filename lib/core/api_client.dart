@@ -201,6 +201,54 @@ class ApiClient {
     return _executeRequest(() => _client.delete(uri, headers: headers));
   }
 
+  /// Multipart POST request for file uploads
+  Future<dynamic> postMultipart(
+    String endpoint, {
+    required String fileFieldName,
+    required List<int> fileBytes,
+    required String fileName,
+    Map<String, String>? fields,
+    bool includeAuth = true,
+  }) async {
+    final uri = Uri.parse(_getUrl(endpoint));
+    final headers = await _getHeaders(includeAuth: includeAuth);
+    headers.remove('Content-Type');
+
+    try {
+      final request = http.MultipartRequest('POST', uri)
+        ..headers.addAll(headers)
+        ..fields.addAll(fields ?? {})
+        ..files.add(
+          http.MultipartFile.fromBytes(
+            fileFieldName,
+            fileBytes,
+            filename: fileName,
+          ),
+        );
+
+      log('API MULTIPART POST: $uri');
+
+      final streamed = await request.send().timeout(
+        Duration(seconds: AppConstants.requestTimeout),
+        onTimeout: () {
+          throw TimeoutException();
+        },
+      );
+
+      final response = await http.Response.fromStream(streamed);
+      log(response.body);
+      return _handleResponse(response);
+    } on SocketException {
+      throw NetworkException();
+    } on TimeoutException {
+      throw TimeoutException();
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(message: 'Unexpected error: $e');
+    }
+  }
+
   /// Dispose the client
   void dispose() {
     _client.close();

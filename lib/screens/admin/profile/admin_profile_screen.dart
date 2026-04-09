@@ -2,7 +2,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
+import 'package:campus_care/services/upload_service.dart';
+import 'package:campus_care/widgets/common/file_display_widget.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AdminProfileScreen extends StatefulWidget {
   const AdminProfileScreen({super.key});
@@ -14,9 +17,12 @@ class AdminProfileScreen extends StatefulWidget {
 class _AdminProfileScreenState extends State<AdminProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final AuthController _authController;
+  final ImagePicker _imagePicker = ImagePicker();
 
   bool _isEditMode = false;
   bool _isSaving = false;
+  bool _isUploadingProfileImage = false;
+  String? _profileImageUrl;
 
   // Controllers for all editable fields
   late final TextEditingController _firstNameCtrl;
@@ -52,6 +58,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
     _countryCtrl = TextEditingController(text: admin?.country ?? '');
     _pincodeCtrl = TextEditingController(text: admin?.pincode ?? '');
     _addressCtrl = TextEditingController(text: admin?.address ?? '');
+    _profileImageUrl = admin?.profileImageUrl;
   }
 
   void _resetControllers() {
@@ -67,6 +74,54 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
     _countryCtrl.text = admin?.country ?? '';
     _pincodeCtrl.text = admin?.pincode ?? '';
     _addressCtrl.text = admin?.address ?? '';
+    _profileImageUrl = admin?.profileImageUrl;
+  }
+
+  Future<void> _pickAndUploadProfileImage() async {
+    if (!_isEditMode || _isUploadingProfileImage) return;
+
+    final admin = _authController.currentAdmin;
+    if (admin == null) {
+      Get.snackbar('Error', 'Admin profile not loaded');
+      return;
+    }
+
+    final file = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1400,
+    );
+    if (file == null) return;
+
+    try {
+      setState(() => _isUploadingProfileImage = true);
+      final bytes = await file.readAsBytes();
+      final uploadedUrl = await UploadService.uploadAdminProfileImage(
+        adminId: admin.id,
+        fileBytes: bytes,
+        fileName: file.name,
+      );
+
+      if (uploadedUrl.isEmpty) {
+        throw Exception('Upload succeeded but image URL was empty');
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _profileImageUrl = uploadedUrl;
+      });
+      _authController.updateAdminProfileImage(uploadedUrl);
+      Get.snackbar('Success', 'Profile image updated');
+    } catch (e) {
+      Get.snackbar(
+        'Upload Failed',
+        e.toString().replaceFirst('Exception: ', ''),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingProfileImage = false);
+      }
+    }
   }
 
   @override
@@ -96,6 +151,7 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
       lastName: _lastNameCtrl.text.trim(),
       instituteName: _instituteNameCtrl.text.trim(),
       phone: _phoneCtrl.text.trim(),
+      profileImageUrl: _profileImageUrl,
       website: _websiteCtrl.text.trim(),
       city: _cityCtrl.text.trim(),
       state: _stateCtrl.text.trim(),
@@ -321,6 +377,8 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
   Widget _buildProfileHeader(
       BuildContext context, AuthController authController) {
     final theme = Theme.of(context);
+    final profileImageUrl =
+        _profileImageUrl ?? authController.currentAdmin?.profileImageUrl;
 
     return Stack(
       fit: StackFit.expand,
@@ -378,23 +436,46 @@ class _AdminProfileScreenState extends State<AdminProfileScreen> {
                       border: Border.all(
                           color: Colors.white.withOpacity(0.3), width: 4),
                     ),
-                    child: const CircleAvatar(
-                      radius: 60,
+                    child: ProfileAvatarWidget(
+                      size: 120,
+                      imageUrl: profileImageUrl,
+                      displayName:
+                          authController.currentAdmin?.instituteName ?? 'Admin',
+                      enablePreview: true,
                       backgroundColor: Colors.white,
+                      textStyle: theme.textTheme.headlineSmall?.copyWith(
+                        color: const Color(0xFF4F46E5),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   if (_isEditMode)
-                    Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4F46E5),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      padding: const EdgeInsets.all(6),
-                      child: const Icon(
-                        Icons.camera_alt_rounded,
-                        color: Colors.white,
-                        size: 16,
+                    InkWell(
+                      onTap: _isUploadingProfileImage
+                          ? null
+                          : _pickAndUploadProfileImage,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4F46E5),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        padding: const EdgeInsets.all(6),
+                        child: _isUploadingProfileImage
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.camera_alt_rounded,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                       ),
                     ),
                 ],

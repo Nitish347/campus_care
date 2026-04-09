@@ -1,6 +1,26 @@
 import 'package:campus_care/core/constants/app_constants.dart';
 
 class Validators {
+  static String? validateEmailOrPhone(String? value) {
+    final input = value?.trim() ?? '';
+    if (input.isEmpty) {
+      return 'Email or phone is required';
+    }
+
+    if (input.contains('@')) {
+      if (!RegExp(AppConstants.emailRegex).hasMatch(input)) {
+        return 'Please enter a valid email';
+      }
+      return null;
+    }
+
+    if (!RegExp(AppConstants.phoneRegex).hasMatch(input)) {
+      return 'Please enter a valid phone number';
+    }
+
+    return null;
+  }
+
   static String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
       return 'Email is required';

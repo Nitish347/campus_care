@@ -4,6 +4,7 @@ class Admin {
   final String lastName;
   final String email;
   final String? phone;
+  final String? profileImageUrl;
 
   // Institute Details
   final String instituteName;
@@ -29,6 +30,7 @@ class Admin {
     required this.lastName,
     required this.email,
     this.phone,
+    this.profileImageUrl,
     required this.instituteName,
     this.address,
     this.city,
@@ -55,9 +57,10 @@ class Admin {
 
     DateTime? parseDate(dynamic value) {
       if (value == null) return null;
-      if (value is int)
+      if (value is int) {
         return DateTime.fromMillisecondsSinceEpoch(
             value > 10000000000 ? value : value * 1000);
+      }
       if (value is String) return DateTime.tryParse(value);
       return null;
     }
@@ -75,6 +78,7 @@ class Admin {
       lastName: getValue('lastName', 'last_name') ?? '',
       email: json['email'] ?? '',
       phone: json['phone'],
+      profileImageUrl: getValue('profileImageUrl', 'profile_image_url'),
       instituteName: getValue('instituteName', 'institute_name') ?? '',
       address: json['address'],
       city: json['city'],
@@ -87,7 +91,9 @@ class Admin {
           parseBool(getValue('isEmailVerified', 'is_email_verified')),
       otp: json['otp'],
       otpExpiry: parseDate(getValue('otpExpiry', 'otp_expiry')),
-      isActive: parseBool(getValue('isActive', 'is_active')) || true,
+      isActive: json.containsKey('isActive') || json.containsKey('is_active')
+          ? parseBool(getValue('isActive', 'is_active'))
+          : true,
       lastLogin: parseDate(getValue('lastLogin', 'last_login')),
       createdAt:
           parseDate(getValue('createdAt', 'created_at')) ?? DateTime.now(),
@@ -103,6 +109,7 @@ class Admin {
       'last_name': lastName,
       'email': email,
       'phone': phone,
+      'profile_image_url': profileImageUrl,
       'institute_name': instituteName,
       'address': address,
       'city': city,
@@ -127,6 +134,7 @@ class Admin {
     String? lastName,
     String? email,
     String? phone,
+    String? profileImageUrl,
     String? instituteName,
     String? address,
     String? city,
@@ -149,6 +157,7 @@ class Admin {
       lastName: lastName ?? this.lastName,
       email: email ?? this.email,
       phone: phone ?? this.phone,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       instituteName: instituteName ?? this.instituteName,
       address: address ?? this.address,
       city: city ?? this.city,

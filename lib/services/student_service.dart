@@ -54,7 +54,7 @@ class StudentService {
   static Future<String> addStudent(Student student) async {
     try {
       final response = await _apiService.createStudent(student.toJson());
-      return response['_id'] ?? '';
+      return (response['id'] ?? response['_id'] ?? '').toString();
     } catch (e) {
       log(e.toString());
       throw Exception('Failed to create student: $e');

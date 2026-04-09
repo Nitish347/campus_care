@@ -34,9 +34,10 @@ class SuperAdminService {
     }
   }
 
-  static Future<Admin> updateSchool(String id, Admin school) async {
+  static Future<Admin> updateSchool(
+      String id, Map<String, dynamic> schoolData) async {
     try {
-      final data = await _apiService.updateSchool(id, school.toJson());
+      final data = await _apiService.updateSchool(id, schoolData);
       return Admin.fromJson(data);
     } catch (e) {
       throw Exception('Failed to update school: $e');
@@ -51,9 +52,9 @@ class SuperAdminService {
     }
   }
 
-  static Future<Admin> createSchool(Admin school) async {
+  static Future<Admin> createSchool(Map<String, dynamic> schoolData) async {
     try {
-      final data = await _apiService.createSchool(school.toJson());
+      final data = await _apiService.createSchool(schoolData);
       return Admin.fromJson(data);
     } catch (e) {
       throw Exception('Failed to create school: $e');

@@ -6,6 +6,7 @@ import 'package:campus_care/screens/splash_screen.dart';
 import 'package:campus_care/screens/admin/admin_dashboard.dart';
 import 'package:campus_care/screens/admin/student_management/student_list_screen.dart';
 import 'package:campus_care/screens/admin/student_management/add_student_screen.dart';
+import 'package:campus_care/screens/admin/student_management/student_details_screen.dart';
 import 'package:campus_care/screens/admin/academic/class_management_screen.dart';
 import 'package:campus_care/screens/admin/academic/timetable_screen.dart';
 import 'package:campus_care/screens/admin/examination/exam_scheduler_screen.dart';
@@ -44,6 +45,7 @@ import 'package:campus_care/screens/admin/academic/add_timetable_screen.dart';
 import 'package:campus_care/screens/student/payment/payment_screen.dart';
 import 'package:campus_care/screens/teacher/homework/homework_submissions_screen.dart';
 import 'package:campus_care/screens/teacher/homework/student_homework_detail_screen.dart';
+import 'package:campus_care/models/student/student.dart';
 import 'package:campus_care/models/teacher/teacher.dart';
 import 'package:campus_care/core/middleware/school_admin_middleware.dart';
 import 'package:campus_care/screens/admin/attendance/admin_attendance_screen.dart';
@@ -58,6 +60,7 @@ import '../../screens/admin/exam/admin_add_edit_exam_type_screen.dart';
 import '../../screens/admin/exam/admin_exam_timetable_screen.dart';
 import '../../screens/admin/exam/admin_exam_type_screen.dart';
 import '../../screens/admin/exam/admin_examination_management_screen.dart';
+import '../../screens/admin/exam/admin_exam_results_screen.dart';
 import '../../screens/admin/homework/admin_add_edit_homework_screen.dart';
 import '../../screens/admin/homework/admin_homework_management_screen.dart';
 import '../../screens/super_admin/add_edit_institute_screen.dart';
@@ -78,6 +81,7 @@ class AppRoutes {
 
   static const String studentList = '/admin/students';
   static const String addStudent = '/admin/students/add';
+  static const String adminStudentDetails = '/admin/students/details';
   static const String classManagement = '/admin/classes';
   static const String timetable = '/admin/timetable';
   static const String examScheduler = '/admin/exams';
@@ -148,6 +152,7 @@ class AppRoutes {
   static const String adminExamTimetable = '/admin/exam-timetable';
   static const String adminAddExam = '/admin/exam-timetable/add';
   static const String adminEditExam = '/admin/exam-timetable/edit';
+  static const String adminExamResults = '/admin/exam-results';
 
   // Teacher Homework & Exam Routes
   static const String homeworkSubmissions = '/teacher/homework/submissions';
@@ -184,6 +189,14 @@ class AppRoutes {
     GetPage(
       name: addStudent,
       page: () => const AddStudentScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: adminStudentDetails,
+      page: () {
+        final student = Get.arguments as Student;
+        return AdminStudentDetailsScreen(student: student);
+      },
       middlewares: [SchoolAdminMiddleware()],
     ),
     GetPage(
@@ -369,6 +382,11 @@ class AppRoutes {
     GetPage(
       name: adminExamTimetable,
       page: () => const AdminExamTimetableScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: adminExamResults,
+      page: () => const AdminExamResultsScreen(),
       middlewares: [SchoolAdminMiddleware()],
     ),
 

@@ -30,37 +30,66 @@ class ExamResult {
   });
 
   factory ExamResult.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic raw) {
+      if (raw == null) return DateTime.now();
+      if (raw is int) {
+        final milliseconds = raw > 10000000000 ? raw : raw * 1000;
+        return DateTime.fromMillisecondsSinceEpoch(milliseconds);
+      }
+      if (raw is String) {
+        final asNumber = int.tryParse(raw);
+        if (asNumber != null) {
+          final milliseconds =
+              asNumber > 10000000000 ? asNumber : asNumber * 1000;
+          return DateTime.fromMillisecondsSinceEpoch(milliseconds);
+        }
+        return DateTime.tryParse(raw) ?? DateTime.now();
+      }
+      return DateTime.now();
+    }
+
+    bool parsePresent(dynamic isPresentRaw, dynamic isAbsentRaw) {
+      if (isPresentRaw is bool) return isPresentRaw;
+      if (isPresentRaw is int) return isPresentRaw == 1;
+      if (isPresentRaw is String) return isPresentRaw.toLowerCase() == 'true';
+      if (isAbsentRaw is int) return isAbsentRaw == 0;
+      if (isAbsentRaw is bool) return !isAbsentRaw;
+      return true;
+    }
+
     return ExamResult(
-      id: json['id'] ?? '',
-      studentId: json['studentId'] ?? '',
-      examId: json['examId'] ?? '',
-      subject: json['subject'] ?? '',
-      marks: (json['marks'] ?? 0).toDouble(),
-      totalMarks: (json['totalMarks'] ?? 0).toDouble(),
+      id: json['id'] ?? json['_id'] ?? '',
+      studentId: json['student_id'] ?? json['studentId'] ?? '',
+      examId: json['exam_id'] ?? json['examId'] ?? '',
+      subject: json['subject'] ?? json['exam_subject'] ?? '',
+      marks: ((json['marks'] ?? 0) as num).toDouble(),
+      totalMarks:
+          ((json['total_marks'] ?? json['totalMarks'] ?? 0) as num).toDouble(),
       grade: json['grade'],
       remarks: json['remarks'],
-      createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+      status: json['status'] ?? (json['is_absent'] == 1 ? 'absent' : 'graded'),
+      isPresent: parsePresent(json['isPresent'], json['is_absent']),
+      teacherRemarks: json['teacher_remarks'] ?? json['teacherRemarks'],
+      createdAt: parseDate(json['created_at'] ?? json['createdAt']),
+      updatedAt: parseDate(json['updated_at'] ?? json['updatedAt']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'studentId': studentId,
-      'examId': examId,
+      'student_id': studentId,
+      'exam_id': examId,
       'subject': subject,
       'marks': marks,
-      'totalMarks': totalMarks,
+      'total_marks': totalMarks,
       'grade': grade,
       'remarks': remarks,
       'status': status,
-      'isPresent': isPresent,
-      'teacherRemarks': teacherRemarks,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'is_absent': isPresent ? 0 : 1,
+      'teacher_remarks': teacherRemarks,
+      'created_at': createdAt.millisecondsSinceEpoch ~/ 1000,
+      'updated_at': updatedAt.millisecondsSinceEpoch ~/ 1000,
     };
   }
 

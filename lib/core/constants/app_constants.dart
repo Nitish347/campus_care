@@ -40,11 +40,11 @@ class AppConstants {
       String.fromEnvironment('API_BASE_URL', defaultValue: '');
 
   static String get baseUrl {
-    // return "http://127.0.0.1:8787";
-    // if (_baseUrlFromEnv.isNotEmpty) {
-    //   return _baseUrlFromEnv;
-    // }
-    return 'https://campus-care-api.nitishchaurasiya3470.workers.dev';
+    return "http://127.0.0.1:8787";
+    if (_baseUrlFromEnv.isNotEmpty) {
+      return _baseUrlFromEnv;
+    }
+    return 'https://erp.campuslink102.workers.dev';
   }
 
   static const String apiVersion = '/api/v1';
@@ -70,6 +70,7 @@ class AppConstants {
   static const String medicalRecordsEndpoint = '/medical-records';
   static const String transportEndpoint = '/transport';
   static const String institutesEndpoint = '/institutes';
+  static const String uploadsEndpoint = '/uploads';
 
   // Storage Keys for API
   static const String keyAuthToken = 'auth_token';

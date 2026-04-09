@@ -22,6 +22,7 @@ class ClassSectionDropDown extends StatefulWidget {
   /// If true, forces filtering by teacher assignments regardless of role
   /// Default: false (only used if autoDetectRole is false)
   final bool filterByTeacherAssignments;
+  final double? fieldHeight;
 
   const ClassSectionDropDown({
     super.key,
@@ -30,6 +31,7 @@ class ClassSectionDropDown extends StatefulWidget {
     required this.onChangedSection,
     this.autoDetectRole = true,
     this.filterByTeacherAssignments = false,
+    this.fieldHeight,
   });
 
   @override
@@ -133,6 +135,7 @@ class _ClassSectionDropDownState extends State<ClassSectionDropDown> {
               child: CustomDropdown<String>(
                 hintText: "Select Class",
                 labelText: "Class",
+                fieldHeight: widget.fieldHeight,
                 value: selectedClass,
                 onChanged: (val) {
                   if (val == null) return;
@@ -160,6 +163,7 @@ class _ClassSectionDropDownState extends State<ClassSectionDropDown> {
               child: CustomDropdown<String>(
                 hintText: "Select Section",
                 labelText: "Section",
+                fieldHeight: widget.fieldHeight,
                 value: selectedSection,
                 onChanged: (val) {
                   if (val == null) return;

@@ -1,6 +1,5 @@
 import 'package:campus_care/widgets/admin/admin_page_header.dart';
 import 'package:campus_care/widgets/admin/confirm_dialog.dart';
-import 'package:campus_care/widgets/admin/detail_dialog.dart';
 import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -11,6 +10,7 @@ import 'package:campus_care/controllers/class_controller.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/models/student/student.dart';
+import 'package:campus_care/widgets/common/file_display_widget.dart';
 
 class StudentListScreen extends GetView<StudentController> {
   const StudentListScreen({super.key});
@@ -33,6 +33,7 @@ class StudentListScreen extends GetView<StudentController> {
             showBreadcrumb: true,
             breadcrumbLabel: 'Students',
             showBackButton: true,
+            showProfileControls: false,
             actions: [
               HeaderActionButton(
                 icon: Icons.refresh_rounded,
@@ -69,16 +70,11 @@ class StudentListScreen extends GetView<StudentController> {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     final isDesktop = size.width > 800;
+    const toolbarControlHeight = 56.0;
 
     return Column(
       children: [
-        // Filter row
-        ClassSectionDropDown(
-          onChangedClass: (val) => controller.selectClass(val),
-          onChangedSection: (val) => controller.selectSection(val),
-        ),
-
-        // Search + count bar
+        // Class, section, search and count toolbar
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
@@ -91,21 +87,65 @@ class StudentListScreen extends GetView<StudentController> {
               ),
             ],
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: CustomTextField(
-                  hintText: 'Search students by name, ID, or email...',
-                  prefixIcon: Icon(Icons.search_rounded,
-                      color: theme.colorScheme.onSurfaceVariant),
-                  onChanged: controller.searchStudents,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final hasSingleRowSpace = constraints.maxWidth >= 1100;
+
+              final classAndSection = ClassSectionDropDown(
+                padding: 0,
+                fieldHeight: toolbarControlHeight,
+                onChangedClass: (val) => controller.selectClass(val),
+                onChangedSection: (val) => controller.selectSection(val),
+              );
+
+              final searchBar = CustomTextField(
+                fieldHeight: toolbarControlHeight,
+                labelText: 'Search',
+                hintText: 'Search students by name, ID, or email...',
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Obx(() => _StudentCountBadge(
+                onChanged: controller.searchStudents,
+              );
+
+              final countBadge = Obx(
+                () => SizedBox(
+                  height: toolbarControlHeight,
+                  child: _StudentCountBadge(
                     count: controller.filteredStudents.length,
-                  )),
-            ],
+                  ),
+                ),
+              );
+
+              if (hasSingleRowSpace) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 6, child: classAndSection),
+                    const SizedBox(width: 12),
+                    Expanded(flex: 4, child: searchBar),
+                    const SizedBox(width: 12),
+                    countBadge,
+                  ],
+                );
+              }
+
+              return Column(
+                children: [
+                  classAndSection,
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: searchBar),
+                      const SizedBox(width: 12),
+                      countBadge,
+                    ],
+                  ),
+                ],
+              );
+            },
           ),
         ),
 
@@ -143,7 +183,7 @@ class StudentListScreen extends GetView<StudentController> {
         return _StudentMobileCard(
           student: student,
           theme: theme,
-          onView: () => _showStudentDetails(context, student),
+          onView: () => _openStudentDetails(student),
           onEdit: () => Get.to(() => AddStudentScreen(student: student)),
           onDelete: () => _showDeleteDialog(context, student),
           getClassName: _getClassName,
@@ -196,7 +236,8 @@ class StudentListScreen extends GetView<StudentController> {
                     _TableHeaderCell('Email', flex: 3),
                     _TableHeaderCell('Phone', flex: 2),
                     _TableHeaderCell('Class', flex: 2),
-                    _TableHeaderCell('Actions', flex: 1, align: TextAlign.center),
+                    _TableHeaderCell('Actions',
+                        flex: 1, align: TextAlign.center),
                   ],
                 ),
               ),
@@ -210,8 +251,9 @@ class StudentListScreen extends GetView<StudentController> {
                   isEven: isEven,
                   theme: theme,
                   className: _getClassName(student.class_),
-                  onView: () => _showStudentDetails(context, student),
-                  onEdit: () => Get.to(() => AddStudentScreen(student: student)),
+                  onView: () => _openStudentDetails(student),
+                  onEdit: () =>
+                      Get.to(() => AddStudentScreen(student: student)),
                   onDelete: () => _showDeleteDialog(context, student),
                 );
               }),
@@ -222,89 +264,8 @@ class StudentListScreen extends GetView<StudentController> {
     );
   }
 
-  void _showStudentDetails(BuildContext context, Student student) {
-    showDialog(
-      context: context,
-      builder: (context) => DetailDialog(
-        avatarInitial: student.fullName.substring(0, 1),
-        title: student.fullName,
-        subtitle: 'ID: ${student.enrollmentNumber}',
-        accentColor: const Color(0xFF2563EB),
-        sections: [
-          DetailSection(
-            title: 'Personal Information',
-            rows: [
-              DetailRow(
-                  icon: Icons.person_rounded,
-                  label: 'Full Name',
-                  value: student.fullName),
-              DetailRow(
-                  icon: Icons.badge_rounded,
-                  label: 'Student ID',
-                  value: student.enrollmentNumber),
-              DetailRow(
-                  icon: Icons.email_rounded,
-                  label: 'Email',
-                  value: student.email),
-              DetailRow(
-                  icon: Icons.phone_rounded,
-                  label: 'Phone',
-                  value: student.phone ?? '—'),
-            ],
-          ),
-          DetailSection(
-            title: 'Academic Information',
-            rows: [
-              DetailRow(
-                  icon: Icons.class_rounded,
-                  label: 'Class',
-                  value:
-                      '${_getClassName(student.class_)} - ${student.section ?? '—'}'),
-            ],
-          ),
-          DetailSection(
-            title: 'Guardian Information',
-            rows: [
-              DetailRow(
-                  icon: Icons.person_outline_rounded,
-                  label: 'Guardian Name',
-                  value: student.guardian?.name ?? '—'),
-              DetailRow(
-                  icon: Icons.phone_rounded,
-                  label: 'Guardian Phone',
-                  value: student.guardian?.phone ?? '—'),
-              DetailRow(
-                  icon: Icons.email_rounded,
-                  label: 'Guardian Email',
-                  value: student.guardian?.email ?? '—'),
-            ],
-          ),
-        ],
-        footerActions: [
-          OutlinedButton(
-            onPressed: () => Navigator.pop(context),
-            style: OutlinedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Close'),
-          ),
-          const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: () {
-              Navigator.pop(context);
-              Get.to(() => AddStudentScreen(student: student));
-            },
-            icon: const Icon(Icons.edit_rounded, size: 16),
-            label: const Text('Edit Student'),
-            style: FilledButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-          ),
-        ],
-      ),
-    );
+  void _openStudentDetails(Student student) {
+    Get.toNamed(AppRoutes.adminStudentDetails, arguments: student);
   }
 
   void _showDeleteDialog(BuildContext context, Student student) async {
@@ -341,13 +302,15 @@ class StudentListScreen extends GetView<StudentController> {
 class _StudentCountBadge extends StatelessWidget {
   final int count;
 
-  const _StudentCountBadge({required this.count});
+  const _StudentCountBadge({
+    required this.count,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+    final badge = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
@@ -378,6 +341,8 @@ class _StudentCountBadge extends StatelessWidget {
         ],
       ),
     );
+
+    return badge;
   }
 }
 
@@ -414,29 +379,12 @@ class _StudentMobileCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  // Avatar
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          theme.colorScheme.primary,
-                          theme.colorScheme.primary.withValues(alpha: 0.7),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Center(
-                      child: Text(
-                        student.fullName.substring(0, 1).toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
+                  _ProfileAvatar(
+                    size: 50,
+                    initial:
+                        student.fullName.isNotEmpty ? student.fullName[0] : 'S',
+                    imageUrl: student.profileImageUrl,
+                    theme: theme,
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -499,8 +447,7 @@ class _StudentMobileCard extends StatelessWidget {
                               size: 18, color: theme.colorScheme.error),
                           const SizedBox(width: 10),
                           Text('Delete',
-                              style:
-                                  TextStyle(color: theme.colorScheme.error)),
+                              style: TextStyle(color: theme.colorScheme.error)),
                         ]),
                       ),
                     ],
@@ -653,31 +600,13 @@ class _DesktopStudentRowState extends State<_DesktopStudentRow> {
                   flex: 3,
                   child: Row(
                     children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              widget.theme.colorScheme.primary,
-                              widget.theme.colorScheme.primary
-                                  .withValues(alpha: 0.7),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            widget.student.fullName
-                                .substring(0, 1)
-                                .toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
+                      _ProfileAvatar(
+                        size: 36,
+                        initial: widget.student.fullName.isNotEmpty
+                            ? widget.student.fullName[0]
+                            : 'S',
+                        imageUrl: widget.student.profileImageUrl,
+                        theme: widget.theme,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -734,8 +663,8 @@ class _DesktopStudentRowState extends State<_DesktopStudentRow> {
                 Expanded(
                   flex: 2,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: widget.theme.colorScheme.primaryContainer
                           .withValues(alpha: 0.3),
@@ -782,6 +711,41 @@ class _DesktopStudentRowState extends State<_DesktopStudentRow> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  final double size;
+  final String initial;
+  final String? imageUrl;
+  final ThemeData theme;
+
+  const _ProfileAvatar({
+    required this.size,
+    required this.initial,
+    this.imageUrl,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ProfileAvatarWidget(
+      size: size,
+      imageUrl: imageUrl,
+      displayName: initial,
+      enablePreview: true,
+      backgroundGradient: LinearGradient(
+        colors: [
+          theme.colorScheme.primary,
+          theme.colorScheme.primary.withValues(alpha: 0.7),
+        ],
+      ),
+      textStyle: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+        fontSize: size > 45 ? 20 : 14,
       ),
     );
   }

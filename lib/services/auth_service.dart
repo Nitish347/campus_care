@@ -11,12 +11,12 @@ import 'package:campus_care/services/teacher_service.dart';
 class AuthService {
   static final AuthApiService _authApiService = AuthApiService();
 
-  /// Login with email, password, and role
+  /// Login with identifier (email/phone), password, and role
   static Future<Map<String, dynamic>?> login(
-      String email, String password, String role) async {
+      String identifier, String password, String role) async {
     try {
       final result = await _authApiService.login(
-        email: email,
+        identifier: identifier,
         password: password,
         role: role,
       );
@@ -38,6 +38,44 @@ class AuthService {
       throw Exception(e.message);
     } catch (e) {
       throw Exception('Login failed: $e');
+    }
+  }
+
+  /// Request password reset OTP for a role.
+  static Future<void> requestPasswordResetOtp({
+    required String role,
+    required String identifier,
+  }) async {
+    try {
+      await _authApiService.requestPasswordResetOtp(
+        role: role,
+        identifier: identifier,
+      );
+    } on ApiException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
+      throw Exception('Failed to request password reset OTP: $e');
+    }
+  }
+
+  /// Reset password with role, email, OTP and new password.
+  static Future<void> resetPasswordWithOtp({
+    required String role,
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      await _authApiService.resetPasswordWithOtp(
+        role: role,
+        email: email,
+        otp: otp,
+        newPassword: newPassword,
+      );
+    } on ApiException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
+      throw Exception('Failed to reset password: $e');
     }
   }
 

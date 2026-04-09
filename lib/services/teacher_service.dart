@@ -28,9 +28,8 @@ class TeacherService {
   static Future<String> addTeacher(Teacher teacher) async {
     try {
       final response = await _apiService.createTeacher(teacher.toJson());
-      return response['_id'] ?? '';
+      return (response['id'] ?? response['_id'] ?? '').toString();
     } catch (e) {
-
       throw Exception('Failed to create teacher: $e');
     }
   }

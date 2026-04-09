@@ -31,7 +31,7 @@ class AuthController extends GetxController {
   Teacher? get currentTeacher => _currentTeacher.value;
   Admin? get currentAdmin => _currentAdmin.value;
   bool get isLoggedIn => _isLoggedIn.value;
-  String? get currentRole => _currentRole?.value;
+  String? get currentRole => _currentRole.value;
 
   @override
   void onInit() {
@@ -67,9 +67,8 @@ class AuthController extends GetxController {
     try {
       _isLoading.value = true;
 
-      // Determine role based on email or default to student
+      // Default role for single-form login; tabbed login passes role explicitly.
       String role = AppConstants.roleSuperAdmin;
-      final email = emailController.text.trim().toLowerCase();
       log(emailController.text.trim());
       log(passwordController.text.trim());
       final user = await AuthService.login(
@@ -100,7 +99,7 @@ class AuthController extends GetxController {
       } else {
         Get.snackbar(
           'Login Failed',
-          'Invalid email or password. Please try again.',
+          'Invalid email/phone or password. Please try again.',
           backgroundColor: Colors.red,
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
@@ -120,16 +119,16 @@ class AuthController extends GetxController {
   }
 
   Future<void> loginWithCredentials({
-    required String email,
+    required String identifier,
     required String password,
     required String role,
   }) async {
     try {
       _isLoading.value = true;
-      log(email);
+      log(identifier);
       log(password);
       final user = await AuthService.login(
-        email.trim(),
+        identifier.trim(),
         password.trim(),
         role,
       );
@@ -151,7 +150,7 @@ class AuthController extends GetxController {
       } else {
         Get.snackbar(
           'Login Failed',
-          'Invalid email or password. Please try again.',
+          'Invalid email/phone or password. Please try again.',
           backgroundColor: Colors.red,
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
@@ -168,6 +167,30 @@ class AuthController extends GetxController {
     } finally {
       _isLoading.value = false;
     }
+  }
+
+  Future<void> requestPasswordResetOtp({
+    required String role,
+    required String identifier,
+  }) async {
+    await AuthService.requestPasswordResetOtp(
+      role: role,
+      identifier: identifier,
+    );
+  }
+
+  Future<void> resetPasswordWithOtp({
+    required String role,
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    await AuthService.resetPasswordWithOtp(
+      role: role,
+      email: email,
+      otp: otp,
+      newPassword: newPassword,
+    );
   }
 
   void _navigateToRoleDashboard() async {
@@ -295,6 +318,33 @@ class AuthController extends GetxController {
     } finally {
       _isLoading.value = false;
     }
+  }
+
+  void updateTeacherProfileImage(String imageUrl) {
+    final teacher = _currentTeacher.value;
+    if (teacher == null) return;
+    _currentTeacher.value = teacher.copyWith(
+      profileImageUrl: imageUrl,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  void updateStudentProfileImage(String imageUrl) {
+    final student = _currentStudent.value;
+    if (student == null) return;
+    _currentStudent.value = student.copyWith(
+      profileImageUrl: imageUrl,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  void updateAdminProfileImage(String imageUrl) {
+    final admin = _currentAdmin.value;
+    if (admin == null) return;
+    _currentAdmin.value = admin.copyWith(
+      profileImageUrl: imageUrl,
+      updatedAt: DateTime.now(),
+    );
   }
 
   Future<void> updateAdminProfile(Admin updatedAdmin) async {

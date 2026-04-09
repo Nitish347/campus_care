@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/models/exam_result_model.dart';
 import 'package:campus_care/services/api/exam_result_api_service.dart';
@@ -17,20 +16,24 @@ class ExamResultController extends GetxController {
     fetchResults();
   }
 
-  /// Fetch exam results with optional filters
   Future<void> fetchResults({
     String? examId,
     String? classId,
     String? studentId,
+    String? section,
+    String? subject,
   }) async {
     try {
       isLoading.value = true;
+
       final data = await _apiService.getExamResults(
         examId: examId ??
             (selectedExamId.value.isNotEmpty ? selectedExamId.value : null),
         classId: classId ??
             (selectedClassId.value.isNotEmpty ? selectedClassId.value : null),
         studentId: studentId,
+        section: section,
+        subject: subject,
       );
 
       results.value = data.map((json) => ExamResult.fromJson(json)).toList();
@@ -45,45 +48,40 @@ class ExamResultController extends GetxController {
     }
   }
 
-  /// Get result for specific student in an exam
   ExamResult? getStudentResult(String examId, String studentId) {
     try {
       return results.firstWhere(
         (result) => result.examId == examId && result.studentId == studentId,
       );
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
 
-  /// Save marks for a single student
   Future<void> saveMarks({
     required String examId,
     required String studentId,
     required double marks,
+    required String subject,
+    required double totalMarks,
     String? remarks,
+    bool isAbsent = false,
   }) async {
     try {
       isLoading.value = true;
 
-      final existingResult = getStudentResult(examId, studentId);
-
       final resultData = {
-        'examId': examId,
-        'studentId': studentId,
-        'marks': marks,
-        if (remarks != null) 'remarks': remarks,
+        'exam_id': examId,
+        'student_id': studentId,
+        'subject': subject,
+        'marks': isAbsent ? 0 : marks,
+        'total_marks': totalMarks,
+        'is_absent': isAbsent ? 1 : 0,
+        if (remarks != null && remarks.trim().isNotEmpty)
+          'remarks': remarks.trim(),
       };
 
-      if (existingResult != null) {
-        // Update existing result
-        await _apiService.updateExamResult(existingResult.id, resultData);
-      } else {
-        // Create new result
-        await _apiService.createExamResult(resultData);
-      }
-
-      // Refresh results
+      await _apiService.createExamResult(resultData);
       await fetchResults(examId: examId);
 
       Get.snackbar(
@@ -105,107 +103,62 @@ class ExamResultController extends GetxController {
     }
   }
 
-  /// Bulk save marks for multiple students
   Future<void> bulkSaveMarks({
-    required String examId,
     required List<Map<String, dynamic>> entries,
+    String? examId,
+    bool showSuccess = true,
   }) async {
     try {
       isLoading.value = true;
 
-      int successCount = 0;
-      int failureCount = 0;
-      List<String> errors = [];
-
-      for (var entry in entries) {
-        try {
-          await saveMarks(
-            examId: examId,
-            studentId: entry['studentId'],
-            marks: entry['marks'],
-            remarks: entry['remarks'],
-          );
-          successCount++;
-        } catch (e) {
-          failureCount++;
-          errors.add('${entry['studentId']}: ${e.toString()}');
-        }
+      if (entries.isEmpty) {
+        throw Exception('No marks entries provided');
       }
 
-      if (failureCount > 0) {
-        Get.dialog(
-          AlertDialog(
-            title: const Text('Bulk Save Results'),
-            content: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('$successCount records saved successfully.'),
-                  Text('$failureCount records failed.'),
-                  if (errors.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    const Text('Errors:',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    ...errors.take(5).map((e) =>
-                        Text('• $e', style: const TextStyle(fontSize: 12))),
-                    if (errors.length > 5)
-                      Text('...and ${errors.length - 5} more'),
-                  ],
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Get.back(),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      } else {
+      await _apiService.bulkUpsertExamResults(entries);
+
+      await fetchResults(
+        examId: examId ??
+            (selectedExamId.value.isNotEmpty ? selectedExamId.value : null),
+      );
+
+      if (showSuccess) {
         Get.snackbar(
           'Success',
-          'All marks saved successfully ($successCount records)',
+          'Marks saved successfully (${entries.length} records)',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Get.theme.colorScheme.primary,
           colorText: Get.theme.colorScheme.onPrimary,
         );
       }
-
-      // Refresh results
-      await fetchResults(examId: examId);
     } catch (e) {
       Get.snackbar(
         'Error',
         'Bulk save failed: ${e.toString()}',
         snackPosition: SnackPosition.BOTTOM,
       );
+      rethrow;
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Set filter for exam
   void setExamFilter(String examId) {
     selectedExamId.value = examId;
     fetchResults();
   }
 
-  /// Set filter for class
   void setClassFilter(String classId) {
     selectedClassId.value = classId;
     fetchResults();
   }
 
-  /// Clear all filters
   void clearFilters() {
     selectedExamId.value = '';
     selectedClassId.value = '';
     fetchResults();
   }
 
-  /// Get statistics for an exam
   Map<String, dynamic> getExamStats(String examId) {
     final examResults = results.where((r) => r.examId == examId).toList();
 

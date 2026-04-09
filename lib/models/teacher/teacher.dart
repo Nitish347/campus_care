@@ -7,6 +7,7 @@ class Teacher {
   final String? phone;
   final String? address;
   final String? department;
+  final String? profileImageUrl;
   final DateTime? hireDate;
   final String institute; // Institute ID reference
   final bool isEmailVerified;
@@ -24,6 +25,7 @@ class Teacher {
     this.phone,
     this.address,
     this.department,
+    this.profileImageUrl,
     this.hireDate,
     required this.institute,
     this.isEmailVerified = false,
@@ -65,6 +67,7 @@ class Teacher {
       phone: json['phone'],
       address: json['address'],
       department: json['department'],
+      profileImageUrl: getValue('profileImageUrl', 'profile_image_url'),
       hireDate: parseDate(getValue('hireDate', 'hire_date')),
       institute: getValue('institute', 'institute_id') ?? '',
       isEmailVerified:
@@ -86,6 +89,7 @@ class Teacher {
       'phone': phone,
       'address': address,
       'department': department,
+      'profile_image_url': profileImageUrl,
       'hire_date':
           hireDate != null ? hireDate!.millisecondsSinceEpoch ~/ 1000 : null,
       'institute_id': institute,
@@ -114,6 +118,7 @@ class Teacher {
     String? phone,
     String? address,
     String? department,
+    String? profileImageUrl,
     DateTime? hireDate,
     String? institute,
     bool? isEmailVerified,
@@ -131,6 +136,7 @@ class Teacher {
       phone: phone ?? this.phone,
       address: address ?? this.address,
       department: department ?? this.department,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       hireDate: hireDate ?? this.hireDate,
       institute: institute ?? this.institute,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,

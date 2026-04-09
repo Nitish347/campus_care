@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class NoticeModel {
   final String id;
   final String title;
@@ -48,6 +50,25 @@ class NoticeModel {
     List<String>? parseStringList(dynamic raw) {
       if (raw == null) return null;
       if (raw is List) return List<String>.from(raw);
+      if (raw is String) {
+        final trimmed = raw.trim();
+        if (trimmed.isEmpty) return null;
+
+        // Stored in DB as JSON string (e.g. ["url1","url2"])
+        if (trimmed.startsWith('[')) {
+          try {
+            final decoded = jsonDecode(trimmed);
+            if (decoded is List) {
+              return decoded.map((item) => item.toString()).toList();
+            }
+          } catch (_) {
+            // Fall through to single-value handling below
+          }
+        }
+
+        // Fallback for non-JSON single values
+        return [trimmed];
+      }
       return null;
     }
 

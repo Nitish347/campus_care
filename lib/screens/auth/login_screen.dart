@@ -4,10 +4,15 @@ import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/utils/validators.dart';
 import 'package:campus_care/widgets/buttons/primary_button.dart';
 
-import '../../controllers/admin/admin_auth_controller.dart';
-
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  bool _isPasswordVisible = false;
 
   @override
   Widget build(BuildContext context) {
@@ -82,13 +87,13 @@ class LoginScreen extends StatelessWidget {
                       // Email Field
                       TextFormField(
                         controller: authController.emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        validator: Validators.validateEmail,
+                        keyboardType: TextInputType.text,
+                        validator: Validators.validateEmailOrPhone,
                         decoration: InputDecoration(
-                          labelText: 'Email Address',
-                          hintText: 'Enter your email',
+                          labelText: 'Email or Phone',
+                          hintText: 'Enter email or phone',
                           prefixIcon: Icon(
-                            Icons.email_outlined,
+                            Icons.person_outline_rounded,
                             color: theme.colorScheme.primary,
                           ),
                           border: OutlineInputBorder(
@@ -111,7 +116,7 @@ class LoginScreen extends StatelessWidget {
                       // Password Field
                       TextFormField(
                         controller: authController.passwordController,
-                        obscureText: true,
+                        obscureText: !_isPasswordVisible,
                         validator: Validators.validatePassword,
                         decoration: InputDecoration(
                           labelText: 'Password',
@@ -119,6 +124,18 @@ class LoginScreen extends StatelessWidget {
                           prefixIcon: Icon(
                             Icons.lock_outline,
                             color: theme.colorScheme.primary,
+                          ),
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
+                            icon: Icon(
+                              _isPasswordVisible
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                            ),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
