@@ -1,3 +1,4 @@
+import 'package:campus_care/core/constants/admin_module_permissions.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/super_admin_controller.dart';
@@ -47,7 +48,7 @@ class _SchoolDetailsScreenState extends State<SchoolDetailsScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.school.instituteName ?? 'School Details'),
+        title: Text(widget.school.instituteName),
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
@@ -90,9 +91,7 @@ class _SchoolDetailsScreenState extends State<SchoolDetailsScreen>
                     radius: 40,
                     backgroundColor: theme.colorScheme.primaryContainer,
                     child: Text(
-                      (widget.school.instituteName ?? 'S')
-                          .substring(0, 1)
-                          .toUpperCase(),
+                      widget.school.instituteName.substring(0, 1).toUpperCase(),
                       style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
@@ -102,7 +101,7 @@ class _SchoolDetailsScreenState extends State<SchoolDetailsScreen>
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    widget.school.instituteName ?? 'Unknown School',
+                    widget.school.instituteName,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -216,6 +215,10 @@ class _SchoolDetailsScreenState extends State<SchoolDetailsScreen>
             ],
           ),
 
+          const SizedBox(height: 20),
+
+          _buildModulePermissionsCard(theme),
+
           const SizedBox(height: 24),
 
           // Access Admin Dashboard Button
@@ -297,8 +300,7 @@ class _SchoolDetailsScreenState extends State<SchoolDetailsScreen>
         return EmptyState(
           icon: Icons.people_outline,
           title: 'No Students',
-          message:
-              'No students found in ${widget.school.instituteName ?? "this school"}',
+          message: 'No students found in ${widget.school.instituteName}',
         );
       }
 
@@ -335,13 +337,12 @@ class _SchoolDetailsScreenState extends State<SchoolDetailsScreen>
                 children: [
                   const SizedBox(height: 4),
                   Text(student.email),
-                  if (student.enrollmentNumber != null)
-                    Text(
-                      'Enrollment: ${student.enrollmentNumber}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                  Text(
+                    'Enrollment: ${student.enrollmentNumber}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
+                  ),
                   if (student.class_ != null)
                     Text(
                       'Class: ${student.class_}',
@@ -376,8 +377,7 @@ class _SchoolDetailsScreenState extends State<SchoolDetailsScreen>
         return EmptyState(
           icon: Icons.person_outline,
           title: 'No Teachers',
-          message:
-              'No teachers found in ${widget.school.instituteName ?? "this school"}',
+          message: 'No teachers found in ${widget.school.instituteName}',
         );
       }
 
@@ -440,6 +440,68 @@ class _SchoolDetailsScreenState extends State<SchoolDetailsScreen>
         },
       );
     });
+  }
+
+  Widget _buildModulePermissionsCard(ThemeData theme) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Obx(() {
+          final isLoading = _controller.isLoadingSchoolModulePermissions.value;
+          final isUpdating =
+              _controller.isUpdatingSchoolModulePermissions.value;
+          final permissions = {
+            ...defaultAdminModulePermissions,
+            ..._controller.schoolModulePermissions,
+          };
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Admin Module Access',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Control which modules this admin can access in their dashboard.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              if (isLoading) ...[
+                const SizedBox(height: 12),
+                const LinearProgressIndicator(minHeight: 3),
+              ],
+              const SizedBox(height: 8),
+              ...AdminModulePermissionKeys.all.map((key) {
+                final label = adminModulePermissionLabels[key] ?? key;
+                return SwitchListTile.adaptive(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(label),
+                  value: permissions[key] ?? true,
+                  onChanged: isLoading || isUpdating
+                      ? null
+                      : (value) => _controller.toggleSchoolModulePermission(
+                            widget.school.id,
+                            key,
+                            value,
+                          ),
+                );
+              }),
+            ],
+          );
+        }),
+      ),
+    );
   }
 
   Widget _buildStatCard(

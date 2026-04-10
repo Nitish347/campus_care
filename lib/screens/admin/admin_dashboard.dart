@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/controllers/theme_controller.dart';
+import 'package:campus_care/core/constants/admin_module_permissions.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/widgets/cards/dashboard_card.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
@@ -31,8 +32,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
     });
   }
 
+  bool _hasModuleAccess(String moduleKey) {
+    final admin = Get.find<AuthController>().currentAdmin;
+    return admin?.hasModuleAccess(moduleKey) ?? true;
+  }
+
   List<SidebarSection> _buildSidebarSections() {
-    return [
+    final sections = <SidebarSection>[
       SidebarSection(
         title: 'Main',
         items: [
@@ -44,102 +50,128 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ),
         ],
       ),
-      SidebarSection(
-        title: 'Student Management',
-        items: [
-          SidebarItem(
-            icon: Icons.people_rounded,
-            title: 'Student List',
-            onTap: () => Get.toNamed(AppRoutes.studentList),
-          ),
-          SidebarItem(
-            icon: Icons.person_add_rounded,
-            title: 'Add Student',
-            onTap: () => Get.toNamed(AppRoutes.addStudent),
-          ),
-        ],
-      ),
-      SidebarSection(
-        title: 'Staff Management',
-        items: [
-          SidebarItem(
-            icon: Icons.badge_rounded,
-            title: 'Teacher List',
-            onTap: () => Get.toNamed(AppRoutes.teacherList),
-          ),
-          SidebarItem(
-            icon: Icons.person_add_alt_1_rounded,
-            title: 'Add Teacher',
-            onTap: () => Get.toNamed(AppRoutes.addTeacher),
-          ),
-          SidebarItem(
-            icon: Icons.admin_panel_settings_rounded,
-            title: 'Admin List',
-            onTap: () => Get.toNamed(AppRoutes.adminList),
-          ),
-        ],
-      ),
-      SidebarSection(
-        title: 'Academic',
-        items: [
-          SidebarItem(
-            icon: Icons.class_rounded,
-            title: 'Classes',
-            onTap: () => Get.toNamed(AppRoutes.classManagement),
-          ),
-          SidebarItem(
-            icon: Icons.book_rounded,
-            title: 'Subjects',
-            onTap: () => Get.toNamed(AppRoutes.subjectManagement),
-          ),
-          SidebarItem(
-            icon: Icons.schedule_rounded,
-            title: 'Timetable',
-            onTap: () => Get.toNamed(AppRoutes.timetable),
-          ),
-          SidebarItem(
-            icon: Icons.how_to_reg_rounded,
-            title: 'Attendance',
-            onTap: () => Get.toNamed(AppRoutes.adminAttendance),
-          ),
-          SidebarItem(
-            icon: Icons.restaurant_menu_rounded,
-            title: 'Lunch Management',
-            onTap: () => Get.toNamed(AppRoutes.adminLunchManagement),
-          ),
-          SidebarItem(
-            icon: Icons.directions_bus_rounded,
-            title: 'Transport',
-            onTap: () => Get.toNamed(AppRoutes.adminTransportManagement),
-          ),
-          SidebarItem(
-            icon: Icons.assignment_rounded,
-            title: 'Homework',
-            onTap: () => Get.toNamed(AppRoutes.adminHomework),
-          ),
-          SidebarItem(
-            icon: Icons.assignment_rounded,
-            title: 'Examinations',
-            onTap: () => Get.toNamed(AppRoutes.adminExaminations),
-          ),
-          SidebarItem(
-            icon: Icons.fact_check_rounded,
-            title: 'Exam Results & Marks',
-            onTap: () => Get.toNamed(AppRoutes.adminExamResults),
-          ),
-        ],
-      ),
-      SidebarSection(
-        title: 'Communication',
-        items: [
-          SidebarItem(
-            icon: Icons.campaign_rounded,
-            title: 'Notices & Events',
-            onTap: () => Get.toNamed(AppRoutes.noticeManagement),
-          ),
-        ],
+    ];
+
+    if (_hasModuleAccess(AdminModulePermissionKeys.studentManagement)) {
+      sections.add(
+        SidebarSection(
+          title: 'Student Management',
+          items: [
+            SidebarItem(
+              icon: Icons.people_rounded,
+              title: 'Student List',
+              onTap: () => Get.toNamed(AppRoutes.studentList),
+            ),
+            SidebarItem(
+              icon: Icons.person_add_rounded,
+              title: 'Add Student',
+              onTap: () => Get.toNamed(AppRoutes.addStudent),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final staffItems = <SidebarItem>[
+      if (_hasModuleAccess(AdminModulePermissionKeys.teacherManagement))
+        SidebarItem(
+          icon: Icons.badge_rounded,
+          title: 'Teacher List',
+          onTap: () => Get.toNamed(AppRoutes.teacherList),
+        ),
+      if (_hasModuleAccess(AdminModulePermissionKeys.teacherManagement))
+        SidebarItem(
+          icon: Icons.person_add_alt_1_rounded,
+          title: 'Add Teacher',
+          onTap: () => Get.toNamed(AppRoutes.addTeacher),
+        ),
+      SidebarItem(
+        icon: Icons.admin_panel_settings_rounded,
+        title: 'Admin List',
+        onTap: () => Get.toNamed(AppRoutes.adminList),
       ),
     ];
+    if (staffItems.isNotEmpty) {
+      sections
+          .add(SidebarSection(title: 'Staff Management', items: staffItems));
+    }
+
+    final academicItems = <SidebarItem>[
+      if (_hasModuleAccess(AdminModulePermissionKeys.classManagement))
+        SidebarItem(
+          icon: Icons.class_rounded,
+          title: 'Classes',
+          onTap: () => Get.toNamed(AppRoutes.classManagement),
+        ),
+      if (_hasModuleAccess(AdminModulePermissionKeys.subjectManagement))
+        SidebarItem(
+          icon: Icons.book_rounded,
+          title: 'Subjects',
+          onTap: () => Get.toNamed(AppRoutes.subjectManagement),
+        ),
+      if (_hasModuleAccess(AdminModulePermissionKeys.timetable))
+        SidebarItem(
+          icon: Icons.schedule_rounded,
+          title: 'Timetable',
+          onTap: () => Get.toNamed(AppRoutes.timetable),
+        ),
+      if (_hasModuleAccess(AdminModulePermissionKeys.attendance))
+        SidebarItem(
+          icon: Icons.how_to_reg_rounded,
+          title: 'Attendance',
+          onTap: () => Get.toNamed(AppRoutes.adminAttendance),
+        ),
+      if (_hasModuleAccess(AdminModulePermissionKeys.lunchManagement))
+        SidebarItem(
+          icon: Icons.restaurant_menu_rounded,
+          title: 'Lunch Management',
+          onTap: () => Get.toNamed(AppRoutes.adminLunchManagement),
+        ),
+      if (_hasModuleAccess(AdminModulePermissionKeys.transportManagement))
+        SidebarItem(
+          icon: Icons.directions_bus_rounded,
+          title: 'Transport',
+          onTap: () => Get.toNamed(AppRoutes.adminTransportManagement),
+        ),
+      if (_hasModuleAccess(AdminModulePermissionKeys.homeworkManagement))
+        SidebarItem(
+          icon: Icons.assignment_rounded,
+          title: 'Homework',
+          onTap: () => Get.toNamed(AppRoutes.adminHomework),
+        ),
+      if (_hasModuleAccess(AdminModulePermissionKeys.examinations))
+        SidebarItem(
+          icon: Icons.assignment_rounded,
+          title: 'Examinations',
+          onTap: () => Get.toNamed(AppRoutes.adminExaminations),
+        ),
+      if (_hasModuleAccess(AdminModulePermissionKeys.examResults))
+        SidebarItem(
+          icon: Icons.fact_check_rounded,
+          title: 'Exam Results & Marks',
+          onTap: () => Get.toNamed(AppRoutes.adminExamResults),
+        ),
+    ];
+    if (academicItems.isNotEmpty) {
+      sections.add(SidebarSection(title: 'Academic', items: academicItems));
+    }
+
+    if (_hasModuleAccess(AdminModulePermissionKeys.noticesEvents)) {
+      sections.add(
+        SidebarSection(
+          title: 'Communication',
+          items: [
+            SidebarItem(
+              icon: Icons.campaign_rounded,
+              title: 'Notices & Events',
+              onTap: () => Get.toNamed(AppRoutes.noticeManagement),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return sections;
   }
 
   @override
@@ -203,84 +235,106 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ResponsiveGrid(
                   childAspectRatio: 1.0,
                   children: [
-                    DashboardCard(
-                      icon: Icons.people_rounded,
-                      title: 'Student Management',
-                      subtitle: 'Manage students',
-                      onTap: () => Get.toNamed(AppRoutes.studentList),
-                      iconColor: const Color(0xFF2563EB),
-                    ),
-                    DashboardCard(
-                      icon: Icons.badge_rounded,
-                      title: 'Teacher Management',
-                      subtitle: 'Manage teachers',
-                      onTap: () => Get.toNamed(AppRoutes.teacherList),
-                      iconColor: const Color(0xFF059669),
-                    ),
-                    DashboardCard(
-                      icon: Icons.class_rounded,
-                      title: 'Classes & Subjects',
-                      subtitle: 'Manage classes',
-                      onTap: () => Get.toNamed(AppRoutes.classManagement),
-                      iconColor: const Color(0xFF7C3AED),
-                    ),
-                    DashboardCard(
-                      icon: Icons.schedule_rounded,
-                      title: 'Timetable',
-                      subtitle: 'View schedule',
-                      onTap: () => Get.toNamed(AppRoutes.timetable),
-                      iconColor: const Color(0xFFF59E0B),
-                    ),
-                    DashboardCard(
-                      icon: Icons.how_to_reg_rounded,
-                      title: 'Attendance',
-                      subtitle: 'Manage attendance',
-                      onTap: () => Get.toNamed(AppRoutes.adminAttendance),
-                      iconColor: const Color(0xFF0D9488),
-                    ),
-                    DashboardCard(
-                      icon: Icons.restaurant_menu_rounded,
-                      title: 'Lunch Management',
-                      subtitle: 'Track student meals',
-                      onTap: () => Get.toNamed(AppRoutes.adminLunchManagement),
-                      iconColor: const Color(0xFF7C3AED),
-                    ),
-                    DashboardCard(
-                      icon: Icons.directions_bus_rounded,
-                      title: 'Transport',
-                      subtitle: 'Manage routes & vans',
-                      onTap: () =>
-                          Get.toNamed(AppRoutes.adminTransportManagement),
-                      iconColor: const Color(0xFF0EA5E9),
-                    ),
-                    DashboardCard(
-                      icon: Icons.assignment_rounded,
-                      title: 'Homework',
-                      subtitle: 'Manage homework',
-                      onTap: () => Get.toNamed(AppRoutes.adminHomework),
-                      iconColor: const Color(0xFF4F46E5),
-                    ),
-                    DashboardCard(
-                      icon: Icons.assignment_rounded,
-                      title: 'Examinations',
-                      subtitle: 'Manage exams & timetables',
-                      onTap: () => Get.toNamed(AppRoutes.adminExaminations),
-                      iconColor: const Color(0xFFE11D48),
-                    ),
-                    DashboardCard(
-                      icon: Icons.fact_check_rounded,
-                      title: 'Exam Results & Marks',
-                      subtitle: 'Enter and review marks',
-                      onTap: () => Get.toNamed(AppRoutes.adminExamResults),
-                      iconColor: const Color(0xFF7C3AED),
-                    ),
-                    DashboardCard(
-                      icon: Icons.campaign_rounded,
-                      title: 'Notices & Events',
-                      subtitle: 'Announcements',
-                      onTap: () => Get.toNamed(AppRoutes.noticeManagement),
-                      iconColor: const Color(0xFF0891B2),
-                    ),
+                    if (_hasModuleAccess(
+                        AdminModulePermissionKeys.studentManagement))
+                      DashboardCard(
+                        icon: Icons.people_rounded,
+                        title: 'Student Management',
+                        subtitle: 'Manage students',
+                        onTap: () => Get.toNamed(AppRoutes.studentList),
+                        iconColor: const Color(0xFF2563EB),
+                      ),
+                    if (_hasModuleAccess(
+                        AdminModulePermissionKeys.teacherManagement))
+                      DashboardCard(
+                        icon: Icons.badge_rounded,
+                        title: 'Teacher Management',
+                        subtitle: 'Manage teachers',
+                        onTap: () => Get.toNamed(AppRoutes.teacherList),
+                        iconColor: const Color(0xFF059669),
+                      ),
+                    if (_hasModuleAccess(
+                            AdminModulePermissionKeys.classManagement) ||
+                        _hasModuleAccess(
+                            AdminModulePermissionKeys.subjectManagement))
+                      DashboardCard(
+                        icon: Icons.class_rounded,
+                        title: 'Classes & Subjects',
+                        subtitle: 'Manage classes',
+                        onTap: () => Get.toNamed(AppRoutes.classManagement),
+                        iconColor: const Color(0xFF7C3AED),
+                      ),
+                    if (_hasModuleAccess(AdminModulePermissionKeys.timetable))
+                      DashboardCard(
+                        icon: Icons.schedule_rounded,
+                        title: 'Timetable',
+                        subtitle: 'View schedule',
+                        onTap: () => Get.toNamed(AppRoutes.timetable),
+                        iconColor: const Color(0xFFF59E0B),
+                      ),
+                    if (_hasModuleAccess(AdminModulePermissionKeys.attendance))
+                      DashboardCard(
+                        icon: Icons.how_to_reg_rounded,
+                        title: 'Attendance',
+                        subtitle: 'Manage attendance',
+                        onTap: () => Get.toNamed(AppRoutes.adminAttendance),
+                        iconColor: const Color(0xFF0D9488),
+                      ),
+                    if (_hasModuleAccess(
+                        AdminModulePermissionKeys.lunchManagement))
+                      DashboardCard(
+                        icon: Icons.restaurant_menu_rounded,
+                        title: 'Lunch Management',
+                        subtitle: 'Track student meals',
+                        onTap: () =>
+                            Get.toNamed(AppRoutes.adminLunchManagement),
+                        iconColor: const Color(0xFF7C3AED),
+                      ),
+                    if (_hasModuleAccess(
+                        AdminModulePermissionKeys.transportManagement))
+                      DashboardCard(
+                        icon: Icons.directions_bus_rounded,
+                        title: 'Transport',
+                        subtitle: 'Manage routes & vans',
+                        onTap: () =>
+                            Get.toNamed(AppRoutes.adminTransportManagement),
+                        iconColor: const Color(0xFF0EA5E9),
+                      ),
+                    if (_hasModuleAccess(
+                        AdminModulePermissionKeys.homeworkManagement))
+                      DashboardCard(
+                        icon: Icons.assignment_rounded,
+                        title: 'Homework',
+                        subtitle: 'Manage homework',
+                        onTap: () => Get.toNamed(AppRoutes.adminHomework),
+                        iconColor: const Color(0xFF4F46E5),
+                      ),
+                    if (_hasModuleAccess(
+                        AdminModulePermissionKeys.examinations))
+                      DashboardCard(
+                        icon: Icons.assignment_rounded,
+                        title: 'Examinations',
+                        subtitle: 'Manage exams & timetables',
+                        onTap: () => Get.toNamed(AppRoutes.adminExaminations),
+                        iconColor: const Color(0xFFE11D48),
+                      ),
+                    if (_hasModuleAccess(AdminModulePermissionKeys.examResults))
+                      DashboardCard(
+                        icon: Icons.fact_check_rounded,
+                        title: 'Exam Results & Marks',
+                        subtitle: 'Enter and review marks',
+                        onTap: () => Get.toNamed(AppRoutes.adminExamResults),
+                        iconColor: const Color(0xFF7C3AED),
+                      ),
+                    if (_hasModuleAccess(
+                        AdminModulePermissionKeys.noticesEvents))
+                      DashboardCard(
+                        icon: Icons.campaign_rounded,
+                        title: 'Notices & Events',
+                        subtitle: 'Announcements',
+                        onTap: () => Get.toNamed(AppRoutes.noticeManagement),
+                        iconColor: const Color(0xFF0891B2),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 32),
@@ -684,8 +738,7 @@ class _WelcomeBanner extends StatelessWidget {
               builder: (drawerContext) => _BannerGlassIconButton(
                 icon: Icons.menu_rounded,
                 tooltip: 'Open drawer',
-                onPressed: () =>
-                    Scaffold.of(drawerContext).openDrawer(),
+                onPressed: () => Scaffold.of(drawerContext).openDrawer(),
               ),
             ),
             const SizedBox(width: 12),
@@ -705,7 +758,6 @@ class _WelcomeBanner extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-
                     Expanded(
                       child: Text(
                         adminName,

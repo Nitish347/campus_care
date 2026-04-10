@@ -1,3 +1,4 @@
+import 'package:campus_care/core/constants/admin_module_permissions.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/models/admin/admin.dart';
 import 'package:campus_care/models/student/student.dart';
@@ -10,6 +11,9 @@ class SuperAdminController extends GetxController {
   final _selectedSchool = Rxn<Admin>();
   final _searchQuery = ''.obs;
   final _dashboardStats = <String, dynamic>{}.obs;
+  final _schoolModulePermissions = <String, bool>{}.obs;
+  final _isLoadingSchoolModulePermissions = false.obs;
+  final _isUpdatingSchoolModulePermissions = false.obs;
 
   // Students
   final _students = <Student>[].obs;
@@ -32,6 +36,11 @@ class SuperAdminController extends GetxController {
   List<Teacher> get schoolTeachers => _schoolTeachers;
   RxBool get isLoadingSchoolStudents => _isLoadingSchoolStudents;
   RxBool get isLoadingSchoolTeachers => _isLoadingSchoolTeachers;
+  Map<String, bool> get schoolModulePermissions => _schoolModulePermissions;
+  RxBool get isLoadingSchoolModulePermissions =>
+      _isLoadingSchoolModulePermissions;
+  RxBool get isUpdatingSchoolModulePermissions =>
+      _isUpdatingSchoolModulePermissions;
 
   List<Admin> get filteredSchools {
     if (_searchQuery.value.isEmpty) {
@@ -118,12 +127,14 @@ class SuperAdminController extends GetxController {
     // Load school-specific data
     loadSchoolStudents(school.id);
     loadSchoolTeachers(school.id);
+    loadSchoolModulePermissions(school.id);
   }
 
   void clearSelectedSchool() {
     _selectedSchool.value = null;
     _schoolStudents.clear();
     _schoolTeachers.clear();
+    _schoolModulePermissions.assignAll(defaultAdminModulePermissions);
   }
 
   Future<bool> updateSchool(String id, Map<String, dynamic> schoolData) async {
@@ -287,6 +298,50 @@ class SuperAdminController extends GetxController {
       Get.snackbar('Error', 'Failed to load school teachers: $e');
     } finally {
       _isLoadingSchoolTeachers.value = false;
+    }
+  }
+
+  Future<void> loadSchoolModulePermissions(String schoolId) async {
+    try {
+      _isLoadingSchoolModulePermissions.value = true;
+      final permissions =
+          await SuperAdminService.getSchoolModulePermissions(schoolId);
+      _schoolModulePermissions.assignAll({
+        ...defaultAdminModulePermissions,
+        ...permissions,
+      });
+    } catch (e) {
+      _schoolModulePermissions.assignAll(defaultAdminModulePermissions);
+      Get.snackbar('Error', 'Failed to load module permissions: $e');
+    } finally {
+      _isLoadingSchoolModulePermissions.value = false;
+    }
+  }
+
+  Future<void> toggleSchoolModulePermission(
+    String schoolId,
+    String moduleKey,
+    bool enabled,
+  ) async {
+    try {
+      _isUpdatingSchoolModulePermissions.value = true;
+      final nextPermissions = {
+        ...defaultAdminModulePermissions,
+        ..._schoolModulePermissions,
+        moduleKey: enabled,
+      };
+      final updated = await SuperAdminService.updateSchoolModulePermissions(
+        schoolId,
+        nextPermissions,
+      );
+      _schoolModulePermissions.assignAll({
+        ...defaultAdminModulePermissions,
+        ...updated,
+      });
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to update module permission: $e');
+    } finally {
+      _isUpdatingSchoolModulePermissions.value = false;
     }
   }
 

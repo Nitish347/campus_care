@@ -1,3 +1,4 @@
+import 'package:campus_care/core/constants/admin_module_permissions.dart';
 import 'package:campus_care/models/admin/admin.dart';
 import 'package:campus_care/models/student/student.dart';
 import 'package:campus_care/models/teacher/teacher.dart';
@@ -5,6 +6,30 @@ import 'package:campus_care/services/api/super_admin_api_service.dart';
 
 class SuperAdminService {
   static final SuperAdminApiService _apiService = SuperAdminApiService();
+
+  static Map<String, bool> _normalizeModulePermissions(dynamic raw) {
+    final normalized = Map<String, bool>.from(defaultAdminModulePermissions);
+    if (raw is Map) {
+      for (final key in AdminModulePermissionKeys.all) {
+        if (raw.containsKey(key)) {
+          final value = raw[key];
+          if (value is bool) {
+            normalized[key] = value;
+          } else if (value is num) {
+            normalized[key] = value != 0;
+          } else if (value is String) {
+            final parsed = value.trim().toLowerCase();
+            if (parsed == 'true' || parsed == '1' || parsed == 'yes') {
+              normalized[key] = true;
+            } else if (parsed == 'false' || parsed == '0' || parsed == 'no') {
+              normalized[key] = false;
+            }
+          }
+        }
+      }
+    }
+    return normalized;
+  }
 
   // Dashboard
   static Future<Map<String, dynamic>> getDashboardStats() async {
@@ -58,6 +83,29 @@ class SuperAdminService {
       return Admin.fromJson(data);
     } catch (e) {
       throw Exception('Failed to create school: $e');
+    }
+  }
+
+  static Future<Map<String, bool>> getSchoolModulePermissions(
+      String schoolId) async {
+    try {
+      final data = await _apiService.getSchoolModulePermissions(schoolId);
+      return _normalizeModulePermissions(data['module_permissions']);
+    } catch (e) {
+      throw Exception('Failed to load module permissions: $e');
+    }
+  }
+
+  static Future<Map<String, bool>> updateSchoolModulePermissions(
+    String schoolId,
+    Map<String, bool> permissions,
+  ) async {
+    try {
+      final data = await _apiService.updateSchoolModulePermissions(
+          schoolId, permissions);
+      return _normalizeModulePermissions(data['module_permissions']);
+    } catch (e) {
+      throw Exception('Failed to update module permissions: $e');
     }
   }
 

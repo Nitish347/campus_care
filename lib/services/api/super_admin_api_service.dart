@@ -33,6 +33,20 @@ class SuperAdminApiService {
     return response['data'];
   }
 
+  Future<Map<String, dynamic>> getSchoolModulePermissions(String id) async {
+    final response = await _apiClient.get('/admins/$id/module-permissions');
+    return response['data'];
+  }
+
+  Future<Map<String, dynamic>> updateSchoolModulePermissions(
+      String id, Map<String, bool> modulePermissions) async {
+    final response = await _apiClient.put(
+      '/admins/$id/module-permissions',
+      body: {'module_permissions': modulePermissions},
+    );
+    return response['data'];
+  }
+
   Future<void> deleteSchool(String id) async {
     await _apiClient.delete('/admins/$id');
   }

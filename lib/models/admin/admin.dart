@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:campus_care/core/constants/admin_module_permissions.dart';
+
 class Admin {
   final String id;
   final String firstName;
@@ -15,6 +19,7 @@ class Admin {
   final String? pincode;
   final String? website;
   final int? establishedYear;
+  final Map<String, bool> modulePermissions;
 
   final bool isEmailVerified;
   final String? otp;
@@ -39,6 +44,7 @@ class Admin {
     this.pincode,
     this.website,
     this.establishedYear,
+    Map<String, bool>? modulePermissions,
     this.isEmailVerified = false,
     this.otp,
     this.otpExpiry,
@@ -46,7 +52,8 @@ class Admin {
     this.lastLogin,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : modulePermissions = Map<String, bool>.from(
+            modulePermissions ?? defaultAdminModulePermissions);
 
   String get fullName => '$firstName $lastName';
 
@@ -72,6 +79,40 @@ class Admin {
       return false;
     }
 
+    Map<String, bool> parseModulePermissions(dynamic value) {
+      final normalized = Map<String, bool>.from(defaultAdminModulePermissions);
+      dynamic source = value;
+
+      if (source is String && source.trim().isNotEmpty) {
+        try {
+          source = jsonDecode(source);
+        } catch (_) {
+          source = null;
+        }
+      }
+
+      if (source is Map) {
+        for (final key in AdminModulePermissionKeys.all) {
+          if (!source.containsKey(key)) continue;
+          final rawValue = source[key];
+          if (rawValue is bool) {
+            normalized[key] = rawValue;
+          } else if (rawValue is num) {
+            normalized[key] = rawValue != 0;
+          } else if (rawValue is String) {
+            final parsed = rawValue.trim().toLowerCase();
+            if (parsed == 'true' || parsed == '1' || parsed == 'yes') {
+              normalized[key] = true;
+            } else if (parsed == 'false' || parsed == '0' || parsed == 'no') {
+              normalized[key] = false;
+            }
+          }
+        }
+      }
+
+      return normalized;
+    }
+
     return Admin(
       id: json['_id'] ?? json['id'] ?? '',
       firstName: getValue('firstName', 'first_name') ?? '',
@@ -87,6 +128,9 @@ class Admin {
       pincode: json['pincode'],
       website: json['website'],
       establishedYear: getValue('establishedYear', 'established_year'),
+      modulePermissions: parseModulePermissions(
+        getValue('modulePermissions', 'module_permissions'),
+      ),
       isEmailVerified:
           parseBool(getValue('isEmailVerified', 'is_email_verified')),
       otp: json['otp'],
@@ -118,6 +162,7 @@ class Admin {
       'pincode': pincode,
       'website': website,
       'established_year': establishedYear,
+      'module_permissions': modulePermissions,
       'is_email_verified': isEmailVerified ? 1 : 0,
       'otp': otp,
       'otp_expiry':
@@ -143,6 +188,7 @@ class Admin {
     String? pincode,
     String? website,
     int? establishedYear,
+    Map<String, bool>? modulePermissions,
     bool? isEmailVerified,
     String? otp,
     DateTime? otpExpiry,
@@ -166,6 +212,7 @@ class Admin {
       pincode: pincode ?? this.pincode,
       website: website ?? this.website,
       establishedYear: establishedYear ?? this.establishedYear,
+      modulePermissions: modulePermissions ?? this.modulePermissions,
       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
       otp: otp ?? this.otp,
       otpExpiry: otpExpiry ?? this.otpExpiry,
@@ -175,4 +222,7 @@ class Admin {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+
+  bool hasModuleAccess(String moduleKey) =>
+      modulePermissions[moduleKey] ?? true;
 }
