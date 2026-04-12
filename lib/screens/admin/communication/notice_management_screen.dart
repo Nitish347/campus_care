@@ -39,16 +39,17 @@ class NoticeManagementScreen extends GetView<NoticeController> {
         showBackButton: true,
         title: const Text('Notice Management'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
+          HeaderActionButton(
+            icon: Icons.refresh_rounded,
+            label: 'Refresh',
             onPressed: () => controller.loadNotices(),
-            tooltip: 'Refresh',
           ),
+          if (authController.isAdmin()) const SizedBox(width: 8),
           if (authController.isAdmin())
-            IconButton(
-              icon: const Icon(Icons.add),
+            HeaderActionButton(
+              icon: Icons.add_rounded,
+              label: 'Add Notice',
               onPressed: () => _showAddEditDialog(context, null),
-              tooltip: 'Add Notice',
             ),
         ],
       ),
@@ -88,13 +89,13 @@ class NoticeManagementScreen extends GetView<NoticeController> {
                   message: controller.searchQuery.isEmpty
                       ? 'Start by publishing a notice'
                       : 'No notices match your search',
-                  action: controller.searchQuery.isEmpty
-                      ? ElevatedButton.icon(
-                          onPressed: () => _showAddEditDialog(context, null),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Create Notice'),
-                        )
-                      : null,
+                  // action: controller.searchQuery.isEmpty
+                  //     ? ElevatedButton.icon(
+                  //         onPressed: () => _showAddEditDialog(context, null),
+                  //         icon: const Icon(Icons.add),
+                  //         label: const Text('Create Notice'),
+                  //       )
+                  //     : null,
                 );
               }
 

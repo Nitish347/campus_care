@@ -27,13 +27,6 @@ class AdminLunchManagementScreen extends StatelessWidget {
         breadcrumbLabel: 'Lunch',
         showBackButton: true,
         title: const Text('Lunch Management'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => controller.loadStudentsAndLunch(),
-            tooltip: 'Refresh',
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Column(

@@ -64,6 +64,15 @@ class SubjectManagementScreen extends StatelessWidget {
             breadcrumbLabel: 'Subjects',
             actions: [
               HeaderActionButton(
+                icon: Icons.refresh_rounded,
+                label: 'Refresh',
+                onPressed: () {
+                  _classController.fetchClasses();
+                  _controller.fetchSubjects();
+                },
+              ),
+              const SizedBox(width: 8),
+              HeaderActionButton(
                 icon: Icons.add_rounded,
                 label: 'Add Subject',
                 onPressed: () => Get.to(() => AddEditSubjectScreen()),

@@ -35,7 +35,7 @@ class AdminPageHeader extends StatelessWidget implements PreferredSizeWidget {
     this.breadcrumbLabel,
     this.showBackButton = false,
     this.bottom,
-    this.showProfileControls = true,
+    this.showProfileControls = false,
   });
 
   @override

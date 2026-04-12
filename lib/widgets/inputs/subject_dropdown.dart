@@ -15,6 +15,7 @@ class SubjectDropdown extends StatefulWidget {
   final String? classId; // Filter subjects by class
   final bool required;
   final bool enabled;
+  final bool returnSubjectId;
 
   const SubjectDropdown({
     super.key,
@@ -25,6 +26,7 @@ class SubjectDropdown extends StatefulWidget {
     this.classId,
     this.required = false,
     this.enabled = true,
+    this.returnSubjectId = false,
   });
 
   @override
@@ -82,7 +84,23 @@ class _SubjectDropdownState extends State<SubjectDropdown> {
     final raw = selectedSubject?.trim();
     if (raw == null || raw.isEmpty) return null;
 
-    // Existing selected value is already a subject name
+    // Return as ID mode
+    if (widget.returnSubjectId) {
+      final byId = subjects.where((s) => s.id == raw).toList();
+      if (byId.length == 1) {
+        return byId.first.id;
+      }
+
+      // Backward compatibility: existing selected value may be subject name
+      final byName = subjects.where((s) => s.name == raw).toList();
+      if (byName.length == 1) {
+        return byName.first.id;
+      }
+
+      return null;
+    }
+
+    // Default mode: existing selected value is subject name
     final byName = subjects.where((s) => s.name == raw).toList();
     if (byName.length == 1) {
       return byName.first.name;
@@ -139,9 +157,9 @@ class _SubjectDropdownState extends State<SubjectDropdown> {
                 ),
               ]
             : filteredSubjects.map((subject) {
-                // Use subject name as dropdown value for compatibility with exam/homework flows
+                // Keep name-mode for exam/homework; ID-mode for timetable flows.
                 return DropdownMenuItem(
-                  value: subject.name,
+                  value: widget.returnSubjectId ? subject.id : subject.name,
                   child: Text('${subject.name} (${subject.code})'),
                 );
               }).toList(),

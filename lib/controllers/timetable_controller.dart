@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/models/timetable_model.dart';
 import 'package:campus_care/services/api/timetable_api_service.dart';
 import 'package:campus_care/services/student_service.dart';
@@ -169,9 +170,15 @@ class TimetableController extends GetxController {
     try {
       _isLoading.value = true;
 
-      // Get the current admin's institute ID from stored user data
+      // Resolve institute ID from storage with auth-controller fallback.
       final currentUser = await StorageService.currentUser;
-      final instituteId = currentUser?['id'] ?? '';
+      final authController =
+          Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+      final instituteId = (currentUser?['id'] ??
+              currentUser?['_id'] ??
+              authController?.currentAdmin?.id ??
+              '')
+          .toString();
 
       if (instituteId.isEmpty) {
         throw Exception('Institute ID not found. Please log in again.');

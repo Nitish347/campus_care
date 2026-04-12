@@ -2,6 +2,8 @@ import 'package:campus_care/widgets/admin/admin_page_header.dart';
 import 'package:campus_care/widgets/admin/confirm_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:campus_care/controllers/auth_controller.dart';
+import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/controllers/class_controller.dart';
 import 'package:campus_care/screens/admin/academic/add_class_screen.dart';
@@ -94,6 +96,8 @@ class ClassManagementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isTeacherView = Get.isRegistered<AuthController>() &&
+        Get.find<AuthController>().currentRole == AppConstants.roleTeacher;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
@@ -108,10 +112,18 @@ class ClassManagementScreen extends StatelessWidget {
             showBackButton: true,
             actions: [
               HeaderActionButton(
-                icon: Icons.add_rounded,
-                label: 'Add Class',
-                onPressed: () => Get.toNamed(AppRoutes.addClass),
+                icon: Icons.refresh_rounded,
+                label: 'Refresh',
+                onPressed: _controller.fetchClasses,
               ),
+              if (!isTeacherView) ...[
+                const SizedBox(width: 8),
+                HeaderActionButton(
+                  icon: Icons.add_rounded,
+                  label: 'Add Class',
+                  onPressed: () => Get.toNamed(AppRoutes.addClass),
+                ),
+              ],
             ],
           ),
           Expanded(

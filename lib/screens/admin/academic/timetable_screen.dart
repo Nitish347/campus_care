@@ -124,18 +124,18 @@ class TimetableScreen extends GetView<TimetableController> {
                     icon: Icons.event_busy,
                     title: 'No timetable found',
                     message: 'Create a timetable for this class and section',
-                    action: ElevatedButton.icon(
-                      onPressed: () async {
-                        await Get.toNamed(AppRoutes.addTimetable);
-                        // Refresh when returning
-                        controller.loadTimetables(
-                          classId: controller.selectedClass,
-                          section: controller.selectedSection,
-                        );
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Create Timetable'),
-                    ),
+                    // action: ElevatedButton.icon(
+                    //   onPressed: () async {
+                    //     await Get.toNamed(AppRoutes.addTimetable);
+                    //     // Refresh when returning
+                    //     controller.loadTimetables(
+                    //       classId: controller.selectedClass,
+                    //       section: controller.selectedSection,
+                    //     );
+                    //   },
+                    //   icon: const Icon(Icons.add),
+                    //   label: const Text('Create Timetable'),
+                    // ),
                   );
                 }
 

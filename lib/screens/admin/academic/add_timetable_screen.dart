@@ -578,6 +578,7 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
                     labelText: 'Subject *',
                     classId: _selectedClass,
                     enabled: _selectedClass != null,
+                    returnSubjectId: true,
                     onChanged: (value) {
                       _updatePeriod(
                         day,

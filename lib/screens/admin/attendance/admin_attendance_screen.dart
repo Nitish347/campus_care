@@ -58,12 +58,12 @@ class AdminAttendanceScreen extends GetView<AttendanceController> {
                         icon: Icons.fact_check_outlined,
                         title: 'No Class Selected',
                         message: 'Select a class, section, and date to view or mark attendance.',
-                        action: PrimaryButton(
-                          onPressed: () {
-                            // Focus action if needed
-                          },
-                          child: const Text('Select Criteria'),
-                        ),
+                        // action: PrimaryButton(
+                        //   onPressed: () {
+                        //     // Focus action if needed
+                        //   },
+                        //   child: const Text('Select Criteria'),
+                        // ),
                       );
                     }
 

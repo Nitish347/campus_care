@@ -22,6 +22,7 @@ import 'package:campus_care/screens/teacher/homework/homework_screen.dart';
 import 'package:campus_care/screens/teacher/communication/chat_list_screen.dart';
 import 'package:campus_care/screens/teacher/marks/marks_entry_screen.dart';
 import 'package:campus_care/screens/teacher/profile/teacher_profile_screen.dart';
+import 'package:campus_care/screens/teacher/timetable/teacher_today_classes_screen.dart';
 import 'package:campus_care/screens/teacher/timetable/teacher_timetable_screen.dart';
 import 'package:campus_care/screens/student/student_dashboard.dart';
 import 'package:campus_care/screens/student/homework/student_homework_screen.dart';
@@ -103,6 +104,7 @@ class AppRoutes {
   static const String marksEntry = '/teacher/marks';
   static const String teacherProfile = '/teacher/profile';
   static const String teacherTimetable = '/teacher/timetable';
+  static const String teacherTodayClasses = '/teacher/today-classes';
 
   // Student Routes
   static const String studentDashboard = '/student/dashboard';
@@ -270,6 +272,10 @@ class AppRoutes {
     GetPage(name: marksEntry, page: () => const MarksEntryScreen()),
     GetPage(name: teacherProfile, page: () => const TeacherProfileScreen()),
     GetPage(name: teacherTimetable, page: () => const TeacherTimetableScreen()),
+    GetPage(
+      name: teacherTodayClasses,
+      page: () => const TeacherTodayClassesScreen(),
+    ),
 
     // Student Pages
     GetPage(name: studentDashboard, page: () => const StudentDashboard()),

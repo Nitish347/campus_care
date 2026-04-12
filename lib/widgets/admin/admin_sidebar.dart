@@ -129,7 +129,7 @@ class _SidebarSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+      padding: const EdgeInsets.fromLTRB(12, 50, 12, 6),
       child: Row(
         children: [
           Container(

@@ -3,6 +3,8 @@ import 'package:campus_care/widgets/admin/confirm_dialog.dart';
 import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:campus_care/controllers/auth_controller.dart';
+import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/screens/admin/student_management/add_student_screen.dart';
 import 'package:campus_care/controllers/student_controller.dart';
@@ -17,6 +19,9 @@ class StudentListScreen extends GetView<StudentController> {
 
   @override
   Widget build(BuildContext context) {
+    final isTeacherView = Get.isRegistered<AuthController>() &&
+        Get.find<AuthController>().currentRole == AppConstants.roleTeacher;
+
     if (!Get.isRegistered<StudentController>()) {
       Get.put(StudentController());
     }
@@ -43,12 +48,14 @@ class StudentListScreen extends GetView<StudentController> {
                   controller.loadStudents();
                 },
               ),
-              const SizedBox(width: 8),
-              HeaderActionButton(
-                icon: Icons.person_add_rounded,
-                label: 'Add Student',
-                onPressed: () => Get.toNamed(AppRoutes.addStudent),
-              ),
+              if (!isTeacherView) ...[
+                const SizedBox(width: 8),
+                HeaderActionButton(
+                  icon: Icons.person_add_rounded,
+                  label: 'Add Student',
+                  onPressed: () => Get.toNamed(AppRoutes.addStudent),
+                ),
+              ],
             ],
           ),
 
