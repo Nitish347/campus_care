@@ -1,4 +1,3 @@
-import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:campus_care/widgets/inputs/class_section_dropdown.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +9,6 @@ import 'package:campus_care/controllers/exam_type_controller.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/screens/admin/exam/admin_add_edit_exam_screen.dart';
-import 'package:campus_care/widgets/admin/admin_page_header.dart';
 
 class AdminExamTimetableScreen extends StatefulWidget {
   const AdminExamTimetableScreen({super.key});
@@ -30,13 +28,15 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
   bool _isTableView = false; // Toggle between list and table view
 
   List<ExamModel> _getSelectedExams() {
+    final exams = _examController.examList.toList();
+
     if (_selectedExamTypeId == null ||
         _selectedClass == null ||
         _selectedSection == null) {
       return const <ExamModel>[];
     }
 
-    return _examController.examList
+    return exams
         .where((exam) =>
             exam.examTypeId == _selectedExamTypeId &&
             exam.classId == _selectedClass &&
@@ -75,114 +75,93 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
         _selectedClass != null &&
         _selectedSection != null;
 
-    return Scaffold(
-      appBar: AdminPageHeader(
-        title: 'Exam Timetable',
-        subtitle: 'Add exam schedule and create exam timetable',
-        icon: Icons.assignment_turned_in_rounded,
-        showBreadcrumb: true,
-        breadcrumbLabel: 'Exam Timetable',
-        showBackButton: true,
-        actions: [
-          HeaderActionButton(
-            icon: Icons.refresh_rounded,
-            label: 'Refresh',
-            onPressed: () {
-              if (canAddExam) {
-                _examController.fetchExams();
-              } else {
-                _examTypeController.fetchExamTypes();
-              }
-            },
-          ),
-          const SizedBox(width: 8),
-          HeaderActionButton(
-            icon: Icons.add_task_rounded,
-            label: 'Add Exam',
-            onPressed: () =>
-                _openExamEditor(existingExams: _getSelectedExams()),
-          ),
-        ],
-      ),
-      backgroundColor: Colors.transparent,
-      floatingActionButton: canAddExam
-          ? Obx(() {
-              final filteredExams = _getSelectedExams();
-
-              final hasExams = filteredExams.isNotEmpty;
-
-              return FloatingActionButton.extended(
-                onPressed: () => _openExamEditor(existingExams: filteredExams),
-                icon: Icon(hasExams
-                    ? Icons.edit_calendar_rounded
-                    : Icons.add_task_rounded),
-                label: Text(hasExams ? 'Edit Timetable' : 'Create Timetable'),
-              );
-            })
-          : null,
-      body: Column(
+    return Container(
+      color: Colors.transparent,
+      child: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                FilledButton.icon(
+                  onPressed: canAddExam
+                      ? () =>
+                          _openExamEditor(existingExams: _getSelectedExams())
+                      : null,
+                  icon: const Icon(Icons.calendar_month_rounded, size: 18),
+                  label: const Text('Create / Edit Timetable'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: canAddExam
+                      ? () {
+                          setState(() {
+                            _isTableView = !_isTableView;
+                          });
+                        }
+                      : null,
+                  icon: Icon(
+                    _isTableView
+                        ? Icons.view_list_rounded
+                        : Icons.table_chart_rounded,
+                    size: 18,
+                  ),
+                  label: Text(_isTableView ? 'Card View' : 'Table View'),
+                ),
+                IconButton.filledTonal(
+                  icon: const Icon(Icons.refresh, size: 20),
+                  onPressed: () {
+                    _examTypeController.fetchExamTypes();
+                    if (canAddExam) {
+                      _examController.fetchExams();
+                    }
+                  },
+                  tooltip: 'Refresh',
+                ),
+              ],
+            ),
+          ),
+
           // Filters
           Container(
-            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerHighest
-                  .withValues(alpha: 0.3),
-              border: Border(
-                bottom: BorderSide(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                ),
+                  .withValues(alpha: 0.35),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: theme.colorScheme.outline.withValues(alpha: 0.2),
               ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Select Filters',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        if (canAddExam)
-                          IconButton.filledTonal(
-                            icon: Icon(
-                                _isTableView
-                                    ? Icons.view_list
-                                    : Icons.table_chart,
-                                size: 20),
-                            onPressed: () {
-                              setState(() {
-                                _isTableView = !_isTableView;
-                              });
-                            },
-                            tooltip: _isTableView ? 'List View' : 'Table View',
-                          ),
-                        const SizedBox(width: 8),
-                        IconButton.filledTonal(
-                          icon: const Icon(Icons.refresh, size: 20),
-                          onPressed: () {
-                            if (canAddExam) {
-                              _examController.fetchExams();
-                            }
-                          },
-                          tooltip: 'Refresh',
-                        ),
-                      ],
-                    ),
-                  ],
+                Text(
+                  'Select Filters',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Exam Type Selection
                 Obx(() {
-                  final examTypes = _examTypeController.examTypeList
-                      .where((e) => e.isActive)
-                      .toList();
+                  final examTypeCount = _examTypeController.examTypeList.length;
+                  final examTypes = examTypeCount > 0
+                      ? _examTypeController.examTypeList
+                          .where((e) => e.isActive)
+                          .toList()
+                      : _examTypeController.examTypeList.toList();
 
                   return CustomDropdown<String>(
                     labelText: 'Exam Schedule *',
@@ -194,27 +173,35 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
                               child: Text(examType.name),
                             ))
                         .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedExamTypeId = value;
-                      });
-                      if (canAddExam) {
-                        _examController.fetchExams();
-                      }
-                    },
+                    onChanged: examTypeCount == 0
+                        ? null
+                        : (value) {
+                            setState(() {
+                              _selectedExamTypeId = value;
+                            });
+                            if (_selectedExamTypeId != null &&
+                                _selectedClass != null &&
+                                _selectedSection != null) {
+                              _examController.fetchExams();
+                            }
+                          },
                   );
                 }),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 // Class and Section Selection
                 ClassSectionDropDown(
                   padding: 0,
+                  fieldHeight: 50,
                   onChangedClass: (classId) {
                     setState(() {
                       _selectedClass = classId;
                     });
-                    if (canAddExam) {
+                    if (_selectedExamTypeId != null &&
+                        _selectedClass != null &&
+                        _selectedSection != null) {
+                      _examController.fetchExams();
                       _examController.setClassFilter(classId);
                     }
                   },
@@ -222,7 +209,10 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
                     setState(() {
                       _selectedSection = section;
                     });
-                    if (canAddExam) {
+                    if (_selectedExamTypeId != null &&
+                        _selectedClass != null &&
+                        _selectedSection != null) {
+                      _examController.fetchExams();
                       _examController.setSectionFilter(section);
                     }
                   },
@@ -230,6 +220,7 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 8),
 
           // Content
           Expanded(
@@ -305,7 +296,6 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
         );
       }
 
-      // Group by date
       final examsByDate = <String, List<ExamModel>>{};
       for (var exam in filteredExams) {
         final dateKey = DateFormat('yyyy-MM-dd').format(exam.examDate);
@@ -319,61 +309,33 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
         child: ListView(
           padding: const EdgeInsets.symmetric(vertical: 16),
           children: [
-            // Summary Card
-            SummaryCard(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildSummaryItem(
-                    theme,
-                    Icons.calendar_today,
-                    '${examsByDate.length}',
-                    'Days',
-                    theme.colorScheme.primary,
-                  ),
-                  Container(
-                    width: 1,
-                    height: 40,
-                    color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                  ),
-                  _buildSummaryItem(
-                    theme,
-                    Icons.assignment,
-                    '${filteredExams.length}',
-                    'Total Exams',
-                    Colors.blue,
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
             // Exams grouped by date
             ...examsByDate.entries.map((entry) {
               final date = DateTime.parse(entry.key);
               final dayExams = entry.value;
 
               return Card(
-                margin: const EdgeInsets.only(bottom: 12),
+                margin: const EdgeInsets.only(bottom: 10),
                 elevation: 0,
+                shadowColor: Colors.transparent,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                   side: BorderSide(
-                    color: theme.colorScheme.outlineVariant,
+                    color: theme.colorScheme.outline.withValues(alpha: 0.22),
                     width: 1,
                   ),
                 ),
+                clipBehavior: Clip.antiAlias,
                 child: Column(
                   children: [
                     // Date Header
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primaryContainer
-                            .withValues(alpha: 0.5),
+                            .withValues(alpha: 0.35),
                         borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(16),
+                          top: Radius.circular(14),
                         ),
                       ),
                       child: Row(
@@ -386,8 +348,8 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
                           const SizedBox(width: 12),
                           Text(
                             DateFormat('EEEE, MMMM dd, yyyy').format(date),
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
                               color: theme.colorScheme.primary,
                             ),
                           ),
@@ -399,8 +361,8 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
                             ),
                             decoration: BoxDecoration(
                               color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
+                                  .withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
                               '${dayExams.length} exam${dayExams.length > 1 ? 's' : ''}',
@@ -430,18 +392,18 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
     final subjectColor = _getSubjectColor(exam.subject);
 
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       leading: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(9),
         decoration: BoxDecoration(
           color: subjectColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(9),
           border: Border.all(color: subjectColor.withValues(alpha: 0.3)),
         ),
         child: Icon(
           _getSubjectIcon(exam.subject),
           color: subjectColor,
-          size: 24,
+          size: 20,
         ),
       ),
       title: Row(
@@ -450,7 +412,7 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
             child: Text(
               exam.subject,
               style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: subjectColor,
               ),
             ),
@@ -459,7 +421,7 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: _getExamTypeColor(exam.type).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
               exam.type.toUpperCase(),
@@ -472,7 +434,7 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
         ],
       ),
       subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
+        padding: const EdgeInsets.only(top: 3),
         child: Row(
           children: [
             Icon(Icons.access_time,
@@ -486,7 +448,7 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
               const SizedBox(width: 4),
               Text('${exam.durationMinutes} min'),
             ],
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Icon(Icons.grade,
                 size: 14, color: theme.colorScheme.onSurfaceVariant),
             const SizedBox(width: 4),
@@ -530,34 +492,6 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSummaryItem(
-    ThemeData theme,
-    IconData icon,
-    String value,
-    String label,
-    Color color,
-  ) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
     );
   }
 
@@ -692,36 +626,6 @@ class _AdminExamTimetableScreenState extends State<AdminExamTimetableScreen> {
       return ResponsivePadding(
         child: Column(
           children: [
-            // Summary Card
-            SummaryCard(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildSummaryItem(
-                    theme,
-                    Icons.calendar_today,
-                    '${examsByDate.length}',
-                    'Days',
-                    theme.colorScheme.primary,
-                  ),
-                  Container(
-                    width: 1,
-                    height: 40,
-                    color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                  ),
-                  _buildSummaryItem(
-                    theme,
-                    Icons.assignment,
-                    '${filteredExams.length}',
-                    'Total Exams',
-                    Colors.blue,
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
             // Table View
             Expanded(
               child: SingleChildScrollView(

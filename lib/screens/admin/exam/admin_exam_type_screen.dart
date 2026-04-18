@@ -1,4 +1,3 @@
-import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/models/exam_type_model.dart';
@@ -15,21 +14,32 @@ class AdminExamTypeScreen extends StatelessWidget {
     final ExamTypeController controller = Get.put(ExamTypeController());
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Get.to(() => const AdminAddEditExamTypeScreen()),
-        icon: const Icon(Icons.add),
-        label: const Text('Add Exam Schedule'),
-      ),
-      body: Column(
+    return Container(
+      color: Colors.transparent,
+      child: Column(
         children: [
           // Actions Row
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              runSpacing: 8,
+              spacing: 8,
               children: [
+                FilledButton.icon(
+                  onPressed: () =>
+                      Get.to(() => const AdminAddEditExamTypeScreen()),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Add Exam Schedule'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
                 Obx(() => OutlinedButton.icon(
                       onPressed: controller.toggleActiveFilter,
                       icon: Icon(
@@ -39,7 +49,9 @@ class AdminExamTypeScreen extends StatelessWidget {
                         size: 18,
                       ),
                       label: Text(
-                        controller.showOnlyActive.value ? 'Show All' : 'Active Only',
+                        controller.showOnlyActive.value
+                            ? 'Show All'
+                            : 'Active Only',
                       ),
                     )),
                 const SizedBox(width: 8),
@@ -51,52 +63,6 @@ class AdminExamTypeScreen extends StatelessWidget {
               ],
             ),
           ),
-          
-          // Summary Header
-          Obx(() {
-            final examTypes = controller.examTypeList;
-            final active = examTypes.where((e) => e.isActive).length;
-            final inactive = examTypes.length - active;
-
-            return SummaryCard(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildSummaryItem(
-                    theme,
-                    Icons.calendar_today,
-                    '${examTypes.length}',
-                    'Total',
-                    theme.colorScheme.primary,
-                  ),
-                  Container(
-                    width: 1,
-                    height: 40,
-                    color: theme.colorScheme.outline.withOpacity(0.3),
-                  ),
-                  _buildSummaryItem(
-                    theme,
-                    Icons.check_circle,
-                    '$active',
-                    'Active',
-                    Colors.green,
-                  ),
-                  Container(
-                    width: 1,
-                    height: 40,
-                    color: theme.colorScheme.outline.withOpacity(0.3),
-                  ),
-                  _buildSummaryItem(
-                    theme,
-                    Icons.cancel,
-                    '$inactive',
-                    'Inactive',
-                    Colors.grey,
-                  ),
-                ],
-              ),
-            );
-          }),
 
           // Exam Type List
           Expanded(
@@ -126,21 +92,25 @@ class AdminExamTypeScreen extends StatelessWidget {
                     final statusColor = _getStatusColor(examType);
 
                     return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
+                      margin: const EdgeInsets.only(bottom: 10),
+                      color: theme.colorScheme.surface,
                       elevation: 0,
+                      shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                         side: BorderSide(
-                          color: theme.colorScheme.outlineVariant,
+                          color:
+                              theme.colorScheme.outline.withValues(alpha: 0.22),
                           width: 1,
                         ),
                       ),
+                      clipBehavior: Clip.antiAlias,
                       child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                         onTap: () =>
                             _showExamTypeDetails(context, examType, controller),
                         child: Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(14),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -154,10 +124,12 @@ class AdminExamTypeScreen extends StatelessWidget {
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: statusColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
+                                      color:
+                                          statusColor.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(999),
                                       border: Border.all(
-                                        color: statusColor.withOpacity(0.3),
+                                        color:
+                                            statusColor.withValues(alpha: 0.28),
                                         width: 1,
                                       ),
                                     ),
@@ -175,12 +147,14 @@ class AdminExamTypeScreen extends StatelessWidget {
                                   if (!examType.isActive)
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
+                                        horizontal: 10,
+                                        vertical: 5,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.grey.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(8),
+                                        color:
+                                            Colors.grey.withValues(alpha: 0.1),
+                                        borderRadius:
+                                            BorderRadius.circular(999),
                                       ),
                                       child: Text(
                                         'Inactive',
@@ -198,12 +172,12 @@ class AdminExamTypeScreen extends StatelessWidget {
                               // Title
                               Text(
                                 examType.name,
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
                               if (examType.description != null) ...[
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 6),
                                 Text(
                                   examType.description!,
                                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -213,7 +187,7 @@ class AdminExamTypeScreen extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ],
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 12),
 
                               // Weightage Row
                               if (examType.weightage != null)
@@ -222,8 +196,8 @@ class AdminExamTypeScreen extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     color: theme
                                         .colorScheme.surfaceContainerHighest
-                                        .withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(12),
+                                        .withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Row(
                                     children: [
@@ -237,13 +211,13 @@ class AdminExamTypeScreen extends StatelessWidget {
                                         'Weightage: ${examType.weightage}%',
                                         style: theme.textTheme.bodyMedium
                                             ?.copyWith(
-                                          fontWeight: FontWeight.w600,
+                                          fontWeight: FontWeight.w700,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
 
                               // Action Buttons
                               Row(
@@ -256,6 +230,11 @@ class AdminExamTypeScreen extends StatelessWidget {
                                             )),
                                     icon: const Icon(Icons.edit, size: 18),
                                     label: const Text('Edit'),
+                                    style: TextButton.styleFrom(
+                                      visualDensity: VisualDensity.compact,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
                                   TextButton.icon(
@@ -265,6 +244,9 @@ class AdminExamTypeScreen extends StatelessWidget {
                                     label: const Text('Delete'),
                                     style: TextButton.styleFrom(
                                       foregroundColor: theme.colorScheme.error,
+                                      visualDensity: VisualDensity.compact,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
                                     ),
                                   ),
                                 ],
@@ -281,34 +263,6 @@ class AdminExamTypeScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSummaryItem(
-    ThemeData theme,
-    IconData icon,
-    String value,
-    String label,
-    Color color,
-  ) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
     );
   }
 
@@ -361,7 +315,7 @@ class AdminExamTypeScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

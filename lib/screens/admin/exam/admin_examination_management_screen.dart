@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/controllers/exam_controller.dart';
 import 'package:campus_care/controllers/exam_type_controller.dart';
-import 'package:campus_care/core/constants/app_constants.dart';
-import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/widgets/admin/admin_page_header.dart';
 import 'package:campus_care/screens/admin/exam/admin_exam_type_screen.dart';
 import 'package:campus_care/screens/admin/exam/admin_exam_timetable_screen.dart';
@@ -15,8 +12,6 @@ class AdminExaminationManagementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isTeacherView = Get.isRegistered<AuthController>() &&
-        Get.find<AuthController>().currentRole == AppConstants.roleTeacher;
     final examTypeController = Get.isRegistered<ExamTypeController>()
         ? Get.find<ExamTypeController>()
         : Get.put(ExamTypeController());
@@ -46,41 +41,43 @@ class AdminExaminationManagementScreen extends StatelessWidget {
                     examController.fetchExams();
                   },
                 ),
-                if (!isTeacherView) ...[
-                  const SizedBox(width: 8),
-                  HeaderActionButton(
-                    icon: Icons.add_rounded,
-                    label: 'Add',
-                    onPressed: () => Get.toNamed(AppRoutes.adminAddExamType),
-                  ),
-                ],
               ],
             ),
-            Container(
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                border: Border(
-                  bottom: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withValues(alpha: 0.22),
                   ),
                 ),
-              ),
-              child: TabBar(
-                labelColor: theme.colorScheme.primary,
-                unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
-                indicatorColor: theme.colorScheme.primary,
-                indicatorWeight: 3,
-                labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-                tabs: const [
-                  Tab(
-                    icon: Icon(Icons.class_rounded),
-                    text: 'Exam Schedules',
+                child: TabBar(
+                  dividerColor: Colors.transparent,
+                  labelColor: theme.colorScheme.onPrimaryContainer,
+                  unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+                  indicator: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  Tab(
-                    icon: Icon(Icons.table_chart_rounded),
-                    text: 'Exam Timetables',
+                  labelStyle: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.5,
                   ),
-                ],
+                  tabs: const [
+                    Tab(
+                      icon: Icon(Icons.class_rounded, size: 18),
+                      text: 'Exam Schedules',
+                    ),
+                    Tab(
+                      icon: Icon(Icons.table_chart_rounded, size: 18),
+                      text: 'Exam Timetables',
+                    ),
+                  ],
+                ),
               ),
             ),
             const Expanded(

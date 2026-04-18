@@ -56,26 +56,29 @@ class TeacherHomeworkManagementScreen extends GetView<HomeworkController> {
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerLowest,
-      floatingActionButton: Obx(() {
-        if (!controller.isLoading.value) {
-          return FloatingActionButton.extended(
-            onPressed: () => _showAddHomeworkDialog(context),
-            icon: const Icon(Icons.add),
-            label: const Text('Add Homework'),
-          );
-        }
-        return const SizedBox.shrink();
-      }),
       body: Column(
         children: [
           // Gradient Page Header
-          const AdminPageHeader(
+          AdminPageHeader(
             subtitle: 'Manage your assignments',
             icon: Icons.assignment_turned_in,
             showBreadcrumb: true,
             breadcrumbLabel: 'Homework',
             showBackButton: true,
             title: 'Manage Homework',
+            actions: [
+              HeaderActionButton(
+                icon: Icons.add_rounded,
+                label: 'Add Homework',
+                onPressed: () => Get.to(() => const AddEditHomeworkScreen()),
+              ),
+              const SizedBox(width: 8),
+              HeaderActionButton(
+                icon: Icons.refresh_rounded,
+                label: 'Refresh',
+                onPressed: () => controller.fetchHomework(),
+              ),
+            ],
           ),
 
           // Main Content
@@ -109,7 +112,6 @@ class TeacherHomeworkManagementScreen extends GetView<HomeworkController> {
                         controller.isTableView
                             ? _buildDesktopTable(context, theme, filteredHomework)
                             : _buildMobileList(context, theme, filteredHomework),
-                        const SizedBox(height: 80), // Padding for FAB
                       ],
                     );
                   }),
@@ -1036,10 +1038,6 @@ class TeacherHomeworkManagementScreen extends GetView<HomeworkController> {
       default:
         return Colors.grey;
     }
-  }
-
-  void _showAddHomeworkDialog(BuildContext context) {
-    Get.to(() => const AddEditHomeworkScreen());
   }
 
   void _showEditHomeworkDialog(BuildContext context, HomeWorkModel homework) {

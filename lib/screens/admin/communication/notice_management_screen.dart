@@ -9,7 +9,6 @@ import 'package:campus_care/models/notice_model.dart';
 import 'package:campus_care/utils/upload_url_utils.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
-import 'package:campus_care/widgets/common/info_card.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/common/file_display_widget.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
@@ -29,8 +28,11 @@ class NoticeManagementScreen extends GetView<NoticeController> {
     final authController = Get.find<AuthController>();
 
     final theme = Theme.of(context);
+    final isAdmin = authController.isAdmin();
+    final isDesktopWeb = MediaQuery.of(context).size.width >= 1100;
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AdminPageHeader(
         subtitle: 'Broadcast announcements',
         icon: Icons.campaign,
@@ -44,8 +46,8 @@ class NoticeManagementScreen extends GetView<NoticeController> {
             label: 'Refresh',
             onPressed: () => controller.loadNotices(),
           ),
-          if (authController.isAdmin()) const SizedBox(width: 8),
-          if (authController.isAdmin())
+          if (isAdmin) const SizedBox(width: 8),
+          if (isAdmin)
             HeaderActionButton(
               icon: Icons.add_rounded,
               label: 'Add Notice',
@@ -55,25 +57,7 @@ class NoticeManagementScreen extends GetView<NoticeController> {
       ),
       body: Column(
         children: [
-          // Search bar
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.3,
-              ),
-              border: Border(
-                bottom: BorderSide(
-                  color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                ),
-              ),
-            ),
-            child: CustomTextField(
-              hintText: 'Search notices by title or description...',
-              prefixIcon: const Icon(Icons.search),
-              onChanged: controller.searchNotices,
-            ),
-          ),
+          _buildSearchToolbar(context, theme, isAdmin, isDesktopWeb),
 
           // Notices list
           Expanded(
@@ -89,24 +73,37 @@ class NoticeManagementScreen extends GetView<NoticeController> {
                   message: controller.searchQuery.isEmpty
                       ? 'Start by publishing a notice'
                       : 'No notices match your search',
-                  // action: controller.searchQuery.isEmpty
-                  //     ? ElevatedButton.icon(
-                  //         onPressed: () => _showAddEditDialog(context, null),
-                  //         icon: const Icon(Icons.add),
-                  //         label: const Text('Create Notice'),
-                  //       )
-                  //     : null,
+                  action: controller.searchQuery.isEmpty && isAdmin
+                      ? ElevatedButton.icon(
+                          onPressed: () => _showAddEditDialog(context, null),
+                          icon: const Icon(Icons.add_rounded),
+                          label: const Text('Create Notice'),
+                        )
+                      : null,
+                );
+              }
+
+              if (isDesktopWeb) {
+                return _buildDesktopNoticeGrid(
+                  context,
+                  theme,
+                  controller.notices,
+                  isAdmin,
                 );
               }
 
               return ResponsivePadding(
                 child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.fromLTRB(0, 12, 0, 20),
                   itemCount: controller.notices.length,
                   itemBuilder: (context, index) {
                     final notice = controller.notices[index];
                     return _buildNoticeCard(
-                        context, theme, notice, authController.isAdmin());
+                      context,
+                      theme,
+                      notice,
+                      isAdmin,
+                    );
                   },
                 ),
               );
@@ -117,165 +114,454 @@ class NoticeManagementScreen extends GetView<NoticeController> {
     );
   }
 
-  Widget _buildNoticeCard(
-      BuildContext context, ThemeData theme, NoticeModel notice, bool isAdmin) {
-    Color priorityColor;
-    final noticeImageUrls = _getFirstImageAttachmentUrls(notice.attachment);
-    switch (notice.priority) {
-      case 'high':
-        priorityColor = Colors.red;
-        break;
-      case 'medium':
-        priorityColor = Colors.orange;
-        break;
-      default:
-        priorityColor = Colors.blue;
-    }
+  Widget _buildDesktopNoticeGrid(
+    BuildContext context,
+    ThemeData theme,
+    List<NoticeModel> notices,
+    bool isAdmin,
+  ) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1240),
+        child: GridView.builder(
+          padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 560,
+            mainAxisSpacing: 14,
+            crossAxisSpacing: 14,
+            mainAxisExtent: 340,
+          ),
+          itemCount: notices.length,
+          itemBuilder: (context, index) {
+            final notice = notices[index];
+            return _buildNoticeCard(
+              context,
+              theme,
+              notice,
+              isAdmin,
+              compact: true,
+              withBottomMargin: false,
+            );
+          },
+        ),
+      ),
+    );
+  }
 
-    return InfoCard(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => _showNoticeDetails(context, notice),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 4,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: priorityColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+  Widget _buildSearchToolbar(
+    BuildContext context,
+    ThemeData theme,
+    bool isAdmin,
+    bool isDesktopWeb,
+  ) {
+    return ResponsivePadding(
+      desktopPadding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: isDesktopWeb ? 1240 : double.infinity,
+          ),
+          child: Container(
+            margin: const EdgeInsets.only(top: 14),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: theme.colorScheme.outline.withValues(alpha: 0.16),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Obx(() {
+              final noticeCount = controller.notices.length;
+              final query = controller.searchQuery;
+              final expiredCount = controller.notices
+                  .where(
+                    (notice) =>
+                        notice.expiryDate != null &&
+                        notice.expiryDate!.isBefore(DateTime.now()),
+                  )
+                  .length;
+              final activeCount = noticeCount - expiredCount;
+              final highPriorityCount = controller.notices
+                  .where((notice) => notice.priority.toLowerCase() == 'high')
+                  .length;
+
+              if (isDesktopWeb) {
+                return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      notice.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      flex: 3,
+                      child: CustomTextField(
+                        hintText: 'Search notices by title or description...',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        onChanged: controller.searchNotices,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      notice.description,
-                      style: theme.textTheme.bodyMedium,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (noticeImageUrls.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      FileDisplayWidget(
-                        fileUrls: noticeImageUrls,
-                        width: double.infinity,
-                        height: 120,
-                        fit: BoxFit.cover,
-                        borderRadius: BorderRadius.circular(10),
-                        enablePreview: true,
-                        previewTitle: notice.title,
-                        errorWidget: const SizedBox.shrink(),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: priorityColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            notice.priority.toUpperCase(),
-                            style: TextStyle(
-                              color: priorityColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+                    const SizedBox(width: 12),
+                    Flexible(
+                      flex: 2,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.end,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            Icon(
-                              Icons.calendar_today,
-                              size: 14,
-                              color: theme.colorScheme.onSurfaceVariant,
+                            _buildToolbarPill(
+                              theme,
+                              icon: Icons.campaign_rounded,
+                              label: '$noticeCount notices',
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              DateFormat('MMM dd, yyyy')
-                                  .format(notice.issuedDate),
-                              style: theme.textTheme.bodySmall,
+                            _buildToolbarPill(
+                              theme,
+                              icon: Icons.check_circle_outline_rounded,
+                              label: '$activeCount active',
+                              color: Colors.green,
                             ),
-                          ],
-                        ),
-                        if (notice.expiryDate != null)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.event_busy,
-                                size: 14,
+                            if (expiredCount > 0)
+                              _buildToolbarPill(
+                                theme,
+                                icon: Icons.warning_amber_rounded,
+                                label: '$expiredCount expired',
                                 color: theme.colorScheme.error,
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Expires: ${DateFormat('MMM dd').format(notice.expiryDate!)}',
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.error,
-                                ),
+                            if (highPriorityCount > 0)
+                              _buildToolbarPill(
+                                theme,
+                                icon: Icons.priority_high_rounded,
+                                label: '$highPriorityCount high priority',
+                                color: const Color(0xFFD97706),
                               ),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if (isAdmin)
-                PopupMenuButton(
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit),
-                          SizedBox(width: 8),
-                          Text('Edit'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Delete', style: TextStyle(color: Colors.red)),
-                        ],
+                            if (query.isNotEmpty)
+                              _buildToolbarPill(
+                                theme,
+                                icon: Icons.filter_alt_rounded,
+                                label: 'Filtered',
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      _showAddEditDialog(context, notice);
-                    } else if (value == 'delete') {
-                      _showDeleteDialog(context, notice);
-                    }
-                  },
-                ),
-            ],
+                );
+              }
+
+              return Column(
+                children: [
+                  CustomTextField(
+                    hintText: 'Search notices by title or description...',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    onChanged: controller.searchNotices,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      _buildToolbarPill(
+                        theme,
+                        icon: Icons.campaign_rounded,
+                        label: '$noticeCount notices',
+                      ),
+                      const SizedBox(width: 8),
+                      if (query.isNotEmpty)
+                        _buildToolbarPill(
+                          theme,
+                          icon: Icons.filter_alt_rounded,
+                          label: 'Filtered',
+                        ),
+                      const Spacer(),
+                      if (isAdmin)
+                        TextButton.icon(
+                          onPressed: () => _showAddEditDialog(context, null),
+                          icon: const Icon(Icons.add_rounded, size: 18),
+                          label: const Text('New Notice'),
+                        ),
+                    ],
+                  ),
+                ],
+              );
+            }),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildToolbarPill(
+    ThemeData theme, {
+    required IconData icon,
+    required String label,
+    Color? color,
+  }) {
+    final pillColor = color ?? theme.colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: pillColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: pillColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: pillColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoticeCard(
+    BuildContext context,
+    ThemeData theme,
+    NoticeModel notice,
+    bool isAdmin, {
+    bool compact = false,
+    bool withBottomMargin = true,
+  }) {
+    final priorityColor = _priorityColor(notice.priority, theme);
+    final priorityLabel = _priorityLabel(notice.priority);
+    final isExpired = notice.expiryDate != null &&
+        notice.expiryDate!.isBefore(DateTime.now());
+    final noticeImageUrls = _getFirstImageAttachmentUrls(notice.attachment);
+    return Container(
+      margin: withBottomMargin ? const EdgeInsets.only(bottom: 12) : EdgeInsets.zero,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.14),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showNoticeDetails(context, notice),
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: EdgeInsets.all(compact ? 12 : 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      margin: const EdgeInsets.only(top: 6),
+                      decoration: BoxDecoration(
+                        color: priorityColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            notice.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Issued ${DateFormat('MMM dd, yyyy').format(notice.issuedDate)}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    _buildPriorityBadge(theme, priorityColor, priorityLabel),
+                    if (isAdmin) ...[
+                      const SizedBox(width: 6),
+                      PopupMenuButton(
+                        splashRadius: 20,
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit_rounded),
+                                SizedBox(width: 8),
+                                Text('Edit'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_rounded, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text('Delete',
+                                    style: TextStyle(color: Colors.red)),
+                              ],
+                            ),
+                          ),
+                        ],
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _showAddEditDialog(context, notice);
+                          } else if (value == 'delete') {
+                            _showDeleteDialog(context, notice);
+                          }
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  notice.description,
+                  style: theme.textTheme.bodyMedium,
+                  maxLines: compact ? 3 : 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (noticeImageUrls.isNotEmpty) ...[
+                  SizedBox(height: compact ? 10 : 12),
+                  FileDisplayWidget(
+                    fileUrls: noticeImageUrls,
+                    width: double.infinity,
+                    height: compact ? 130 : 160,
+                    fit: BoxFit.cover,
+                    borderRadius: BorderRadius.circular(12),
+                    enablePreview: true,
+                    previewTitle: notice.title,
+                    errorWidget: const SizedBox.shrink(),
+                  ),
+                ],
+                SizedBox(height: compact ? 10 : 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildMetaChip(
+                      theme,
+                      icon: Icons.notifications_active_rounded,
+                      label: 'Announcement',
+                    ),
+                    if (notice.expiryDate != null)
+                      _buildMetaChip(
+                        theme,
+                        icon: isExpired
+                            ? Icons.warning_amber_rounded
+                            : Icons.event_busy_rounded,
+                        label:
+                            'Expires ${DateFormat('MMM dd').format(notice.expiryDate!)}',
+                        color: isExpired
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.secondary,
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _priorityColor(String priority, ThemeData theme) {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return theme.colorScheme.error;
+      case 'medium':
+      case 'normal':
+        return const Color(0xFFD97706);
+      case 'low':
+        return theme.colorScheme.primary;
+      default:
+        return theme.colorScheme.primary;
+    }
+  }
+
+  String _priorityLabel(String priority) {
+    if (priority.toLowerCase() == 'normal') {
+      return 'MEDIUM';
+    }
+    return priority.toUpperCase();
+  }
+
+  Widget _buildPriorityBadge(
+    ThemeData theme,
+    Color color,
+    String label,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetaChip(
+    ThemeData theme, {
+    required IconData icon,
+    required String label,
+    Color? color,
+  }) {
+    final chipColor = color ?? theme.colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: chipColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: chipColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: chipColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -283,88 +569,124 @@ class NoticeManagementScreen extends GetView<NoticeController> {
   void _showNoticeDetails(BuildContext context, NoticeModel notice) {
     final theme = Theme.of(context);
     final noticeImageUrls = _getFirstImageAttachmentUrls(notice.attachment);
+    final priorityColor = _priorityColor(notice.priority, theme);
     showDialog(
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           constraints: const BoxConstraints(maxWidth: 600),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      notice.title,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
+          padding: const EdgeInsets.all(22),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        notice.title,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                _buildPriorityBadge(
+                  theme,
+                  priorityColor,
+                  _priorityLabel(notice.priority),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  notice.description,
+                  style: theme.textTheme.bodyLarge,
+                ),
+                if (noticeImageUrls.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  FileDisplayWidget(
+                    fileUrls: noticeImageUrls,
+                    width: double.infinity,
+                    height: 220,
+                    fit: BoxFit.cover,
+                    borderRadius: BorderRadius.circular(12),
+                    enablePreview: true,
+                    previewTitle: notice.title,
+                    errorWidget: Container(
+                      height: 120,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Could not load notice image',
+                        style: theme.textTheme.bodyMedium,
                       ),
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                  ),
                 ],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                notice.description,
-                style: theme.textTheme.bodyLarge,
-              ),
-              if (noticeImageUrls.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                FileDisplayWidget(
-                  fileUrls: noticeImageUrls,
-                  width: double.infinity,
-                  height: 220,
-                  fit: BoxFit.cover,
-                  borderRadius: BorderRadius.circular(12),
-                  enablePreview: true,
-                  previewTitle: notice.title,
-                  errorWidget: Container(
-                    height: 120,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  children: [
+                    _buildDetailChip(
+                      theme,
+                      Icons.calendar_today_rounded,
+                      'Issued: ${DateFormat('MMM dd, yyyy').format(notice.issuedDate)}',
                     ),
-                    child: Text(
-                      'Could not load notice image',
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ),
+                    if (notice.expiryDate != null)
+                      _buildDetailChip(
+                        theme,
+                        Icons.event_busy_rounded,
+                        'Expires: ${DateFormat('MMM dd, yyyy').format(notice.expiryDate!)}',
+                        color: theme.colorScheme.secondary,
+                      ),
+                  ],
                 ),
               ],
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                children: [
-                  _buildDetailChip(
-                      Icons.flag, 'Priority: ${notice.priority.toUpperCase()}'),
-                  _buildDetailChip(Icons.calendar_today,
-                      'Issued: ${DateFormat('MMM dd, yyyy').format(notice.issuedDate)}'),
-                  if (notice.expiryDate != null)
-                    _buildDetailChip(Icons.event_busy,
-                        'Expires: ${DateFormat('MMM dd, yyyy').format(notice.expiryDate!)}'),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDetailChip(IconData icon, String text) {
-    return Chip(
-      avatar: Icon(icon, size: 18),
-      label: Text(text),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+  Widget _buildDetailChip(
+    ThemeData theme,
+    IconData icon,
+    String text, {
+    Color? color,
+  }) {
+    final chipColor = color ?? theme.colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: chipColor.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: chipColor),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: chipColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
