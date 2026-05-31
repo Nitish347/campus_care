@@ -11,6 +11,7 @@ import 'package:campus_care/models/transport/transport_route.dart';
 import 'package:campus_care/controllers/student_controller.dart';
 import 'package:campus_care/services/transport_service.dart';
 import 'package:campus_care/services/upload_service.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 import 'package:campus_care/utils/upload_url_utils.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
@@ -99,7 +100,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
       setState(() => _transportRoutes = routes);
     } catch (_) {
       if (!mounted) return;
-      _showSnackBar('Failed to load transport routes', isError: true);
+      AppNotifier.error('Error', 'Failed to load transport routes');
     } finally {
       if (mounted) {
         setState(() => _isLoadingRoutes = false);
@@ -120,18 +121,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     _guardianEmailController.dispose();
     _addressController.dispose();
     super.dispose();
-  }
-
-  void _showSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
-      ),
-    );
   }
 
   Future<void> _pickProfileImage() async {
@@ -173,9 +162,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
       return uploadedUrl.isEmpty ? _existingProfileImageUrl : uploadedUrl;
     } catch (e) {
-      _showSnackBar(
+      AppNotifier.error(
+        'Error',
         'Upload failed: ${e.toString().replaceFirst('Exception: ', '')}',
-        isError: true,
       );
       return _existingProfileImageUrl;
     } finally {
@@ -217,7 +206,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
         _selectedGender == null ||
         _dateOfBirth == null ||
         _admissionDate == null) {
-      _showSnackBar('Please fill all required fields', isError: true);
+      AppNotifier.error('Error', 'Please fill all required fields');
       return;
     }
 
@@ -270,7 +259,15 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
       );
 
       if (isEditMode) {
-        await _studentController.updateStudent(student);
+        final updated = await _studentController.updateStudent(
+          student,
+          popOnSuccess: false,
+          showSnackbar: false,
+        );
+        if (updated && mounted) {
+          Get.back();
+          AppNotifier.afterNavigation('Success', 'Student updated successfully');
+        }
         return;
       }
 
@@ -298,10 +295,9 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
           if (createdStudent == null) {
             if (!mounted) return;
-            Get.back();
-            _showSnackBar(
+            AppNotifier.error(
+              'Error',
               'Student added, but profile image could not be linked automatically.',
-              isError: true,
             );
             return;
           }
@@ -322,7 +318,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
       if (!mounted) return;
       Get.back();
-      _showSnackBar('Student added successfully');
+      AppNotifier.afterNavigation('Success', 'Student added successfully');
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);

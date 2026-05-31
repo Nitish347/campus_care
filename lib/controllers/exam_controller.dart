@@ -3,6 +3,7 @@ import 'package:campus_care/models/exam_model.dart';
 import 'package:campus_care/models/exam_result_model.dart';
 import 'package:campus_care/services/api/exam_api_service.dart';
 import 'package:campus_care/core/api_exception.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 
 class ExamController extends GetxController {
   final ExamApiService _apiService = ExamApiService();
@@ -38,17 +39,9 @@ class ExamController extends GetxController {
 
       examList.value = exams.map((e) => ExamModel.fromJson(e)).toList();
     } on ApiException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', e.message);
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to fetch exams: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', 'Failed to fetch exams: $e');
     } finally {
       isLoading.value = false;
     }
@@ -116,7 +109,7 @@ class ExamController extends GetxController {
   }
 
   // Add new exam — sends snake_case to match D1 schema
-  Future<void> addExam(ExamModel exam) async {
+  Future<bool> addExam(ExamModel exam) async {
     try {
       isLoading.value = true;
 
@@ -137,33 +130,20 @@ class ExamController extends GetxController {
 
       final createdExam = await _apiService.createExam(examData);
       examList.add(ExamModel.fromJson(createdExam));
-
-      Get.snackbar(
-        'Success',
-        'Exam created successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      return true;
     } on ApiException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      rethrow;
+      AppNotifier.error('Error', e.message);
+      return false;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to create exam: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      rethrow;
+      AppNotifier.error('Error', 'Failed to create exam: $e');
+      return false;
     } finally {
       isLoading.value = false;
     }
   }
 
   // Update exam — sends snake_case to match D1 schema
-  Future<void> updateExam(ExamModel exam) async {
+  Future<bool> updateExam(ExamModel exam) async {
     try {
       isLoading.value = true;
 
@@ -188,26 +168,13 @@ class ExamController extends GetxController {
       if (index != -1) {
         examList[index] = ExamModel.fromJson(updatedExam);
       }
-
-      Get.snackbar(
-        'Success',
-        'Exam updated successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      return true;
     } on ApiException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      rethrow;
+      AppNotifier.error('Error', e.message);
+      return false;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to update exam: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      rethrow;
+      AppNotifier.error('Error', 'Failed to update exam: $e');
+      return false;
     } finally {
       isLoading.value = false;
     }
@@ -221,24 +188,12 @@ class ExamController extends GetxController {
       examList.removeWhere((e) => e.id == examId);
       examResults.removeWhere((r) => r.examId == examId);
 
-      Get.snackbar(
-        'Success',
-        'Exam deleted successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.success('Success', 'Exam deleted successfully');
     } on ApiException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', e.message);
       rethrow;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to delete exam: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', 'Failed to delete exam: $e');
       rethrow;
     } finally {
       isLoading.value = false;

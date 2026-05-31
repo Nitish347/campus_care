@@ -5,6 +5,7 @@ import 'package:campus_care/models/exam_model.dart';
 import 'package:campus_care/controllers/exam_controller.dart';
 import 'package:campus_care/controllers/exam_type_controller.dart';
 import 'package:campus_care/controllers/class_controller.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 import 'package:campus_care/widgets/inputs/subject_dropdown.dart';
@@ -165,13 +166,7 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
     if (_isSaving) return;
     if (_formKey.currentState!.validate()) {
       if (_selectedSubject == null) {
-        Get.snackbar(
-          'Error',
-          'Please select a subject',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        AppNotifier.error('Error', 'Please select a subject');
         return;
       }
 
@@ -212,12 +207,11 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
 
       setState(() => _isSaving = true);
       try {
-        await controller.updateExam(exam);
-        if (mounted) {
+        final success = await controller.updateExam(exam);
+        if (success && mounted) {
           Get.back();
+          AppNotifier.afterNavigation('Success', 'Exam updated successfully');
         }
-      } catch (e) {
-        // Error already shown by controller
       } finally {
         if (mounted) {
           setState(() => _isSaving = false);
@@ -267,24 +261,14 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
     }
 
     if (errors.isNotEmpty) {
-      Get.snackbar(
-        'Validation Error',
-        errors.join('\n'),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
-      );
+      AppNotifier.error('Validation Error', errors.join('\n'));
       return;
     }
 
     if (validEntries.isEmpty) {
-      Get.snackbar(
+      AppNotifier.error(
         'Error',
         'Please add at least one exam with all required fields',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
       );
       return;
     }
@@ -296,7 +280,6 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
     setState(() => _isSaving = true);
     try {
       for (var entry in validEntries) {
-        // Ensure examDate is properly constructed
         final examDateTime = DateTime(
           entry.selectedDate!.year,
           entry.selectedDate!.month,
@@ -309,7 +292,7 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
           id: entry.examId ?? DateTime.now().millisecondsSinceEpoch.toString(),
           examTypeId: widget.examTypeId,
           name: '${entry.subject} Exam',
-          type: 'final', // Default type for scheduled exams
+          type: 'final',
           subject: entry.subject!,
           classId: widget.classId,
           section: widget.section,
@@ -325,16 +308,20 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
           updatedAt: DateTime.now(),
         );
 
-        // Check if this is an update or new addition
+        final success = entry.examId != null
+            ? await controller.updateExam(exam)
+            : await controller.addExam(exam);
+
+        if (!success) {
+          return;
+        }
+
         if (entry.examId != null) {
-          await controller.updateExam(exam);
           updateCount++;
         } else {
-          await controller.addExam(exam);
           addCount++;
         }
 
-        // Small delay to avoid overwhelming the API
         await Future.delayed(const Duration(milliseconds: 100));
       }
 
@@ -342,7 +329,6 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
         Get.back();
       }
 
-      // Show appropriate success message
       String message;
       if (addCount > 0 && updateCount > 0) {
         message =
@@ -354,31 +340,7 @@ class _AdminAddEditExamScreenState extends State<AdminAddEditExamScreen> {
         message = '$addCount exam${addCount > 1 ? 's' : ''} added successfully';
       }
 
-      Get.snackbar(
-        'Success',
-        message,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-    } catch (e) {
-      if (addCount + updateCount > 0) {
-        Get.snackbar(
-          'Partial Success',
-          '${addCount + updateCount} out of ${validEntries.length} changes were saved',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
-      } else {
-        Get.snackbar(
-          'Error',
-          'Failed to save exams: ${e.toString()}',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      }
+      AppNotifier.afterNavigation('Success', message);
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);

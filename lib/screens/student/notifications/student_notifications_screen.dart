@@ -1,14 +1,14 @@
+import 'package:campus_care/controllers/auth_controller.dart';
+import 'package:campus_care/services/api/notice_api_service.dart';
 import 'package:campus_care/utils/app_utils.dart';
 import 'package:campus_care/widgets/popup_widgets/notification_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:campus_care/models/notice_model.dart';
-import 'package:campus_care/services/storage_service.dart';
-import 'package:campus_care/services/auth_service.dart';
-import 'package:campus_care/services/student_service.dart';
-import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/widgets/common/info_card.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
+import 'package:campus_care/widgets/student/student_app_bar.dart';
+import 'package:get/get.dart';
 
 class StudentNotificationsScreen extends StatefulWidget {
   const StudentNotificationsScreen({super.key});
@@ -20,6 +20,8 @@ class StudentNotificationsScreen extends StatefulWidget {
 
 class _StudentNotificationsScreenState
     extends State<StudentNotificationsScreen> {
+  final NoticeApiService _noticeApi = NoticeApiService();
+  final AuthController _authController = Get.find<AuthController>();
   List<NoticeModel> _notices = [];
   bool _isLoading = true;
   String? _studentClassId;
@@ -37,33 +39,28 @@ class _StudentNotificationsScreenState
     });
 
     try {
-      final currentUser = AuthService.getCurrentUser();
-      if (currentUser == null) {
+      final student = _authController.currentStudent;
+      if (student == null) {
         setState(() {
           _isLoading = false;
         });
         return;
       }
 
-      // Get student details to filter notices
-      final students = await StudentService.getAllStudents();
-      final student = students.firstWhere(
-        (s) => s.email == currentUser.email,
-        orElse: () => students.first,
-      );
       _studentClassId = student.class_;
       _studentSection = student.section;
 
-      // Load all notices
-      final noticesData = StorageService.getData(AppConstants.keyNotices);
+      final noticesData = await _noticeApi.getNotices();
       final allNotices = noticesData
-          .map((data) => NoticeModel.fromJson(data))
+          .whereType<Map>()
+          .map((data) => NoticeModel.fromJson(Map<String, dynamic>.from(data)))
           .toList();
 
       // Filter notices for this student
       _notices = allNotices.where((notice) {
         // Check if notice is targeted to this student's class/section
-        if (notice.targetedClassId != null && notice.targetedClassId!.isNotEmpty) {
+        if (notice.targetedClassId != null &&
+            notice.targetedClassId!.isNotEmpty) {
           if (!notice.targetedClassId!.contains(_studentClassId)) {
             return false;
           }
@@ -80,11 +77,12 @@ class _StudentNotificationsScreenState
         return true;
       }).toList();
 
-      // Sort by priority and date (high priority first, then by date)
       _notices.sort((a, b) {
         final priorityOrder = {'high': 3, 'medium': 2, 'low': 1};
-        final aPriority = priorityOrder[a.priority.toLowerCase()] ?? 0;
-        final bPriority = priorityOrder[b.priority.toLowerCase()] ?? 0;
+        final aPriority =
+            priorityOrder[a.priority.toLowerCase().replaceAll('normal', 'medium')] ?? 0;
+        final bPriority =
+            priorityOrder[b.priority.toLowerCase().replaceAll('normal', 'medium')] ?? 0;
         if (aPriority != bPriority) {
           return bPriority.compareTo(aPriority);
         }
@@ -112,13 +110,22 @@ class _StudentNotificationsScreenState
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadNotifications,
-            tooltip: 'Refresh',
+      appBar: StudentAppBar(
+        title: 'Notifications',
+        extraActions: [
+          const SizedBox(width: 6),
+          InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: _loadNotifications,
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.refresh, color: Colors.white, size: 20),
+            ),
           ),
         ],
       ),

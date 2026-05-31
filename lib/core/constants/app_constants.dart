@@ -41,9 +41,9 @@ class AppConstants {
 
   static String get baseUrl {
     // return "http://127.0.0.1:8787";
-    // if (_baseUrlFromEnv.isNotEmpty) {
-    //   return _baseUrlFromEnv;
-    // }
+    if (_baseUrlFromEnv.isNotEmpty) {
+      return _baseUrlFromEnv;
+    }
     return 'https://erp.campuslink102.workers.dev';
   }
 

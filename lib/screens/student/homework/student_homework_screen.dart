@@ -3,10 +3,10 @@ import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/controllers/homework_controller.dart';
+import 'package:campus_care/widgets/student/student_app_bar.dart';
 
 class StudentHomeworkScreen extends StatefulWidget {
   const StudentHomeworkScreen({super.key});
@@ -19,6 +19,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final HomeworkController _controller = Get.put(HomeworkController());
+  int _currentTabIndex = 0;
   String _selectedFilter = 'All';
   final List<String> _filters = [
     'All',
@@ -32,6 +33,11 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging && _currentTabIndex != _tabController.index) {
+        setState(() => _currentTabIndex = _tabController.index);
+      }
+    });
     _controller.fetchHomework();
   }
 
@@ -131,108 +137,80 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Homework'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list_outlined),
-            onPressed: _showFilterDialog,
-            tooltip: 'Filter',
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => Get.toNamed(AppRoutes.studentNotifications),
-            tooltip: 'Notifications',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => _controller.fetchHomework(),
-            tooltip: 'Refresh',
-          ),
-        ],
+      appBar: StudentAppBar(
+        title: 'Homework',
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Obx(() => TabBar(
-                controller: _tabController,
-                tabs: [
-                  Tab(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('Active'),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${_activeHomework.length}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                        ),
-                      ],
+          preferredSize: const Size.fromHeight(60),
+          child: Obx(() => Padding(
+                padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.15),
                     ),
                   ),
-                  Tab(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('Submitted'),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            '0',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildAnimatedTab(
+                          label: 'Active',
+                          count: _activeHomework.length,
+                          tabIndex: 0,
+                          accent: theme.colorScheme.primary,
                         ),
-                      ],
-                    ),
-                  ),
-                  Tab(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('Overdue'),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '${_overdueHomework.length}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red,
-                            ),
-                          ),
+                      ),
+                      Expanded(
+                        child: _buildAnimatedTab(
+                          label: 'Submitted',
+                          count: 0,
+                          tabIndex: 1,
+                          accent: Colors.green,
                         ),
-                      ],
-                    ),
+                      ),
+                      Expanded(
+                        child: _buildAnimatedTab(
+                          label: 'Overdue',
+                          count: _overdueHomework.length,
+                          tabIndex: 2,
+                          accent: Colors.red,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               )),
         ),
+        extraActions: [
+          InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: _showFilterDialog,
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.filter_list_outlined, color: Colors.white, size: 20),
+            ),
+          ),
+          const SizedBox(width: 6),
+          InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => _controller.fetchHomework(),
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.refresh, color: Colors.white, size: 20),
+            ),
+          ),
+        ],
       ),
       body: Obx(() {
         if (_controller.isLoading.value) {
@@ -300,6 +278,74 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
           ],
         );
       }),
+    );
+  }
+
+  Widget _buildAnimatedTab({
+    required String label,
+    required int count,
+    required int tabIndex,
+    required Color accent,
+  }) {
+    final selected = _currentTabIndex == tabIndex;
+
+    return GestureDetector(
+      onTap: () {
+        _tabController.animateTo(tabIndex);
+        setState(() => _currentTabIndex = tabIndex);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+        margin: const EdgeInsets.all(4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(11),
+          color: selected ? Colors.white : Colors.transparent,
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 220),
+              style: TextStyle(
+                color: selected ? accent : Colors.white,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                fontSize: 13,
+              ),
+              child: Text(label),
+            ),
+            const SizedBox(width: 7),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: selected ? accent.withValues(alpha: 0.15) : Colors.white24,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '$count',
+                style: TextStyle(
+                  color: selected ? accent : Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

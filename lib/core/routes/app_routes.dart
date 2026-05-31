@@ -1,4 +1,5 @@
 import 'package:campus_care/screens/admin/profile/admin_profile_screen.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:campus_care/screens/auth/tabbed_login_screen.dart';
@@ -34,6 +35,8 @@ import 'package:campus_care/screens/student/notifications/student_notifications_
 import 'package:campus_care/screens/student/medical/student_medical_reports_screen.dart';
 import 'package:campus_care/screens/student/exams/student_exam_timetable_screen.dart';
 import 'package:campus_care/screens/student/exams/student_results_screen.dart';
+import 'package:campus_care/screens/student/lunch/student_lunch_screen.dart';
+import 'package:campus_care/screens/student/transport/student_transport_screen.dart';
 import 'package:campus_care/screens/teacher/homework/teacher_homework_management_screen.dart';
 import 'package:campus_care/screens/teacher/leave/leave_history_screen.dart';
 import 'package:campus_care/screens/teacher/profile/change_password_screen.dart';
@@ -70,6 +73,51 @@ import '../../screens/super_admin/institute_management_screen.dart';
 import '../../screens/super_admin/super_admin_dashboard.dart';
 import '../../screens/teacher/marks/exam_management_screen.dart';
 import '../middleware/super_admin_middleware.dart';
+
+class _RouteErrorScreen extends StatelessWidget {
+  final String message;
+
+  const _RouteErrorScreen({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Navigation Error')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => Get.back(),
+                child: const Text('Go Back'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+T? _routeArgument<T>() {
+  final args = Get.arguments;
+  return args is T ? args : null;
+}
+
+Map<String, dynamic>? _routeArgumentMap() {
+  final args = Get.arguments;
+  return args is Map<String, dynamic> ? args : null;
+}
 
 class AppRoutes {
   // Auth Routes
@@ -117,6 +165,8 @@ class AppRoutes {
   static const String studentMedicalReports = '/student/medical-reports';
   static const String studentExamTimetable = '/student/exam-timetable';
   static const String studentResults = '/student/results';
+  static const String studentLunch = '/student/lunch';
+  static const String studentTransport = '/student/transport';
   static const String payment = '/student/payment';
 
   // Teacher Additional Routes
@@ -196,7 +246,12 @@ class AppRoutes {
     GetPage(
       name: adminStudentDetails,
       page: () {
-        final student = Get.arguments as Student;
+        final student = _routeArgument<Student>();
+        if (student == null) {
+          return const _RouteErrorScreen(
+            message: 'Student details require a valid student record.',
+          );
+        }
         return AdminStudentDetailsScreen(student: student);
       },
       middlewares: [SchoolAdminMiddleware()],
@@ -237,15 +292,36 @@ class AppRoutes {
       page: () => const ExamSchedulerScreen(),
       middlewares: [SchoolAdminMiddleware()],
     ),
-    GetPage(name: feeManagement, page: () => const FeeManagementScreen()),
-    GetPage(name: medicalDashboard, page: () => const MedicalDashboardScreen()),
-    GetPage(name: noticeManagement, page: () => const NoticeManagementScreen()),
-    GetPage(name: teacherList, page: () => const TeacherListScreen()),
+    GetPage(
+      name: feeManagement,
+      page: () => const FeeManagementScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: medicalDashboard,
+      page: () => const MedicalDashboardScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: noticeManagement,
+      page: () => const NoticeManagementScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: teacherList,
+      page: () => const TeacherListScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
     GetPage(
       name: teacherDetails,
       page: () {
-        final args = Get.arguments as Map<String, dynamic>;
-        final teacher = args['teacher'] as Teacher;
+        final args = _routeArgumentMap();
+        final teacher = args?['teacher'];
+        if (teacher is! Teacher) {
+          return const _RouteErrorScreen(
+            message: 'Teacher details require a valid teacher record.',
+          );
+        }
         return TeacherDetailsScreen(teacher: teacher);
       },
       middlewares: [SchoolAdminMiddleware()],
@@ -255,7 +331,11 @@ class AppRoutes {
       page: () => const AddTeacherScreen(),
       middlewares: [SchoolAdminMiddleware()],
     ),
-    GetPage(name: adminList, page: () => const AdminListScreen()),
+    GetPage(
+      name: adminList,
+      page: () => const AdminListScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
     // TODO: Add AddAdminScreen when created
 
     // Teacher Pages
@@ -295,10 +375,17 @@ class AppRoutes {
         name: studentExamTimetable,
         page: () => const StudentExamTimetableScreen()),
     GetPage(name: studentResults, page: () => const StudentResultsScreen()),
+    GetPage(name: studentLunch, page: () => const StudentLunchScreen()),
+    GetPage(name: studentTransport, page: () => const StudentTransportScreen()),
     GetPage(
         name: payment,
         page: () {
-          final fee = Get.arguments as Map<String, dynamic>;
+          final fee = _routeArgumentMap();
+          if (fee == null) {
+            return const _RouteErrorScreen(
+              message: 'Payment requires valid fee details.',
+            );
+          }
           return PaymentScreen(fee: fee);
         }),
 
@@ -309,15 +396,32 @@ class AppRoutes {
     GetPage(
         name: chatDetail,
         page: () {
-          final chat = Get.arguments as Map<String, dynamic>;
+          final chat = _routeArgumentMap();
+          if (chat == null) {
+            return const _RouteErrorScreen(
+              message: 'Chat details require a valid conversation.',
+            );
+          }
           return ChatDetailScreen(chat: chat);
         }),
     GetPage(name: newMessage, page: () => const NewMessageScreen()),
 
     // Admin Additional Pages
-    GetPage(name: addMedicalRecord, page: () => const AddMedicalRecordScreen()),
-    GetPage(name: addClass, page: () => const AddClassScreen()),
-    GetPage(name: addTimetable, page: () => const AddTimetableScreen()),
+    GetPage(
+      name: addMedicalRecord,
+      page: () => const AddMedicalRecordScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: addClass,
+      page: () => const AddClassScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: addTimetable,
+      page: () => const AddTimetableScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
     GetPage(
       name: adminHomework,
       page: () => const AdminHomeworkManagementScreen(),
@@ -406,7 +510,12 @@ class AppRoutes {
     GetPage(
         name: studentHomeworkDetail,
         page: () {
-          final args = Get.arguments as Map<String, dynamic>;
+          final args = _routeArgumentMap();
+          if (args == null) {
+            return const _RouteErrorScreen(
+              message: 'Student homework details require valid homework data.',
+            );
+          }
           final homework = args['homework'];
           final submission = args['submission'];
           final student = args['student'];

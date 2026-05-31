@@ -1,8 +1,7 @@
-import 'dart:developer';
-
 import 'package:campus_care/models/admin/admin.dart';
 import 'package:campus_care/models/student/student.dart';
 import 'package:campus_care/models/teacher/teacher.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
@@ -69,8 +68,6 @@ class AuthController extends GetxController {
 
       // Default role for single-form login; tabbed login passes role explicitly.
       String role = AppConstants.roleSuperAdmin;
-      log(emailController.text.trim());
-      log(passwordController.text.trim());
       final user = await AuthService.login(
         emailController.text.trim(),
         passwordController.text.trim(),
@@ -88,30 +85,20 @@ class AuthController extends GetxController {
         // Navigate to appropriate dashboard
         _navigateToRoleDashboard();
 
-        Get.snackbar(
+        AppNotifier.success(
           'Success',
-          '',
-          // 'Welcome back, ${user.name}!',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
+          'Welcome back!',
         );
       } else {
-        Get.snackbar(
+        AppNotifier.error(
           'Login Failed',
           'Invalid email/phone or password. Please try again.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
         );
       }
     } catch (e) {
-      Get.snackbar(
+      AppNotifier.error(
         'Error',
         e.toString().replaceAll('Exception: ', ''),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
       );
     } finally {
       _isLoading.value = false;
@@ -125,8 +112,6 @@ class AuthController extends GetxController {
   }) async {
     try {
       _isLoading.value = true;
-      log(identifier);
-      log(password);
       final user = await AuthService.login(
         identifier.trim(),
         password.trim(),
@@ -140,29 +125,20 @@ class AuthController extends GetxController {
         // Navigate to appropriate dashboard
         _navigateToRoleDashboard();
 
-        Get.snackbar(
+        AppNotifier.success(
           'Success',
           'Welcome back!',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
         );
       } else {
-        Get.snackbar(
+        AppNotifier.error(
           'Login Failed',
           'Invalid email/phone or password. Please try again.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
         );
       }
     } catch (e) {
-      Get.snackbar(
+      AppNotifier.error(
         'Error',
         e.toString().replaceAll('Exception: ', ''),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
       );
     } finally {
       _isLoading.value = false;
@@ -197,12 +173,9 @@ class AuthController extends GetxController {
     final data = await AuthService.getCurrentUser();
 
     if (data == null) {
-      Get.snackbar(
+      AppNotifier.error(
         'Error',
         'Failed to retrieve user data.',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
       );
       Get.offAllNamed(AppRoutes.login);
       return;
@@ -263,20 +236,14 @@ class AuthController extends GetxController {
 
       Get.offAllNamed(AppRoutes.login);
 
-      Get.snackbar(
+      AppNotifier.info(
         'Success',
         'You have been logged out successfully.',
-        backgroundColor: Colors.blue,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
       );
     } catch (e) {
-      Get.snackbar(
+      AppNotifier.error(
         'Error',
         'An error occurred during logout.',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
       );
     } finally {
       _isLoading.value = false;
@@ -291,29 +258,20 @@ class AuthController extends GetxController {
           await AuthService.changePassword(oldPassword, newPassword);
 
       if (success) {
-        Get.snackbar(
+        AppNotifier.success(
           'Success',
           'Password changed successfully.',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
         );
       } else {
-        Get.snackbar(
+        AppNotifier.error(
           'Error',
           'Failed to change password. Please check your current password.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
         );
       }
     } catch (e) {
-      Get.snackbar(
+      AppNotifier.error(
         'Error',
         'An error occurred while changing password.',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
       );
     } finally {
       _isLoading.value = false;
@@ -353,29 +311,20 @@ class AuthController extends GetxController {
       final success = await AdminService.updateAdmin(updatedAdmin);
       if (success) {
         _currentAdmin.value = updatedAdmin;
-        Get.snackbar(
+        AppNotifier.success(
           'Success',
           'Profile updated successfully.',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
         );
       } else {
-        Get.snackbar(
+        AppNotifier.error(
           'Error',
           'Failed to update profile.',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.TOP,
         );
       }
     } catch (e) {
-      Get.snackbar(
+      AppNotifier.error(
         'Error',
         'An error occurred while updating profile.',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
       );
     } finally {
       _isLoading.value = false;
@@ -412,7 +361,7 @@ class AuthController extends GetxController {
       if (currentRole == AppConstants.roleAdmin) {
         final admin = currentAdmin;
         if (admin == null) {
-          Get.snackbar('Error', 'Authentication error: user not found');
+          AppNotifier.error('Error', 'Authentication error: user not found');
           return null;
         }
 
@@ -420,13 +369,13 @@ class AuthController extends GetxController {
       } else if (currentRole == AppConstants.roleTeacher) {
         final teacher = currentTeacher;
         if (teacher == null) {
-          Get.snackbar('Error', 'Authentication error: user not found');
+          AppNotifier.error('Error', 'Authentication error: user not found');
           return null;
         }
 
         return teacher.id;
       } else {
-        Get.snackbar('Error', 'Authentication error: user not found');
+        AppNotifier.error('Error', 'Authentication error: user not found');
         return null;
       }
     }

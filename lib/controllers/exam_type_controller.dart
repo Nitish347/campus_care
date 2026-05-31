@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:campus_care/models/exam_type_model.dart';
 import 'package:campus_care/services/api/exam_type_api_service.dart';
 import 'package:campus_care/core/api_exception.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 
 class ExamTypeController extends GetxController {
   final ExamTypeApiService _apiService = ExamTypeApiService();
@@ -33,24 +34,16 @@ class ExamTypeController extends GetxController {
       examTypeList.value =
           examTypes.map((e) => ExamTypeModel.fromJson(e)).toList();
     } on ApiException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', e.message);
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to fetch exam types: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', 'Failed to fetch exam types: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
   // Add new exam type — sends snake_case to match D1 schema
-  Future<void> addExamType(ExamTypeModel examType) async {
+  Future<bool> addExamType(ExamTypeModel examType) async {
     try {
       isLoading.value = true;
 
@@ -64,33 +57,20 @@ class ExamTypeController extends GetxController {
 
       final createdExamType = await _apiService.createExamType(examTypeData);
       examTypeList.add(ExamTypeModel.fromJson(createdExamType));
-
-      Get.snackbar(
-        'Success',
-        'Exam schedule created successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      return true;
     } on ApiException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      rethrow;
+      AppNotifier.error('Error', e.message);
+      return false;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to create exam schedule: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      rethrow;
+      AppNotifier.error('Error', 'Failed to create exam schedule: $e');
+      return false;
     } finally {
       isLoading.value = false;
     }
   }
 
   // Update exam type — sends snake_case to match D1 schema
-  Future<void> updateExamType(ExamTypeModel examType) async {
+  Future<bool> updateExamType(ExamTypeModel examType) async {
     try {
       isLoading.value = true;
 
@@ -109,26 +89,13 @@ class ExamTypeController extends GetxController {
       if (index != -1) {
         examTypeList[index] = ExamTypeModel.fromJson(updatedExamType);
       }
-
-      Get.snackbar(
-        'Success',
-        'Exam schedule updated successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      return true;
     } on ApiException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      rethrow;
+      AppNotifier.error('Error', e.message);
+      return false;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to update exam schedule: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      rethrow;
+      AppNotifier.error('Error', 'Failed to update exam schedule: $e');
+      return false;
     } finally {
       isLoading.value = false;
     }
@@ -141,24 +108,12 @@ class ExamTypeController extends GetxController {
       await _apiService.deleteExamType(examTypeId);
       examTypeList.removeWhere((e) => e.id == examTypeId);
 
-      Get.snackbar(
-        'Success',
-        'Exam schedule deleted successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.success('Success', 'Exam schedule deleted successfully');
     } on ApiException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', e.message);
       rethrow;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to delete exam schedule: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', 'Failed to delete exam schedule: $e');
       rethrow;
     } finally {
       isLoading.value = false;
@@ -172,5 +127,6 @@ class ExamTypeController extends GetxController {
   }
 
   // Refresh
+  @override
   Future<void> refresh() => fetchExamTypes();
 }

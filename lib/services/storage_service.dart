@@ -9,7 +9,15 @@ class StorageService {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  static SharedPreferences get prefs => _prefs!;
+  static bool get isInitialized => _prefs != null;
+
+  static SharedPreferences get prefs {
+    final instance = _prefs;
+    if (instance == null) {
+      throw StateError('StorageService.init() must be called before writes.');
+    }
+    return instance;
+  }
 
   // Authentication storage
   static Future<void> setLoggedIn(bool isLoggedIn) async {
@@ -17,14 +25,14 @@ class StorageService {
   }
 
   static bool get isLoggedIn =>
-      prefs.getBool(AppConstants.keyIsLoggedIn) ?? false;
+      _prefs?.getBool(AppConstants.keyIsLoggedIn) ?? false;
 
   static Future<void> setCurrentUser(Map<String, dynamic> user) async {
     await prefs.setString(AppConstants.keyCurrentUser, jsonEncode(user));
   }
 
-  static Future<Map<String, dynamic>?> get currentUser async  {
-    final userData = prefs.getString(AppConstants.keyCurrentUser);
+  static Future<Map<String, dynamic>?> get currentUser async {
+    final userData = _prefs?.getString(AppConstants.keyCurrentUser);
     if (userData != null) {
       try {
         return jsonDecode(userData);
@@ -39,7 +47,7 @@ class StorageService {
     await prefs.setString(AppConstants.keyUserRole, role);
   }
 
-  static String? get userRole => prefs.getString(AppConstants.keyUserRole);
+  static String? get userRole => _prefs?.getString(AppConstants.keyUserRole);
 
   // Theme storage
   static Future<void> setThemeMode(String mode) async {
@@ -47,7 +55,7 @@ class StorageService {
   }
 
   static String get themeMode =>
-      prefs.getString(AppConstants.keyThemeMode) ?? 'system';
+      _prefs?.getString(AppConstants.keyThemeMode) ?? 'system';
 
   // Generic string storage
   static Future<void> setString(String key, String value) async {
@@ -55,7 +63,7 @@ class StorageService {
   }
 
   static String? getString(String key) {
-    return prefs.getString(key);
+    return _prefs?.getString(key);
   }
 
   // Generic data storage
@@ -70,7 +78,7 @@ class StorageService {
 
   static List<Map<String, dynamic>> getData(String key) {
     try {
-      final data = prefs.getString(key);
+      final data = _prefs?.getString(key);
       if (data != null) {
         final List<dynamic> jsonList = jsonDecode(data);
         return jsonList.map((item) => Map<String, dynamic>.from(item)).toList();
@@ -93,6 +101,6 @@ class StorageService {
 
   // Check if data exists
   static bool hasData(String key) {
-    return prefs.containsKey(key);
+    return _prefs?.containsKey(key) ?? false;
   }
 }

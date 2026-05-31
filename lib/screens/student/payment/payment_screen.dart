@@ -6,8 +6,10 @@ import 'package:campus_care/widgets/buttons/primary_button.dart';
 import 'package:campus_care/widgets/common/info_card.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
+import 'package:campus_care/widgets/student/student_app_bar.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 
-class PaymentScreen extends StatelessWidget {
+class PaymentScreen extends StatefulWidget {
   final Map<String, dynamic> fee;
 
   const PaymentScreen({
@@ -16,18 +18,52 @@ class PaymentScreen extends StatelessWidget {
   });
 
   @override
+  State<PaymentScreen> createState() => _PaymentScreenState();
+}
+
+class _PaymentScreenState extends State<PaymentScreen> {
+  final _cardNumberController = TextEditingController();
+  final _expiryController = TextEditingController();
+  final _cvvController = TextEditingController();
+  final _cardNameController = TextEditingController();
+  final _isLoading = false.obs;
+
+  @override
+  void dispose() {
+    _cardNumberController.dispose();
+    _expiryController.dispose();
+    _cvvController.dispose();
+    _cardNameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitPayment() async {
+    if (_cardNameController.text.trim().isEmpty ||
+        _cardNumberController.text.trim().isEmpty ||
+        _expiryController.text.trim().isEmpty ||
+        _cvvController.text.trim().isEmpty) {
+      AppNotifier.error('Error', 'Please fill all payment details');
+      return;
+    }
+
+    _isLoading.value = true;
+    await Future.delayed(const Duration(seconds: 2));
+    _isLoading.value = false;
+
+    if (!mounted) return;
+    Get.offNamed(AppRoutes.studentFees);
+    AppNotifier.afterNavigation('Success', 'Payment successful!');
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cardNumberController = TextEditingController();
-    final expiryController = TextEditingController();
-    final cvvController = TextEditingController();
-    final cardNameController = TextEditingController();
-    final isLoading = false.obs;
+    final feeType = widget.fee['feeType']?.toString() ?? 'Fee';
+    final amount =
+        widget.fee['amount'] is num ? widget.fee['amount'] as num : 0;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Payment'),
-      ),
+      appBar: const StudentAppBar(title: 'Payment'),
       body: SingleChildScrollView(
         child: ResponsivePadding(
           child: Column(
@@ -40,12 +76,13 @@ class PaymentScreen extends StatelessWidget {
                   children: [
                     ListTile(
                       title: Text(
-                        fee['feeType'] as String,
+                        feeType,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      subtitle: Text('Amount: ₹${(fee['amount'] as num).toStringAsFixed(2)}'),
+                      subtitle:
+                          Text('Amount: Rs. ${amount.toStringAsFixed(2)}'),
                     ),
                   ],
                 ),
@@ -54,14 +91,14 @@ class PaymentScreen extends StatelessWidget {
               SectionHeader(title: 'Payment Information'),
               const SizedBox(height: 16),
               CustomTextField(
-                controller: cardNameController,
+                controller: _cardNameController,
                 labelText: 'Card Holder Name',
                 hintText: 'Enter name on card',
                 prefixIcon: const Icon(Icons.person),
               ),
               const SizedBox(height: 16),
               CustomTextField(
-                controller: cardNumberController,
+                controller: _cardNumberController,
                 labelText: 'Card Number',
                 hintText: '1234 5678 9012 3456',
                 keyboardType: TextInputType.number,
@@ -72,7 +109,7 @@ class PaymentScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: CustomTextField(
-                      controller: expiryController,
+                      controller: _expiryController,
                       labelText: 'Expiry Date',
                       hintText: 'MM/YY',
                       keyboardType: TextInputType.number,
@@ -82,7 +119,7 @@ class PaymentScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: CustomTextField(
-                      controller: cvvController,
+                      controller: _cvvController,
                       labelText: 'CVV',
                       hintText: '123',
                       keyboardType: TextInputType.number,
@@ -93,25 +130,13 @@ class PaymentScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              Obx(() => PrimaryButton(
-                    onPressed: isLoading.value
-                        ? null
-                        : () async {
-                            if (cardNumberController.text.isEmpty ||
-                                expiryController.text.isEmpty ||
-                                cvvController.text.isEmpty) {
-                              Get.snackbar('Error', 'Please fill all payment details');
-                              return;
-                            }
-                            isLoading.value = true;
-                            await Future.delayed(const Duration(seconds: 2));
-                            isLoading.value = false;
-                            Get.snackbar('Success', 'Payment successful!');
-                            Get.offNamed(AppRoutes.studentFees);
-                          },
-                    isLoading: isLoading.value,
-                    child: Text('Pay ₹${(fee['amount'] as num).toStringAsFixed(2)}'),
-                  )),
+              Obx(
+                () => PrimaryButton(
+                  onPressed: _isLoading.value ? null : _submitPayment,
+                  isLoading: _isLoading.value,
+                  child: Text('Pay Rs. ${amount.toStringAsFixed(2)}'),
+                ),
+              ),
             ],
           ),
         ),
@@ -119,4 +144,3 @@ class PaymentScreen extends StatelessWidget {
     );
   }
 }
-

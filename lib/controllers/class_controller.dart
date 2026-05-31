@@ -1,5 +1,6 @@
 import 'package:campus_care/models/class.dart';
 import 'package:campus_care/services/api/class_api_service.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 import 'package:get/get.dart';
 
 class ClassController extends GetxController {
@@ -23,21 +24,33 @@ class ClassController extends GetxController {
       classes.value = data.map((json) => SchoolClass.fromJson(json)).toList();
     } catch (e) {
       error.value = e.toString();
-      Get.snackbar('Error', 'Failed to fetch classes: ${e.toString()}');
+      AppNotifier.error('Error', 'Failed to fetch classes: ${e.toString()}');
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<void> addClass(Map<String, dynamic> classData) async {
+  Future<bool> addClass(
+    Map<String, dynamic> classData, {
+    bool popOnSuccess = true,
+    bool showSnackbar = true,
+  }) async {
     try {
       isLoading.value = true;
       await _classApiService.createClass(classData);
-      Get.snackbar('Success', 'Class added successfully');
-      fetchClasses();
-      Get.back(); // Go back to previous screen
+      await fetchClasses();
+      if (popOnSuccess) {
+        Get.back();
+      }
+      if (showSnackbar) {
+        AppNotifier.afterNavigation('Success', 'Class added successfully');
+      }
+      return true;
     } catch (e) {
-      Get.snackbar('Error', 'Failed to add class: ${e.toString()}');
+      if (showSnackbar) {
+        AppNotifier.error('Error', 'Failed to add class: ${e.toString()}');
+      }
+      return false;
     } finally {
       isLoading.value = false;
     }
@@ -47,24 +60,37 @@ class ClassController extends GetxController {
     try {
       isLoading.value = true;
       await _classApiService.addSection(classId, section);
-      Get.snackbar('Success', 'Section added successfully');
-      fetchClasses(); // Refresh list to show new section
+      AppNotifier.success('Success', 'Section added successfully');
+      await fetchClasses();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to add section: ${e.toString()}');
+      AppNotifier.error('Error', 'Failed to add section: ${e.toString()}');
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<void> updateClass(String id, Map<String, dynamic> classData) async {
+  Future<bool> updateClass(
+    String id,
+    Map<String, dynamic> classData, {
+    bool popOnSuccess = true,
+    bool showSnackbar = true,
+  }) async {
     try {
       isLoading.value = true;
       await _classApiService.updateClass(id, classData);
-      Get.snackbar('Success', 'Class updated successfully');
-      fetchClasses(); // Refresh list
-      Get.back(); // Close edit screen/dialog
+      await fetchClasses();
+      if (popOnSuccess) {
+        Get.back();
+      }
+      if (showSnackbar) {
+        AppNotifier.afterNavigation('Success', 'Class updated successfully');
+      }
+      return true;
     } catch (e) {
-      Get.snackbar('Error', 'Failed to update class: ${e.toString()}');
+      if (showSnackbar) {
+        AppNotifier.error('Error', 'Failed to update class: ${e.toString()}');
+      }
+      return false;
     } finally {
       isLoading.value = false;
     }
@@ -74,10 +100,10 @@ class ClassController extends GetxController {
     try {
       isLoading.value = true;
       await _classApiService.deleteClass(id);
-      Get.snackbar('Success', 'Class deleted successfully');
-      fetchClasses(); // Refresh list
+      AppNotifier.success('Success', 'Class deleted successfully');
+      await fetchClasses();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to delete class: ${e.toString()}');
+      AppNotifier.error('Error', 'Failed to delete class: ${e.toString()}');
     } finally {
       isLoading.value = false;
     }

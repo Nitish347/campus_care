@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
+import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
-import 'package:campus_care/services/institute_context_service.dart';
-
-import '../../controllers/admin/admin_auth_controller.dart';
+import 'package:campus_care/services/storage_service.dart';
 
 /// School admin middleware
 /// Ensures only school admins (or super admins with institute context) can access school admin routes
@@ -21,10 +20,13 @@ class SchoolAdminMiddleware extends GetMiddleware {
       return const RouteSettings(name: AppRoutes.login);
     }
 
-    // AdminAuthController is now specific to Admin users only
-    // All logged in users via AdminAuthController are admins
-    // If you need separate auth for teachers/students,
-    // create separate TeacherAuthController and StudentAuthController
+    final role = authController.currentRole?.isNotEmpty == true
+        ? authController.currentRole
+        : StorageService.userRole;
+
+    if (role != AppConstants.roleAdmin && role != AppConstants.roleSuperAdmin) {
+      return const RouteSettings(name: AppRoutes.login);
+    }
 
     return null; // Allow access for logged in admin
   }

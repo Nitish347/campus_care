@@ -7,6 +7,7 @@ import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/buttons/primary_button.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 
 import 'package:campus_care/widgets/admin/admin_page_header.dart';
 
@@ -170,8 +171,10 @@ class _AddClassScreenState extends State<AddClassScreen> {
                         : () {
                             if (classNameController.text.isEmpty ||
                                 gradeController.text.isEmpty) {
-                              Get.snackbar(
-                                  'Error', 'Please fill Class Name and Grade');
+                              AppNotifier.error(
+                                'Error',
+                                'Please fill Class Name and Grade',
+                              );
                               return;
                             }
 
@@ -193,12 +196,38 @@ class _AddClassScreenState extends State<AddClassScreen> {
                             }
 
                             if (isEditMode) {
-                              classController.updateClass(
+                              classController
+                                  .updateClass(
                                 widget.schoolClass!.id,
                                 classData,
-                              );
+                                popOnSuccess: false,
+                                showSnackbar: false,
+                              )
+                                  .then((success) {
+                                if (success) {
+                                  Get.back();
+                                  AppNotifier.afterNavigation(
+                                    'Success',
+                                    'Class updated successfully',
+                                  );
+                                }
+                              });
                             } else {
-                              classController.addClass(classData);
+                              classController
+                                  .addClass(
+                                classData,
+                                popOnSuccess: false,
+                                showSnackbar: false,
+                              )
+                                  .then((success) {
+                                if (success) {
+                                  Get.back();
+                                  AppNotifier.afterNavigation(
+                                    'Success',
+                                    'Class added successfully',
+                                  );
+                                }
+                              });
                             }
                           },
                     child: classController.isLoading.value

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/models/exam_type_model.dart';
 import 'package:campus_care/controllers/exam_type_controller.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 
 import 'package:campus_care/widgets/admin/admin_page_header.dart';
@@ -65,15 +66,18 @@ class _AdminAddEditExamTypeScreenState
         updatedAt: DateTime.now(),
       );
 
-      try {
-        if (_isEditing) {
-          await controller.updateExamType(examType);
-        } else {
-          await controller.addExamType(examType);
-        }
+      final success = _isEditing
+          ? await controller.updateExamType(examType)
+          : await controller.addExamType(examType);
+
+      if (success) {
         Get.back();
-      } catch (e) {
-        // Error already shown by controller
+        AppNotifier.afterNavigation(
+          'Success',
+          _isEditing
+              ? 'Exam schedule updated successfully'
+              : 'Exam schedule created successfully',
+        );
       }
     }
   }

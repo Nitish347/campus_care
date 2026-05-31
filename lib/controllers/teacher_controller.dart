@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:campus_care/models/teacher/teacher.dart';
 import 'package:campus_care/services/teacher_service.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 
 class TeacherController extends GetxController {
   final _isLoading = false.obs;
@@ -36,7 +37,7 @@ class TeacherController extends GetxController {
       final data = await TeacherService.getAllTeachers();
       _teachers.assignAll(data);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load teachers');
+      AppNotifier.error('Error', 'Failed to load teachers');
     } finally {
       _isLoading.value = false;
     }
@@ -60,17 +61,17 @@ class TeacherController extends GetxController {
         Get.back();
       }
       if (showSnackbar) {
-        Future.delayed(const Duration(milliseconds: 300), () {
-          Get.snackbar('Success', 'Teacher added successfully');
-        });
+        AppNotifier.afterNavigation('Success', 'Teacher added successfully');
       }
       return createdId.isEmpty ? null : createdId;
     } catch (e) {
       _isLoading.value = false;
       if (showSnackbar) {
-        Future.delayed(const Duration(milliseconds: 300), () {
-          Get.snackbar('Error', 'Failed to add teacher: ${e.toString()}');
-        });
+        AppNotifier.afterNavigation(
+          'Error',
+          'Failed to add teacher: ${e.toString()}',
+          isError: true,
+        );
       }
       return null;
     }
@@ -90,9 +91,8 @@ class TeacherController extends GetxController {
           Get.back();
         }
         if (showSnackbar) {
-          Future.delayed(const Duration(milliseconds: 300), () {
-            Get.snackbar('Success', 'Teacher updated successfully');
-          });
+          AppNotifier.afterNavigation(
+              'Success', 'Teacher updated successfully');
         }
         return true;
       } else {
@@ -100,9 +100,11 @@ class TeacherController extends GetxController {
       }
     } catch (e) {
       if (showSnackbar) {
-        Future.delayed(const Duration(milliseconds: 300), () {
-          Get.snackbar('Error', 'Failed to update teacher: ${e.toString()}');
-        });
+        AppNotifier.afterNavigation(
+          'Error',
+          'Failed to update teacher: ${e.toString()}',
+          isError: true,
+        );
       }
       return false;
     } finally {
@@ -115,13 +117,13 @@ class TeacherController extends GetxController {
       _isLoading.value = true;
       await TeacherService.deleteTeacher(id);
       await loadTeachers();
-      Future.delayed(const Duration(milliseconds: 300), () {
-        Get.snackbar('Success', 'Teacher deleted successfully');
-      });
+      AppNotifier.afterNavigation('Success', 'Teacher deleted successfully');
     } catch (e) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        Get.snackbar('Error', 'Failed to delete teacher: ${e.toString()}');
-      });
+      AppNotifier.afterNavigation(
+        'Error',
+        'Failed to delete teacher: ${e.toString()}',
+        isError: true,
+      );
     } finally {
       _isLoading.value = false;
     }

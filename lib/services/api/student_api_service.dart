@@ -21,6 +21,37 @@ class StudentApiService {
     return [];
   }
 
+  Future<Map<String, dynamic>> getStudentsPage({
+    required int page,
+    required int limit,
+    String? search,
+    String? classId,
+    String? section,
+    String? sortBy,
+    String? sortOrder,
+  }) async {
+    final queryParameters = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+      if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      if (classId != null && classId.isNotEmpty) 'class': classId,
+      if (section != null && section.isNotEmpty) 'section': section,
+      if (sortBy != null && sortBy.isNotEmpty) 'sortBy': sortBy,
+      if (sortOrder != null && sortOrder.isNotEmpty) 'sortOrder': sortOrder,
+    };
+
+    final response = await _apiClient.get(
+      AppConstants.studentsEndpoint,
+      queryParameters: queryParameters,
+    );
+
+    if (response['success'] == true) {
+      return Map<String, dynamic>.from(response as Map);
+    }
+
+    throw Exception(response['message'] ?? 'Failed to load students');
+  }
+
   /// Get student by ID
   Future<Map<String, dynamic>?> getStudentById(String id) async {
     final response = await _apiClient.get(

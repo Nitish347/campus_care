@@ -3,6 +3,22 @@ import 'dart:developer';
 import 'package:campus_care/models/student/student.dart';
 import 'package:campus_care/services/api/student_api_service.dart';
 
+class StudentPage {
+  final List<Student> students;
+  final int total;
+  final int page;
+  final int limit;
+  final int totalPages;
+
+  const StudentPage({
+    required this.students,
+    required this.total,
+    required this.page,
+    required this.limit,
+    required this.totalPages,
+  });
+}
+
 class StudentService {
   static final StudentApiService _apiService = StudentApiService();
 
@@ -48,6 +64,43 @@ class StudentService {
       return data.map((json) => Student.fromJson(json)).toList();
     } catch (e) {
       return [];
+    }
+  }
+
+  static Future<StudentPage> getStudentsPage({
+    required int page,
+    int limit = 50,
+    String? search,
+    String? classId,
+    String? section,
+    String? sortBy,
+    String? sortOrder,
+  }) async {
+    try {
+      final response = await _apiService.getStudentsPage(
+        page: page,
+        limit: limit,
+        search: search,
+        classId: classId,
+        section: section,
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+      );
+      final data = (response['data'] as List<dynamic>? ?? [])
+          .map((json) => Student.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+      final pagination =
+          Map<String, dynamic>.from(response['pagination'] as Map? ?? {});
+
+      return StudentPage(
+        students: data,
+        total: (pagination['total'] as num?)?.toInt() ?? data.length,
+        page: (pagination['page'] as num?)?.toInt() ?? page,
+        limit: (pagination['limit'] as num?)?.toInt() ?? limit,
+        totalPages: (pagination['totalPages'] as num?)?.toInt() ?? 1,
+      );
+    } catch (e) {
+      throw Exception('Failed to load students: $e');
     }
   }
 

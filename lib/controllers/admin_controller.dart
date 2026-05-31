@@ -1,5 +1,6 @@
 import 'package:campus_care/models/admin/admin.dart';
 import 'package:campus_care/services/admin_service.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
@@ -44,7 +45,7 @@ class AdminController extends GetxController {
     } catch (e) {
       _dashboardError.value = e.toString().replaceFirst('Exception: ', '');
       if (showErrorSnackbar) {
-        Get.snackbar(
+        AppNotifier.error(
             'Stats Load Failed', _dashboardError.value ?? 'Unknown error');
       }
     } finally {
@@ -69,7 +70,7 @@ class AdminController extends GetxController {
       final data = await AdminService.getAllAdmins();
       _admins.assignAll(data);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load admins');
+      AppNotifier.error('Error', 'Failed to load admins');
     } finally {
       _isLoading.value = false;
     }
@@ -85,9 +86,9 @@ class AdminController extends GetxController {
       await AdminService.addAdmin(admin);
       await loadAdmins();
       Get.back();
-      Get.snackbar('Success', 'Admin added successfully');
+      AppNotifier.afterNavigation('Success', 'Admin added successfully');
     } catch (e) {
-      Get.snackbar('Error', 'Failed to add admin');
+      AppNotifier.error('Error', 'Failed to add admin');
     } finally {
       _isLoading.value = false;
     }

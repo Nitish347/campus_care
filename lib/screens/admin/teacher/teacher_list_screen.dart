@@ -144,71 +144,88 @@ class TeacherListScreen extends GetView<TeacherController> {
   Widget _buildDesktopTable(BuildContext context, List<Teacher> teachers) {
     final theme = Theme.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.12),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            children: [
-              // Table header
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary.withValues(alpha: 0.08),
-                      theme.colorScheme.primaryContainer
-                          .withValues(alpha: 0.04),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const tableMinWidth = 1180.0;
+        final tableWidth = constraints.maxWidth < tableMinWidth
+            ? tableMinWidth
+            : constraints.maxWidth;
+
+        return Scrollbar(
+          thumbVisibility: constraints.maxWidth < tableMinWidth,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: tableWidth,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.12),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
-                ),
-                child: Row(
-                  children: [
-                    _TableHeaderCell('Teacher', flex: 3),
-                    _TableHeaderCell('Teacher ID', flex: 2),
-                    _TableHeaderCell('Email', flex: 3),
-                    _TableHeaderCell('Phone', flex: 2),
-                    _TableHeaderCell('Department', flex: 2),
-                    _TableHeaderCell('Actions',
-                        flex: 1, align: TextAlign.center),
-                  ],
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 14),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                theme.colorScheme.primary
+                                    .withValues(alpha: 0.08),
+                                theme.colorScheme.primaryContainer
+                                    .withValues(alpha: 0.04),
+                              ],
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              _TableHeaderCell('Teacher', flex: 3),
+                              _TableHeaderCell('Teacher ID', flex: 2),
+                              _TableHeaderCell('Email', flex: 3),
+                              _TableHeaderCell('Phone', flex: 2),
+                              _TableHeaderCell('Department', flex: 1),
+                              _TableHeaderCell('Actions',
+                                  flex: 2, align: TextAlign.center),
+                            ],
+                          ),
+                        ),
+                        ...teachers.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final teacher = entry.value;
+                          final isEven = index % 2 == 0;
+                          return _DesktopTeacherRow(
+                            teacher: teacher,
+                            isEven: isEven,
+                            theme: theme,
+                            onView: () => _openTeacherDetails(teacher),
+                            onEdit: () => Get.to(
+                                () => AddTeacherScreen(teacher: teacher)),
+                            onDelete: () => _showDeleteDialog(context, teacher),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              // Table rows
-              ...teachers.asMap().entries.map((entry) {
-                final index = entry.key;
-                final teacher = entry.value;
-                final isEven = index % 2 == 0;
-                return _DesktopTeacherRow(
-                  teacher: teacher,
-                  isEven: isEven,
-                  theme: theme,
-                  onView: () => _openTeacherDetails(teacher),
-                  onEdit: () =>
-                      Get.to(() => AddTeacherScreen(teacher: teacher)),
-                  onDelete: () => _showDeleteDialog(context, teacher),
-                );
-              }),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -585,13 +602,14 @@ class _DesktopTeacherRowState extends State<_DesktopTeacherRow> {
                 Expanded(
                   flex: 2,
                   child: Text(
-                    widget.teacher.phone ?? '—',
+                    widget.teacher.phone ?? '-',
                     style: widget.theme.textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 // Department badge
                 Expanded(
-                  flex: 2,
+                  flex: 1,
                   child: Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -612,7 +630,7 @@ class _DesktopTeacherRowState extends State<_DesktopTeacherRow> {
                 ),
                 // Actions
                 Expanded(
-                  flex: 1,
+                  flex: 2,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

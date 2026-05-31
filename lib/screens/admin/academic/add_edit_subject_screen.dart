@@ -7,6 +7,7 @@ import 'package:campus_care/widgets/buttons/primary_button.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -76,13 +77,17 @@ class _AddEditSubjectScreenState extends State<AddEditSubjectScreen> {
       updatedAt: DateTime.now(),
     );
 
-    if (isEditMode) {
-      await _subjectController.updateSubject(subject);
-    } else {
-      await _subjectController.addSubject(subject);
-    }
+    final success = isEditMode
+        ? await _subjectController.updateSubject(subject)
+        : await _subjectController.addSubject(subject);
 
-    Get.back();
+    if (success) {
+      Get.back();
+      AppNotifier.afterNavigation(
+        'Success',
+        isEditMode ? 'Subject updated successfully' : 'Subject added successfully',
+      );
+    }
   }
 
   @override

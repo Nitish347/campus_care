@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
+import 'package:campus_care/widgets/student/student_app_bar.dart';
 
 class StudentExamTimetableScreen extends StatefulWidget {
   const StudentExamTimetableScreen({super.key});
@@ -123,32 +124,56 @@ class _StudentExamTimetableScreenState
     final controller = Get.find<ExamController>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Exam Timetable'),
-        actions: [
+      appBar: StudentAppBar(
+        title: 'Exam Timetable',
+        extraActions: [
           Obx(() => controller.isLoading.value
               ? const Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: EdgeInsets.all(9),
                   child: SizedBox(
-                    width: 20,
-                    height: 20,
+                    width: 18,
+                    height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 )
-              : IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: () => controller.fetchExams(),
-                  tooltip: 'Refresh',
+              : InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => controller.fetchExams(),
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.refresh, color: Colors.white, size: 20),
+                  ),
                 )),
-          IconButton(
-            icon: const Icon(Icons.filter_list_outlined),
-            onPressed: _showFilterDialog,
-            tooltip: 'Filter',
+          InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: _showFilterDialog,
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.filter_list_outlined, color: Colors.white, size: 20),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.assessment_outlined),
-            onPressed: () => Get.toNamed(AppRoutes.studentResults),
-            tooltip: 'View Results',
+          InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () => Get.toNamed(AppRoutes.studentResults),
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.assessment_outlined, color: Colors.white, size: 20),
+            ),
           ),
         ],
       ),

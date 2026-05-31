@@ -1168,10 +1168,32 @@ class _TransportManagementScreenState extends State<TransportManagementScreen>
                     ),
                   ),
                   const SizedBox(height: 12),
-                  TabBar(
-                      controller: _tabController,
-                      isScrollable: true,
-                      tabs: _tabLabels.map((e) => Tab(text: e)).toList()),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withValues(alpha: 0.22),
+                      ),
+                    ),
+                    child: Row(
+                      children: List.generate(_tabLabels.length, (index) {
+                        return Expanded(
+                          child: _buildAnimatedTab(
+                            title: _tabLabels[index],
+                            index: index,
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   Expanded(
                     child: TabBarView(
@@ -1375,6 +1397,62 @@ class _TransportManagementScreenState extends State<TransportManagementScreen>
               style: theme.textTheme.titleSmall
                   ?.copyWith(fontWeight: FontWeight.bold)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedTab({
+    required String title,
+    required int index,
+  }) {
+    const accents = [
+      Color(0xFF0891B2),
+      Color(0xFF4F46E5),
+      Color(0xFF059669),
+      Color(0xFFDC2626),
+      Color(0xFF7C3AED),
+    ];
+    final selected = _tabController.index == index;
+    final accent = accents[index % accents.length];
+
+    return GestureDetector(
+      onTap: () {
+        _tabController.animateTo(index);
+        setState(() {});
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+        margin: const EdgeInsets.all(4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: selected ? Colors.white : Colors.transparent,
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.10),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 220),
+            style: TextStyle(
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+              color: selected ? accent : Colors.black54,
+              fontSize: 13.0,
+            ),
+            child: Text(
+              title,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -11,6 +11,7 @@ import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/controllers/theme_controller.dart';
 import 'package:campus_care/services/institute_context_service.dart';
 import 'package:campus_care/controllers/institute_controller.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 
 import 'controllers/admin/admin_auth_controller.dart';
 import 'controllers/teacher/teacher_auth_controller.dart';
@@ -36,6 +37,7 @@ class SchoolStreamApp extends StatelessWidget {
         return GetMaterialApp(
           title: 'School Stream',
           debugShowCheckedModeBanner: false,
+          scaffoldMessengerKey: AppNotifier.messengerKey,
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: themeController.themeMode,

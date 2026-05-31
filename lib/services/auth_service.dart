@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:campus_care/services/admin_service.dart';
 import 'package:campus_care/services/storage_service.dart';
 import 'package:campus_care/core/constants/app_constants.dart';
@@ -90,14 +88,19 @@ class AuthService {
     final userRole = StorageService.userRole;
 
     if (userRole != null && userData != null) {
+      final userId = userData['id']?.toString();
+      if (userId == null || userId.isEmpty) {
+        return userData;
+      }
+
       switch (userRole) {
         case AppConstants.roleStudent:
-          var data = await StudentService.getStudentById(userData['id']!);
-          return data!;
+          final data = await StudentService.getStudentById(userId);
+          return data ?? userData;
 
         case AppConstants.roleTeacher:
-          var data = await TeacherService.getTeacherById(userData['id']!);
-          return data!;
+          final data = await TeacherService.getTeacherById(userId);
+          return data ?? userData;
 
         case AppConstants.roleSuperAdmin:
           // For super admin, return the stored user data directly
@@ -105,9 +108,8 @@ class AuthService {
           return userData;
 
         case AppConstants.roleAdmin:
-          var data = await AdminService.getAdminById(userData['id']!);
-          log(userData['id']!);
-          return data!;
+          final data = await AdminService.getAdminById(userId);
+          return data ?? userData;
 
         default:
           break;

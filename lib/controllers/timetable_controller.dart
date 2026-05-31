@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/models/timetable_model.dart';
@@ -6,6 +5,7 @@ import 'package:campus_care/services/api/timetable_api_service.dart';
 import 'package:campus_care/services/student_service.dart';
 
 import '../services/storage_service.dart';
+import '../utils/app_notifier.dart';
 
 class TimetableController extends GetxController {
   final _isLoading = false.obs;
@@ -120,7 +120,7 @@ class TimetableController extends GetxController {
 
       _updateCurrentTimetable();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load timetables: $e');
+      AppNotifier.error('Error', 'Failed to load timetables: $e');
     } finally {
       _isLoading.value = false;
     }
@@ -166,7 +166,7 @@ class TimetableController extends GetxController {
     }
   }
 
-  Future<void> saveTimetable(TimeTableModel timetable) async {
+  Future<bool> saveTimetable(TimeTableModel timetable) async {
     try {
       _isLoading.value = true;
 
@@ -230,22 +230,11 @@ class TimetableController extends GetxController {
       // Batch create all timetable entries
       await _apiService.createTimetable(timetableEntries);
 
-      Get.snackbar(
-        'Success',
-        'Timetable saved successfully',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-
-      // Reload timetables to show updated data
       await loadTimetables();
+      return true;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to save timetable: ${e.toString()}',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      AppNotifier.error('Error', 'Failed to save timetable: ${e.toString()}');
+      return false;
     } finally {
       _isLoading.value = false;
     }
@@ -259,9 +248,9 @@ class TimetableController extends GetxController {
       // Reload from API
       await loadTimetables();
 
-      Get.snackbar('Success', 'Timetable deleted successfully');
+      AppNotifier.success('Success', 'Timetable deleted successfully');
     } catch (e) {
-      Get.snackbar('Error', 'Failed to delete timetable: $e');
+      AppNotifier.error('Error', 'Failed to delete timetable: $e');
     } finally {
       _isLoading.value = false;
     }

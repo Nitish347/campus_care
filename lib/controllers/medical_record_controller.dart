@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 
 class MedicalRecordController extends GetxController {
   final formKey = GlobalKey<FormState>();
@@ -23,12 +24,12 @@ class MedicalRecordController extends GetxController {
   Future<void> saveRecord() async {
     if (!formKey.currentState!.validate()) return;
     if (selectedStudent == null || selectedType == null || recordDate == null) {
-      Get.snackbar('Error', 'Please fill all required fields');
+      AppNotifier.error('Error', 'Please fill all required fields');
       return;
     }
 
-    Get.snackbar('Success', 'Medical record added successfully');
     Get.back();
+    AppNotifier.afterNavigation('Success', 'Medical record added successfully');
   }
 }
 

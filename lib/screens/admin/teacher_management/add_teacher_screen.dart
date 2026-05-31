@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:campus_care/models/teacher/teacher.dart';
 import 'package:campus_care/controllers/teacher_controller.dart';
 import 'package:campus_care/services/upload_service.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 import 'package:campus_care/utils/upload_url_utils.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/buttons/primary_button.dart';
@@ -70,18 +71,6 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
     super.dispose();
   }
 
-  void _showSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Theme.of(context).colorScheme.error : null,
-      ),
-    );
-  }
-
   Future<void> _selectHireDate(BuildContext context) async {
     final picked = await showDatePicker(
       context: context,
@@ -130,9 +119,9 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
       });
       return uploadedUrl.isEmpty ? _existingProfileImageUrl : uploadedUrl;
     } catch (e) {
-      _showSnackBar(
+      AppNotifier.error(
+        'Error',
         'Upload failed: ${e.toString().replaceFirst('Exception: ', '')}',
-        isError: true,
       );
       return _existingProfileImageUrl;
     } finally {
@@ -183,7 +172,15 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
       );
 
       if (isEditMode) {
-        await _teacherController.updateTeacher(teacher);
+        final updated = await _teacherController.updateTeacher(
+          teacher,
+          popOnSuccess: false,
+          showSnackbar: false,
+        );
+        if (updated && mounted) {
+          Get.back();
+          AppNotifier.afterNavigation('Success', 'Teacher updated successfully');
+        }
         return;
       }
 
@@ -211,10 +208,9 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
 
           if (createdTeacher == null) {
             if (!mounted) return;
-            Get.back();
-            _showSnackBar(
+            AppNotifier.error(
+              'Error',
               'Teacher added, but profile image could not be linked automatically.',
-              isError: true,
             );
             return;
           }
@@ -235,7 +231,7 @@ class _AddTeacherScreenState extends State<AddTeacherScreen> {
 
       if (!mounted) return;
       Get.back();
-      _showSnackBar('Teacher added successfully');
+      AppNotifier.afterNavigation('Success', 'Teacher added successfully');
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);

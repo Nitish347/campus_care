@@ -1,6 +1,7 @@
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/models/subject.dart';
 import 'package:campus_care/services/subject_service.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 import 'package:get/get.dart';
 
 class SubjectController extends GetxController {
@@ -22,11 +23,7 @@ class SubjectController extends GetxController {
       subjects.value = await SubjectService.getAllSubjects();
     } catch (e) {
       error.value = e.toString();
-      Get.snackbar(
-        'Error',
-        'Failed to load subjects: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', 'Failed to load subjects: $e');
     } finally {
       isLoading.value = false;
     }
@@ -40,7 +37,7 @@ class SubjectController extends GetxController {
   }
 
   /// Add a new subject
-  Future<void> addSubject(Subject subject) async {
+  Future<bool> addSubject(Subject subject) async {
     try {
       isLoading.value = true;
       error.value = '';
@@ -57,28 +54,21 @@ class SubjectController extends GetxController {
       final newId = await SubjectService.addSubject(subjectWithInstitute);
 
       if (newId.isNotEmpty) {
-        // Refresh the list
         await fetchSubjects();
-        Get.snackbar(
-          'Success',
-          'Subject added successfully',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        return true;
       }
+      throw Exception('Failed to add subject');
     } catch (e) {
       error.value = e.toString();
-      Get.snackbar(
-        'Error',
-        'Failed to add subject: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', 'Failed to add subject: $e');
+      return false;
     } finally {
       isLoading.value = false;
     }
   }
 
   /// Update an existing subject
-  Future<void> updateSubject(Subject subject) async {
+  Future<bool> updateSubject(Subject subject) async {
     try {
       isLoading.value = true;
       error.value = '';
@@ -86,23 +76,15 @@ class SubjectController extends GetxController {
       final success = await SubjectService.updateSubject(subject);
 
       if (success) {
-        // Refresh the list
         await fetchSubjects();
-        Get.snackbar(
-          'Success',
-          'Subject updated successfully',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        return true;
       } else {
         throw Exception('Update failed');
       }
     } catch (e) {
       error.value = e.toString();
-      Get.snackbar(
-        'Error',
-        'Failed to update subject: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', 'Failed to update subject: $e');
+      return false;
     } finally {
       isLoading.value = false;
     }
@@ -116,20 +98,11 @@ class SubjectController extends GetxController {
 
       await SubjectService.deleteSubject(id);
 
-      // Refresh the list
       await fetchSubjects();
-      Get.snackbar(
-        'Success',
-        'Subject deleted successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.success('Success', 'Subject deleted successfully');
     } catch (e) {
       error.value = e.toString();
-      Get.snackbar(
-        'Error',
-        'Failed to delete subject: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', 'Failed to delete subject: $e');
     } finally {
       isLoading.value = false;
     }

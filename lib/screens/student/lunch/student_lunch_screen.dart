@@ -1,7 +1,5 @@
 import 'package:campus_care/controllers/auth_controller.dart';
-import 'package:campus_care/models/student/student.dart';
-import 'package:campus_care/models/student/student_attendance_model.dart';
-import 'package:campus_care/services/api/attendance_api_service.dart';
+import 'package:campus_care/services/api/lunch_api_service.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
 import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
@@ -10,122 +8,134 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-class StudentAttendanceScreen extends StatefulWidget {
-  const StudentAttendanceScreen({super.key});
+class StudentLunchScreen extends StatefulWidget {
+  const StudentLunchScreen({super.key});
 
   @override
-  State<StudentAttendanceScreen> createState() => _StudentAttendanceScreenState();
+  State<StudentLunchScreen> createState() => _StudentLunchScreenState();
 }
 
-class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
-  final AttendanceApiService _attendanceApi = AttendanceApiService();
+class _StudentLunchScreenState extends State<StudentLunchScreen> {
+  final LunchApiService _lunchApi = LunchApiService();
   final AuthController _authController = Get.find<AuthController>();
-  final DateTime _today = DateTime.now();
 
-  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
-  List<StudentAttendanceModel> _allAttendance = [];
   bool _isLoading = true;
+  DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  List<Map<String, dynamic>> _records = [];
 
   @override
   void initState() {
     super.initState();
-    _loadAttendance();
+    _loadLunch();
   }
 
-  Future<void> _loadAttendance() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadLunch() async {
+    final student = _authController.currentStudent;
+    if (student == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
     try {
-      final Student? currentUser = _authController.currentStudent;
-      if (currentUser == null) return;
-
-      final attendanceData = await _attendanceApi.getAttendance(studentId: currentUser.id);
-      _allAttendance = attendanceData.whereType<Map>().map((dataRaw) {
-        final data = Map<String, dynamic>.from(dataRaw);
-        final dateRaw = data['date'];
-        DateTime date;
-        if (dateRaw is int) {
-          final ms = dateRaw > 10000000000 ? dateRaw : dateRaw * 1000;
-          date = DateTime.fromMillisecondsSinceEpoch(ms);
-        } else if (dateRaw is String) {
-          final asInt = int.tryParse(dateRaw);
-          if (asInt != null) {
-            final ms = asInt > 10000000000 ? asInt : asInt * 1000;
-            date = DateTime.fromMillisecondsSinceEpoch(ms);
-          } else {
-            date = DateTime.tryParse(dateRaw) ?? DateTime.now();
-          }
-        } else {
-          date = DateTime.now();
-        }
-
-        return StudentAttendanceModel(
-          id: (data['id'] ?? '').toString(),
-          dateTime: date,
-          status: (data['status'] ?? '').toString().toLowerCase(),
-          userId: (data['student_id'] ?? currentUser.id).toString(),
-          type: 'daily',
-          remark: data['remarks']?.toString(),
-          markedBy: (data['marked_by'] ?? '').toString(),
-        );
-      }).toList()
-        ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
-
-      if (_allAttendance.isNotEmpty) {
-        final latest = _allAttendance.first.dateTime;
+      setState(() => _isLoading = true);
+      final data = await _lunchApi.getLunch(studentId: student.id);
+      final records =
+          data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      records.sort((a, b) => _parseUnix(b['date']).compareTo(_parseUnix(a['date'])));
+      if (records.isNotEmpty) {
+        final latest = _parseUnix(records.first['date']);
         _selectedMonth = DateTime(latest.year, latest.month);
       }
+      setState(() => _records = records);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  DateTime _parseUnix(dynamic raw) {
+    if (raw is int) {
+      final ms = raw > 10000000000 ? raw : raw * 1000;
+      return DateTime.fromMillisecondsSinceEpoch(ms);
+    }
+    if (raw is String) {
+      final asInt = int.tryParse(raw);
+      if (asInt != null) {
+        final ms = asInt > 10000000000 ? asInt : asInt * 1000;
+        return DateTime.fromMillisecondsSinceEpoch(ms);
+      }
+      return DateTime.tryParse(raw) ?? DateTime.now();
+    }
+    return DateTime.now();
+  }
+
+  String _status(dynamic raw) => (raw?.toString() ?? 'Not Taken').trim();
+
   List<Map<String, dynamic>> _calendarDataForMonth(DateTime month) {
     final firstDay = DateTime(month.year, month.month, 1);
     final lastDay = DateTime(month.year, month.month + 1, 0);
     final firstDayOfWeek = firstDay.weekday % 7;
-    final today = DateTime(_today.year, _today.month, _today.day);
     final cells = <Map<String, dynamic>>[];
 
     for (int i = 0; i < firstDayOfWeek; i++) {
-      cells.add({'date': null, 'status': null, 'attendance': null, 'isFuture': false});
+      cells.add({'date': null, 'status': null, 'record': null});
     }
 
     for (int day = 1; day <= lastDay.day; day++) {
       final date = DateTime(month.year, month.month, day);
       final dateOnly = DateTime(date.year, date.month, date.day);
-      final isFuture = dateOnly.isAfter(today);
 
-      StudentAttendanceModel? attendanceRecord;
-      for (final att in _allAttendance) {
-        final attDate = DateTime(att.dateTime.year, att.dateTime.month, att.dateTime.day);
-        if (attDate == dateOnly) {
-          attendanceRecord = att;
+      Map<String, dynamic>? record;
+      for (final item in _records) {
+        final d = _parseUnix(item['date']);
+        final itemDate = DateTime(d.year, d.month, d.day);
+        if (itemDate == dateOnly) {
+          record = item;
           break;
         }
       }
 
       cells.add({
         'date': date,
-        'status': attendanceRecord?.status,
-        'attendance': attendanceRecord,
-        'isFuture': isFuture,
+        'status': record == null ? null : _status(record['status']),
+        'record': record,
       });
     }
     return cells;
   }
 
-  List<Map<String, dynamic>> get _attendance => _calendarDataForMonth(_selectedMonth);
+  int get _fullMealCount =>
+      _records.where((r) => _status(r['status']).toLowerCase() == 'full meal').length;
+  int get _halfMealCount =>
+      _records.where((r) => _status(r['status']).toLowerCase() == 'half meal').length;
+  int get _notTakenCount =>
+      _records.where((r) => _status(r['status']).toLowerCase() == 'not taken').length;
 
-  int get _presentDays =>
-      _attendance.where((a) => a['status'] == 'present').length;
+  Color _statusColor(String status, ThemeData theme) {
+    switch (status.toLowerCase()) {
+      case 'full meal':
+        return Colors.green;
+      case 'half meal':
+        return Colors.orange;
+      case 'absent':
+        return Colors.red;
+      case 'not taken':
+        return theme.colorScheme.outline;
+      default:
+        return theme.colorScheme.outline;
+    }
+  }
 
-  int get _absentDays =>
-      _attendance.where((a) => a['status'] == 'absent').length;
-
-  int get _attendancePercentage {
-    final markedDays = _attendance.where((a) => a['status'] != null).length;
-    if (markedDays == 0) return 0;
-    return (_presentDays / markedDays * 100).round();
+  IconData _statusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'full meal':
+        return Icons.restaurant;
+      case 'half meal':
+        return Icons.lunch_dining;
+      case 'absent':
+        return Icons.event_busy;
+      default:
+        return Icons.no_meals;
+    }
   }
 
   void _previousMonth() {
@@ -144,16 +154,18 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    final today = DateTime(_today.year, _today.month, _today.day);
+    final cells = _calendarDataForMonth(_selectedMonth);
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
 
     return Scaffold(
       appBar: StudentAppBar(
-        title: 'Attendance',
+        title: 'Lunch',
         extraActions: [
           const SizedBox(width: 6),
           InkWell(
             borderRadius: BorderRadius.circular(10),
-            onTap: _loadAttendance,
+            onTap: _loadLunch,
             child: Container(
               width: 38,
               height: 38,
@@ -174,9 +186,9 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _summaryItem(context, 'Present', '$_presentDays', Colors.green),
-                      _summaryItem(context, 'Absent', '$_absentDays', Colors.red),
-                      _summaryItem(context, 'Rate', '$_attendancePercentage%', theme.colorScheme.primary),
+                      _summaryItem(context, 'Full Meal', '$_fullMealCount', Colors.green),
+                      _summaryItem(context, 'Half Meal', '$_halfMealCount', Colors.orange),
+                      _summaryItem(context, 'Not Taken', '$_notTakenCount', theme.colorScheme.outline),
                     ],
                   ),
                 ),
@@ -210,25 +222,13 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _legendDot('Present', Colors.green, theme),
-                      _legendDot('Absent', Colors.red, theme),
-                      _legendDot('No Record', theme.colorScheme.outline, theme),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
                 Expanded(
                   child: ResponsivePadding(
-                    child: _attendance.isEmpty
+                    child: _records.isEmpty
                         ? const EmptyState(
-                            icon: Icons.event_busy,
-                            title: 'No attendance records',
-                            message: 'No attendance records available for this month.',
+                            icon: Icons.no_meals,
+                            title: 'No lunch records',
+                            message: 'No lunch records found for this month.',
                           )
                         : Column(
                             children: [
@@ -259,40 +259,32 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                                     crossAxisSpacing: 6,
                                     mainAxisSpacing: 6,
                                   ),
-                                  itemCount: _attendance.length,
+                                  itemCount: cells.length,
                                   itemBuilder: (_, index) {
-                                    final item = _attendance[index];
+                                    final item = cells[index];
                                     final date = item['date'] as DateTime?;
                                     if (date == null) return const SizedBox.shrink();
 
                                     final status = item['status'] as String?;
-                                    final attendanceRecord = item['attendance'] as StudentAttendanceModel?;
-                                    final isPresent = status == 'present';
-                                    final isAbsent = status == 'absent';
-                                    final dateOnly = DateTime(date.year, date.month, date.day);
-                                    final isToday = dateOnly == today;
+                                    final record = item['record'] as Map<String, dynamic>?;
+                                    final isToday =
+                                        DateTime(date.year, date.month, date.day) == todayDate;
 
-                                    Color bg = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35);
-                                    Color border = theme.colorScheme.outline.withValues(alpha: 0.25);
-                                    if (isPresent) {
-                                      bg = Colors.green.withValues(alpha: 0.14);
-                                      border = Colors.green.withValues(alpha: 0.45);
-                                    } else if (isAbsent) {
-                                      bg = Colors.red.withValues(alpha: 0.14);
-                                      border = Colors.red.withValues(alpha: 0.45);
-                                    }
+                                    final color = status == null
+                                        ? theme.colorScheme.outline.withValues(alpha: 0.25)
+                                        : _statusColor(status, theme);
 
                                     return InkWell(
                                       borderRadius: BorderRadius.circular(12),
-                                      onTap: attendanceRecord == null
+                                      onTap: record == null
                                           ? null
-                                          : () => _showAttendanceDetails(context, attendanceRecord),
+                                          : () => _showLunchDetails(context, date, status!),
                                       child: Container(
                                         decoration: BoxDecoration(
-                                          color: bg,
+                                          color: color.withValues(alpha: 0.14),
                                           borderRadius: BorderRadius.circular(12),
                                           border: Border.all(
-                                            color: isToday ? theme.colorScheme.primary : border,
+                                            color: isToday ? theme.colorScheme.primary : color.withValues(alpha: 0.5),
                                             width: isToday ? 2 : 1.2,
                                           ),
                                         ),
@@ -307,11 +299,11 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                                               ),
                                             ),
                                             const SizedBox(height: 2),
-                                            if (isPresent || isAbsent)
+                                            if (status != null)
                                               Icon(
-                                                isPresent ? Icons.check_circle : Icons.cancel,
-                                                size: 15,
-                                                color: isPresent ? Colors.green : Colors.red,
+                                                _statusIcon(status),
+                                                size: 14,
+                                                color: color,
                                               ),
                                           ],
                                         ),
@@ -345,23 +337,9 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     );
   }
 
-  Widget _legendDot(String text, Color color, ThemeData theme) {
-    return Row(
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 6),
-        Text(text, style: theme.textTheme.labelMedium),
-      ],
-    );
-  }
-
-  void _showAttendanceDetails(BuildContext context, StudentAttendanceModel attendance) {
+  void _showLunchDetails(BuildContext context, DateTime date, String status) {
     final theme = Theme.of(context);
-    final isPresent = attendance.status == 'present';
+    final color = _statusColor(status, theme);
 
     showModalBottomSheet(
       context: context,
@@ -375,26 +353,20 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isPresent ? 'Present' : 'Absent',
+              status,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: isPresent ? Colors.green : Colors.red,
+                color: color,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              DateFormat('EEEE, MMM dd, yyyy').format(attendance.dateTime),
+              DateFormat('EEEE, MMM dd, yyyy').format(date),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            if ((attendance.remark ?? '').isNotEmpty) ...[
-              const SizedBox(height: 14),
-              Text('Remark', style: theme.textTheme.titleSmall),
-              const SizedBox(height: 4),
-              Text(attendance.remark!),
-            ],
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
           ],
         ),
       ),

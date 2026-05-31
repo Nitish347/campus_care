@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:campus_care/core/api_client.dart';
 import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/services/storage_service.dart';
@@ -31,13 +29,8 @@ class AuthApiService {
     required String role,
   }) async {
     // Determine the login endpoint based on role
-    final loginEndpoint = '${AppConstants.authEndpoint}/login/${_rolePath(role)}';
-
-    log('=== ABOUT TO CALL API ===');
-    log('Login endpoint: $loginEndpoint');
-    log('Identifier: $identifier');
-    log('Role: $role');
-    log('========================');
+    final loginEndpoint =
+        '${AppConstants.authEndpoint}/login/${_rolePath(role)}';
 
     final response = await _apiClient.post(
       loginEndpoint,
@@ -47,13 +40,6 @@ class AuthApiService {
       },
       includeAuth: false,
     );
-
-    // Debug logging
-    log('=== LOGIN RESPONSE ===');
-    log('Full response: $response');
-    log('Success: ${response['success']}');
-    log('Data: ${response['data']}');
-    log('====================');
 
     // Extract token and user data from response
     if (response['success'] == true && response['data'] != null) {
@@ -72,7 +58,6 @@ class AuthApiService {
       };
     }
 
-    log('Login failed - throwing exception');
     throw Exception('Invalid login response');
   }
 

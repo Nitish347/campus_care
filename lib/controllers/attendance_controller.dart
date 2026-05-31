@@ -1,4 +1,3 @@
-import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/models/student/student.dart';
@@ -286,13 +285,27 @@ class AttendanceController extends GetxController {
       if (bulkData.isNotEmpty) {
         final results = await _attendanceService.bulkMarkAttendance(bulkData);
         for (var result in results) {
-          if (result['success'] == true) {
-            successCount++;
-          } else {
+          if (result is Map<String, dynamic>) {
+            if (result['success'] == true) {
+              successCount++;
+              continue;
+            }
+
+            // Attendance bulk API currently returns created/upserted records directly,
+            // not wrapped per-item success objects. Treat records with an id as success.
+            final recordId = result['id'] ?? result['_id'];
+            if (recordId != null) {
+              successCount++;
+              continue;
+            }
+
             failureCount++;
             if (result['error'] != null) {
               errors.add(result['error'].toString());
             }
+          } else {
+            // Non-map items from bulk create are treated as successful inserts.
+            successCount++;
           }
         }
       }

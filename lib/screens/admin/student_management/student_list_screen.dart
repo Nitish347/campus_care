@@ -45,7 +45,6 @@ class StudentListScreen extends GetView<StudentController> {
                 label: 'Refresh',
                 onPressed: () {
                   controller.resetSelection();
-                  controller.loadStudents();
                 },
               ),
               if (!isTeacherView) ...[
@@ -62,7 +61,7 @@ class StudentListScreen extends GetView<StudentController> {
           // Main content
           Expanded(
             child: Obx(() {
-              if (controller.isLoading) {
+              if (controller.isInitialLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
               return _buildStudentList(context);
@@ -116,11 +115,18 @@ class StudentListScreen extends GetView<StudentController> {
                 onChanged: controller.searchStudents,
               );
 
+              final sortControl = _SortControl(
+                height: toolbarControlHeight,
+                sortBy: controller.sortBy,
+                sortOrder: controller.sortOrder,
+                onSelected: controller.setSort,
+              );
+
               final countBadge = Obx(
                 () => SizedBox(
                   height: toolbarControlHeight,
                   child: _StudentCountBadge(
-                    count: controller.filteredStudents.length,
+                    count: controller.totalStudents,
                   ),
                 ),
               );
@@ -132,6 +138,8 @@ class StudentListScreen extends GetView<StudentController> {
                     Expanded(flex: 6, child: classAndSection),
                     const SizedBox(width: 12),
                     Expanded(flex: 4, child: searchBar),
+                    const SizedBox(width: 12),
+                    sortControl,
                     const SizedBox(width: 12),
                     countBadge,
                   ],
@@ -147,6 +155,8 @@ class StudentListScreen extends GetView<StudentController> {
                     children: [
                       Expanded(child: searchBar),
                       const SizedBox(width: 12),
+                      sortControl,
+                      const SizedBox(width: 12),
                       countBadge,
                     ],
                   ),
@@ -158,23 +168,56 @@ class StudentListScreen extends GetView<StudentController> {
 
         // List/Table
         Expanded(
-          child: Obx(() {
-            if (controller.filteredStudents.isEmpty) {
-              return EmptyState(
-                icon: Icons.people_outline_rounded,
-                title: 'No students found',
-                message: 'Try adjusting your search or filter criteria',
-                action: ElevatedButton.icon(
-                  onPressed: () => Get.toNamed(AppRoutes.addStudent),
-                  icon: const Icon(Icons.person_add_rounded, size: 18),
-                  label: const Text('Add Student'),
+          child: Column(
+            children: [
+              Obx(
+                () => AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  child: controller.isListLoading
+                      ? const Padding(
+                          padding: EdgeInsets.only(top: 10, bottom: 2),
+                          child: Center(child: _RefreshingResultsBadge()),
+                        )
+                      : const SizedBox(height: 12),
                 ),
-              );
-            }
-            return isDesktop
-                ? _buildDesktopTable(context, controller.filteredStudents)
-                : _buildMobileList(context, controller.filteredStudents);
-          }),
+              ),
+              Expanded(
+                child: Obx(() {
+                  final students = controller.filteredStudents;
+                  final content = students.isEmpty
+                      ? EmptyState(
+                          icon: Icons.people_outline_rounded,
+                          title: 'No students found',
+                          message:
+                              'Try adjusting your search or filter criteria',
+                          action: ElevatedButton.icon(
+                            onPressed: () => Get.toNamed(AppRoutes.addStudent),
+                            icon:
+                                const Icon(Icons.person_add_rounded, size: 18),
+                            label: const Text('Add Student'),
+                          ),
+                        )
+                      : isDesktop
+                          ? _buildDesktopTable(context, students)
+                          : _buildMobileList(context, students);
+
+                  return content;
+                }),
+              ),
+              Obx(
+                () => _StudentPaginationBar(
+                  currentPage: controller.currentPage,
+                  totalPages: controller.totalPages,
+                  totalStudents: controller.totalStudents,
+                  pageSize: StudentController.studentsPerPage,
+                  hasPreviousPage: controller.hasPreviousPage,
+                  hasNextPage: controller.hasNextPage,
+                  onPrevious: controller.previousPage,
+                  onNext: controller.nextPage,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -202,72 +245,117 @@ class StudentListScreen extends GetView<StudentController> {
   Widget _buildDesktopTable(BuildContext context, List<Student> students) {
     final theme = Theme.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: theme.colorScheme.outline.withValues(alpha: 0.12),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Column(
-            children: [
-              // Table header
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      theme.colorScheme.primary.withValues(alpha: 0.08),
-                      theme.colorScheme.primaryContainer
-                          .withValues(alpha: 0.04),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const tableMinWidth = 1180.0;
+        final tableWidth = constraints.maxWidth < tableMinWidth
+            ? tableMinWidth
+            : constraints.maxWidth;
+
+        return Scrollbar(
+          thumbVisibility: constraints.maxWidth < tableMinWidth,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: tableWidth,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.12),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
-                ),
-                child: Row(
-                  children: [
-                    _TableHeaderCell('Student', flex: 3),
-                    _TableHeaderCell('Student ID', flex: 2),
-                    _TableHeaderCell('Email', flex: 3),
-                    _TableHeaderCell('Phone', flex: 2),
-                    _TableHeaderCell('Class', flex: 2),
-                    _TableHeaderCell('Actions',
-                        flex: 1, align: TextAlign.center),
-                  ],
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 14),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                theme.colorScheme.primary
+                                    .withValues(alpha: 0.08),
+                                theme.colorScheme.primaryContainer
+                                    .withValues(alpha: 0.04),
+                              ],
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              _TableHeaderCell(
+                                'Student',
+                                flex: 3,
+                                sortKey: 'name',
+                                currentSort: controller.sortBy,
+                                sortOrder: controller.sortOrder,
+                                onSort: controller.setSort,
+                              ),
+                              _TableHeaderCell(
+                                'Student ID',
+                                flex: 2,
+                                sortKey: 'enrollmentNumber',
+                                currentSort: controller.sortBy,
+                                sortOrder: controller.sortOrder,
+                                onSort: controller.setSort,
+                              ),
+                              _TableHeaderCell(
+                                'Email',
+                                flex: 3,
+                                sortKey: 'email',
+                                currentSort: controller.sortBy,
+                                sortOrder: controller.sortOrder,
+                                onSort: controller.setSort,
+                              ),
+                              _TableHeaderCell('Phone', flex: 2),
+                              _TableHeaderCell(
+                                'Class',
+                                flex: 1,
+                                sortKey: 'class',
+                                currentSort: controller.sortBy,
+                                sortOrder: controller.sortOrder,
+                                onSort: controller.setSort,
+                              ),
+                              _TableHeaderCell('Actions',
+                                  flex: 2, align: TextAlign.center),
+                            ],
+                          ),
+                        ),
+                        ...students.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final student = entry.value;
+                          final isEven = index % 2 == 0;
+                          return _DesktopStudentRow(
+                            student: student,
+                            isEven: isEven,
+                            theme: theme,
+                            className: _getClassName(student.class_),
+                            onView: () => _openStudentDetails(student),
+                            onEdit: () => Get.to(
+                                () => AddStudentScreen(student: student)),
+                            onDelete: () => _showDeleteDialog(context, student),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              // Table rows
-              ...students.asMap().entries.map((entry) {
-                final index = entry.key;
-                final student = entry.value;
-                final isEven = index % 2 == 0;
-                return _DesktopStudentRow(
-                  student: student,
-                  isEven: isEven,
-                  theme: theme,
-                  className: _getClassName(student.class_),
-                  onView: () => _openStudentDetails(student),
-                  onEdit: () =>
-                      Get.to(() => AddStudentScreen(student: student)),
-                  onDelete: () => _showDeleteDialog(context, student),
-                );
-              }),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -350,6 +438,205 @@ class _StudentCountBadge extends StatelessWidget {
     );
 
     return badge;
+  }
+}
+
+class _SortControl extends StatelessWidget {
+  final double height;
+  final String sortBy;
+  final String sortOrder;
+  final ValueChanged<String> onSelected;
+
+  const _SortControl({
+    required this.height,
+    required this.sortBy,
+    required this.sortOrder,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final label = switch (sortBy) {
+      'enrollmentNumber' => 'Student ID',
+      'rollNumber' => 'Roll No',
+      'email' => 'Email',
+      'class' => 'Class',
+      'section' => 'Section',
+      'createdAt' => 'Created',
+      _ => 'Name',
+    };
+
+    return SizedBox(
+      height: height,
+      child: PopupMenuButton<String>(
+        tooltip: 'Sort students',
+        onSelected: onSelected,
+        itemBuilder: (context) => const [
+          PopupMenuItem(value: 'name', child: Text('Name')),
+          PopupMenuItem(value: 'enrollmentNumber', child: Text('Student ID')),
+          PopupMenuItem(value: 'rollNumber', child: Text('Roll No')),
+          PopupMenuItem(value: 'email', child: Text('Email')),
+          PopupMenuItem(value: 'class', child: Text('Class')),
+          PopupMenuItem(value: 'section', child: Text('Section')),
+          PopupMenuItem(value: 'createdAt', child: Text('Created')),
+        ],
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest
+                .withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.18),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                sortOrder == 'asc'
+                    ? Icons.arrow_upward_rounded
+                    : Icons.arrow_downward_rounded,
+                size: 16,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StudentPaginationBar extends StatelessWidget {
+  final int currentPage;
+  final int totalPages;
+  final int totalStudents;
+  final int pageSize;
+  final bool hasPreviousPage;
+  final bool hasNextPage;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+
+  const _StudentPaginationBar({
+    required this.currentPage,
+    required this.totalPages,
+    required this.totalStudents,
+    required this.pageSize,
+    required this.hasPreviousPage,
+    required this.hasNextPage,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final start = totalStudents == 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
+    final end = (currentPage * pageSize).clamp(0, totalStudents);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          top: BorderSide(
+            color: theme.colorScheme.outline.withValues(alpha: 0.12),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              totalStudents == 0
+                  ? 'No students'
+                  : 'Showing $start-$end of $totalStudents students',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            tooltip: 'Previous page',
+            onPressed: hasPreviousPage ? onPrevious : null,
+            icon: const Icon(Icons.chevron_left_rounded),
+          ),
+          Text(
+            'Page $currentPage of $totalPages',
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          IconButton(
+            tooltip: 'Next page',
+            onPressed: hasNextPage ? onNext : null,
+            icon: const Icon(Icons.chevron_right_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RefreshingResultsBadge extends StatelessWidget {
+  const _RefreshingResultsBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.16),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Updating',
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -535,24 +822,73 @@ class _TableHeaderCell extends StatelessWidget {
   final String label;
   final int flex;
   final TextAlign align;
+  final String? sortKey;
+  final String? currentSort;
+  final String? sortOrder;
+  final ValueChanged<String>? onSort;
 
-  const _TableHeaderCell(this.label,
-      {this.flex = 1, this.align = TextAlign.left});
+  const _TableHeaderCell(
+    this.label, {
+    this.flex = 1,
+    this.align = TextAlign.left,
+    this.sortKey,
+    this.currentSort,
+    this.sortOrder,
+    this.onSort,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isSorted = sortKey != null && sortKey == currentSort;
+    final child = Row(
+      mainAxisSize:
+          align == TextAlign.center ? MainAxisSize.min : MainAxisSize.max,
+      mainAxisAlignment: align == TextAlign.center
+          ? MainAxisAlignment.center
+          : MainAxisAlignment.start,
+      children: [
+        Flexible(
+          child: Text(
+            label,
+            textAlign: align,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.primary,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        if (sortKey != null) ...[
+          const SizedBox(width: 4),
+          Icon(
+            isSorted
+                ? (sortOrder == 'desc'
+                    ? Icons.arrow_downward_rounded
+                    : Icons.arrow_upward_rounded)
+                : Icons.unfold_more_rounded,
+            size: 14,
+            color: isSorted
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ],
+    );
+
     return Expanded(
       flex: flex,
-      child: Text(
-        label,
-        textAlign: align,
-        style: theme.textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: theme.colorScheme.primary,
-          letterSpacing: 0.5,
-        ),
-      ),
+      child: sortKey == null || onSort == null
+          ? child
+          : InkWell(
+              borderRadius: BorderRadius.circular(6),
+              onTap: () => onSort!(sortKey!),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: child,
+              ),
+            ),
     );
   }
 }
@@ -662,13 +998,14 @@ class _DesktopStudentRowState extends State<_DesktopStudentRow> {
                 Expanded(
                   flex: 2,
                   child: Text(
-                    widget.student.phone ?? '—',
+                    widget.student.phone ?? '-',
                     style: widget.theme.textTheme.bodySmall,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 // Class badge
                 Expanded(
-                  flex: 2,
+                  flex: 1,
                   child: Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -689,7 +1026,7 @@ class _DesktopStudentRowState extends State<_DesktopStudentRow> {
                 ),
                 // Actions
                 Expanded(
-                  flex: 1,
+                  flex: 2,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

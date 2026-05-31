@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:campus_care/models/homework_model.dart';
 import 'package:campus_care/controllers/homework_controller.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 import 'package:campus_care/widgets/inputs/custom_text_field.dart';
 import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 
@@ -99,13 +100,7 @@ class _AdminAddEditHomeworkScreenState
   Future<void> _saveHomework() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedClass == null || _selectedSection == null) {
-        Get.snackbar(
-          'Error',
-          'Please select class and section',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        AppNotifier.error('Error', 'Please select class and section');
         return;
       }
 
@@ -128,16 +123,18 @@ class _AdminAddEditHomeworkScreenState
         totalMarks: double.tryParse(_totalMarksController.text),
       );
 
-      try {
-        if (_isEditing) {
-          await controller.updateHomework(homework);
-          Get.back();
-        } else {
-          await controller.addHomework(homework);
-          Get.back();
-        }
-      } catch (e) {
-        // Error already shown by controller
+      final success = _isEditing
+          ? await controller.updateHomework(homework)
+          : await controller.addHomework(homework);
+
+      if (success) {
+        Get.back();
+        AppNotifier.afterNavigation(
+          'Success',
+          _isEditing
+              ? 'Homework updated successfully'
+              : 'Homework created successfully',
+        );
       }
     }
   }

@@ -11,6 +11,7 @@ import 'package:campus_care/widgets/inputs/custom_dropdown.dart';
 import 'package:campus_care/widgets/buttons/primary_button.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/common/section_header.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 
 import '../../../widgets/inputs/class_section_dropdown.dart';
 import '../../../widgets/inputs/subject_dropdown.dart';
@@ -110,7 +111,7 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
         _teachers = teachers;
       });
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load teachers');
+      AppNotifier.error('Error', 'Failed to load teachers');
     }
   }
 
@@ -149,7 +150,7 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
   void _autoFillAllDays() {
     final mondayPeriods = _weeklySchedule['Monday'] ?? [];
     if (mondayPeriods.isEmpty) {
-      Get.snackbar('Error', 'Please add periods for Monday first');
+      AppNotifier.error('Error', 'Please add periods for Monday first');
       return;
     }
 
@@ -171,14 +172,14 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
       }
     });
 
-    Get.snackbar('Success', 'Monday schedule copied to all days');
+    AppNotifier.success('Success', 'Monday schedule copied to all days');
   }
 
   Future<void> _saveTimetable() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedClass == null || _selectedSection == null) {
-      Get.snackbar('Error', 'Please select class and section');
+      AppNotifier.error('Error', 'Please select class and section');
       return;
     }
 
@@ -186,7 +187,7 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
     bool hasPeriods =
         _weeklySchedule.values.any((periods) => periods.isNotEmpty);
     if (!hasPeriods) {
-      Get.snackbar('Error', 'Please add at least one period');
+      AppNotifier.error('Error', 'Please add at least one period');
       return;
     }
 
@@ -194,7 +195,7 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
     for (var day in _days) {
       for (var period in _weeklySchedule[day]!) {
         if (period.subject.isEmpty || period.teacherId.isEmpty) {
-          Get.snackbar('Error', 'Please fill all required fields for $day');
+          AppNotifier.error('Error', 'Please fill all required fields for $day');
           return;
         }
       }
@@ -207,8 +208,11 @@ class _AddTimetableScreenState extends State<AddTimetableScreen> {
       weeklySchedule: Map.from(_weeklySchedule),
     );
 
-    await _controller.saveTimetable(timetable);
-    Get.offNamed(AppRoutes.timetable);
+    final success = await _controller.saveTimetable(timetable);
+    if (success) {
+      Get.offNamed(AppRoutes.timetable);
+      AppNotifier.afterNavigation('Success', 'Timetable saved successfully');
+    }
   }
 
   @override

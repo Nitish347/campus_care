@@ -3,6 +3,7 @@ import 'package:campus_care/models/homework_model.dart';
 import 'package:campus_care/models/homework_submission_model.dart';
 import 'package:campus_care/services/api/homework_api_service.dart';
 import 'package:campus_care/core/api_exception.dart';
+import 'package:campus_care/utils/app_notifier.dart';
 
 class HomeworkController extends GetxController {
   final HomeworkApiService _apiService = HomeworkApiService();
@@ -44,17 +45,9 @@ class HomeworkController extends GetxController {
       homeworkList.value =
           data.map((json) => HomeWorkModel.fromJson(json)).toList();
     } on ApiException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', e.message);
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to load homework: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', 'Failed to load homework: $e');
     } finally {
       isLoading.value = false;
     }
@@ -99,7 +92,7 @@ class HomeworkController extends GetxController {
   }
 
   // Add new homework
-  Future<void> addHomework(HomeWorkModel homework) async {
+  Future<bool> addHomework(HomeWorkModel homework) async {
     try {
       isLoading.value = true;
 
@@ -118,33 +111,20 @@ class HomeworkController extends GetxController {
 
       final createdHomework = await _apiService.createHomework(homeworkData);
       homeworkList.add(HomeWorkModel.fromJson(createdHomework));
-
-      Get.snackbar(
-        'Success',
-        'Homework created successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      return true;
     } on ApiException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      rethrow;
+      AppNotifier.error('Error', e.message);
+      return false;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to create homework: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      rethrow;
+      AppNotifier.error('Error', 'Failed to create homework: $e');
+      return false;
     } finally {
       isLoading.value = false;
     }
   }
 
   // Update homework
-  Future<void> updateHomework(HomeWorkModel homework) async {
+  Future<bool> updateHomework(HomeWorkModel homework) async {
     try {
       isLoading.value = true;
 
@@ -166,26 +146,13 @@ class HomeworkController extends GetxController {
       if (index != -1) {
         homeworkList[index] = HomeWorkModel.fromJson(updatedHomework);
       }
-
-      Get.snackbar(
-        'Success',
-        'Homework updated successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      return true;
     } on ApiException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      rethrow;
+      AppNotifier.error('Error', e.message);
+      return false;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to update homework: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      rethrow;
+      AppNotifier.error('Error', 'Failed to update homework: $e');
+      return false;
     } finally {
       isLoading.value = false;
     }
@@ -199,24 +166,12 @@ class HomeworkController extends GetxController {
       homeworkList.removeWhere((hw) => hw.id == homeworkId);
       submissions.removeWhere((sub) => sub.homeworkId == homeworkId);
 
-      Get.snackbar(
-        'Success',
-        'Homework deleted successfully',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.success('Success', 'Homework deleted successfully');
     } on ApiException catch (e) {
-      Get.snackbar(
-        'Error',
-        e.message,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', e.message);
       rethrow;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to delete homework: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      AppNotifier.error('Error', 'Failed to delete homework: $e');
       rethrow;
     } finally {
       isLoading.value = false;
