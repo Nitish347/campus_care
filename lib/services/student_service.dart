@@ -24,7 +24,8 @@ class StudentService {
 
   static Future<List<Student>> getAllStudents() async {
     try {
-      final List<dynamic> data = await _apiService.getStudents();
+      final response = await _apiService.getStudentsPage(page: 1, limit: 100);
+      final List<dynamic> data = response['data'] as List<dynamic>? ?? [];
       return data.map((json) => Student.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Failed to load students: $e');
@@ -46,13 +47,28 @@ class StudentService {
   static Future<List<Student>> getStudentsByClass(
       String classId, String section) async {
     try {
-      final filters = {
-        'class': classId,
-        if (section.isNotEmpty) 'section': section,
-      };
-      final List<dynamic> data =
-          await _apiService.getStudents(filters: filters);
-      return data.map((json) => Student.fromJson(json)).toList();
+      const limit = 100;
+      var page = 1;
+      var totalPages = 1;
+      final students = <Student>[];
+
+      do {
+        final response = await _apiService.getStudentsPage(
+          page: page,
+          limit: limit,
+          classId: classId,
+          section: section,
+        );
+        final List<dynamic> data = response['data'] as List<dynamic>? ?? [];
+        students.addAll(data.map((json) => Student.fromJson(json)));
+
+        final pagination =
+            Map<String, dynamic>.from(response['pagination'] as Map? ?? {});
+        totalPages = (pagination['totalPages'] as num?)?.toInt() ?? page;
+        page++;
+      } while (page <= totalPages);
+
+      return students;
     } catch (e) {
       return [];
     }

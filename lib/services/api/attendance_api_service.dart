@@ -11,12 +11,17 @@ class AttendanceApiService {
     String? section,
     String? studentId,
     String? date,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     final queryParams = <String, dynamic>{};
     if (classId != null) queryParams['classId'] = classId;
     if (section != null) queryParams['section'] = section;
     if (studentId != null) queryParams['studentId'] = studentId;
-    if (date != null) {
+    if (startDate != null && endDate != null) {
+      queryParams['startDate'] = startDate.toUtc().toIso8601String();
+      queryParams['endDate'] = endDate.toUtc().toIso8601String();
+    } else if (date != null) {
       // Parse YYYY-MM-DD and build local midnight boundaries, then convert to UTC.
       // This ensures the query window matches the timezone where the app is running,
       // because attendance 'date' is stored as local midnight unix seconds.

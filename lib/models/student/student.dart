@@ -156,9 +156,15 @@ class Student {
   static DateTime? _parseDate(dynamic value) {
     if (value == null) return null;
     if (value is int) {
-      return DateTime.fromMillisecondsSinceEpoch(value);
+      final ms = value > 10000000000 ? value : value * 1000;
+      return DateTime.fromMillisecondsSinceEpoch(ms);
     }
     if (value is String) {
+      final parsedInt = int.tryParse(value);
+      if (parsedInt != null) {
+        final ms = parsedInt > 10000000000 ? parsedInt : parsedInt * 1000;
+        return DateTime.fromMillisecondsSinceEpoch(ms);
+      }
       return DateTime.tryParse(value);
     }
     return null;

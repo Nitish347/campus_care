@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
+import 'package:campus_care/services/auth_service.dart';
 
 /// Base authentication middleware
 /// Ensures user is logged in before accessing protected routes
@@ -14,7 +15,7 @@ class AuthMiddleware extends GetMiddleware {
     final authController = Get.find<AuthController>();
 
     // If not logged in, redirect to login
-    if (!authController.isLoggedIn) {
+    if (!authController.isLoggedIn && !AuthService.isLoggedIn) {
       return const RouteSettings(name: AppRoutes.login);
     }
 

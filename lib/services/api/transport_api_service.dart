@@ -6,6 +6,14 @@ class TransportApiService {
 
   String get _endpoint => AppConstants.transportEndpoint;
 
+  Future<Map<String, dynamic>> getStudentTransportSummary() async {
+    final response = await _apiClient.get('$_endpoint/me/summary');
+    if (response['success'] == true && response['data'] != null) {
+      return Map<String, dynamic>.from(response['data'] as Map);
+    }
+    throw Exception('Failed to load transport summary');
+  }
+
   Future<List<dynamic>> getDrivers({bool? isActive}) async {
     final queryParams = <String, dynamic>{};
     if (isActive != null) {

@@ -44,7 +44,7 @@ class AttendanceController extends GetxController {
     return _students.where((student) {
       final query = _searchQuery.value.toLowerCase();
       return student.fullName.toLowerCase().contains(query) ||
-             student.rollNumber.toLowerCase().contains(query);
+          student.rollNumber.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -106,13 +106,10 @@ class AttendanceController extends GetxController {
         await _classController.fetchClasses();
       }
 
-      // Load students for selected class/section
-      final allStudents = await StudentService.getAllStudents();
-      _students.value = allStudents
-          .where((student) =>
-              student.class_ == _selectedClass.value &&
-              student.section == _selectedSection.value)
-          .toList();
+      _students.value = await StudentService.getStudentsByClass(
+        _selectedClass.value!,
+        _selectedSection.value!,
+      );
 
       // Load existing attendance for the selected date
       final dateString = _formatDate(_selectedDate.value);
@@ -190,8 +187,7 @@ class AttendanceController extends GetxController {
       return;
     }
     String? markedBy = _authController.getMarkedBy();
-    String? teacherId = _authController.getMarkedBy();
-    if (markedBy == null || teacherId == null) {
+    if (markedBy == null) {
       Get.snackbar('Error', 'Authentication error: user not found');
       return;
     }
@@ -227,61 +223,30 @@ class AttendanceController extends GetxController {
     try {
       _isLoading.value = true;
 
+      final dateUnix = DateTime(
+            _selectedDate.value.year,
+            _selectedDate.value.month,
+            _selectedDate.value.day,
+          ).millisecondsSinceEpoch ~/
+          1000;
       final List<Map<String, dynamic>> bulkData = [];
-      final List<Future> updateFutures = [];
 
       for (var student in _students) {
         final status = _attendanceMap[student.id] ?? AttendanceStatus.present;
-        final existingId = _existingAttendanceIds[student.id];
-
-        if (existingId != null) {
-          // Update existing attendance
-          updateFutures.add(
-            _attendanceService.updateAttendance(
-              existingId,
-              {
-                'status': _getStatusString(status),
-                'date': DateTime(_selectedDate.value.year,
-                            _selectedDate.value.month, _selectedDate.value.day)
-                        .millisecondsSinceEpoch ~/
-                    1000,
-                'marked_by': markedBy,
-              },
-            ),
-          );
-        } else {
-          // Add to bulk create
-          bulkData.add({
-            // 'teacher_id': teacherId, // REMOVED
-            'student_id': student.id,
-            'date': DateTime(_selectedDate.value.year,
-                        _selectedDate.value.month, _selectedDate.value.day)
-                    .millisecondsSinceEpoch ~/
-                1000,
-            'status': _getStatusString(status),
-            'class': _selectedClass.value,
-            'section': _selectedSection.value,
-            'marked_by': markedBy,
-          });
-        }
+        bulkData.add({
+          'student_id': student.id,
+          'date': dateUnix,
+          'status': _getStatusString(status),
+          'class': _selectedClass.value,
+          'section': _selectedSection.value,
+          'marked_by': markedBy,
+        });
       }
 
       int successCount = 0;
       int failureCount = 0;
       List<String> errors = [];
 
-      // Execute updates
-      if (updateFutures.isNotEmpty) {
-        try {
-          await Future.wait(updateFutures);
-          successCount += updateFutures.length;
-        } catch (e) {
-          failureCount += updateFutures.length; // Approximate
-          errors.add('Update failed: $e');
-        }
-      }
-
-      // Execute bulk create
       if (bulkData.isNotEmpty) {
         final results = await _attendanceService.bulkMarkAttendance(bulkData);
         for (var result in results) {

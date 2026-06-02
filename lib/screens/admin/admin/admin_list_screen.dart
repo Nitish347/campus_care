@@ -9,6 +9,7 @@ import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/models/admin/admin.dart';
 
 import 'package:campus_care/widgets/admin/admin_page_header.dart';
+
 class AdminListScreen extends GetView<AdminController> {
   const AdminListScreen({super.key});
 
@@ -21,6 +22,11 @@ class AdminListScreen extends GetView<AdminController> {
     // Ensure controller is initialized
     if (!Get.isRegistered<AdminController>()) {
       Get.put(AdminController());
+    }
+    if (controller.admins.isEmpty && !controller.isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.loadAdmins();
+      });
     }
 
     return Scaffold(

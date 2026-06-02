@@ -225,8 +225,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.25),
-                  Colors.black.withOpacity(0.5),
+                  Colors.black.withValues(alpha: 0.25),
+                  Colors.black.withValues(alpha: 0.5),
                 ],
               ),
             ),
@@ -240,8 +240,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.white.withOpacity(0.1),
-                  Colors.white.withOpacity(0.05),
+                  Colors.white.withValues(alpha: 0.1),
+                  Colors.white.withValues(alpha: 0.05),
                 ],
               ),
             ),
@@ -259,14 +259,14 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
+                          color: Colors.black.withValues(alpha: 0.3),
                           blurRadius: 30,
                           spreadRadius: 5,
                           offset: const Offset(0, 10),
                         ),
                       ],
                       border: Border.all(
-                          color: Colors.white.withOpacity(0.3), width: 4),
+                          color: Colors.white.withValues(alpha: 0.3), width: 4),
                     ),
                     child: CircleAvatar(
                       radius: 64,
@@ -329,10 +329,10 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
@@ -373,7 +373,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -394,7 +394,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: accent.withOpacity(0.15),
+                      color: accent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(icon, color: accent, size: 24),
@@ -426,7 +426,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withOpacity(0.5),
+              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 20, color: theme.colorScheme.primary),

@@ -22,6 +22,7 @@ class AdminLunchManagementScreen extends StatelessWidget {
     final isSmallMobile = size.width < 390;
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AdminPageHeader(
         subtitle: 'Manage cafeteria meal plans',
         icon: Icons.restaurant,
@@ -235,6 +236,8 @@ class AdminLunchManagementScreen extends StatelessWidget {
                           height: 1,
                         ),
                         const SizedBox(height: 10),
+                        _buildLunchOverview(theme, controller, isDesktop),
+                        const SizedBox(height: 10),
                         CustomTextField(
                           fieldHeight: _kFilterFieldHeight,
                           hintText: 'Search by name or roll number...',
@@ -406,36 +409,7 @@ class AdminLunchManagementScreen extends StatelessWidget {
             // Student List or Table View
             Obx(() {
               if (controller.students.isEmpty && !controller.isLoading) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 64),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.restaurant_menu,
-                          size: 64,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No students loaded',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Select class, section, and date\nthen click "Load Students"',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
+                return _buildLunchEmptyState(theme);
               }
 
               if (controller.students.isNotEmpty &&
@@ -558,7 +532,6 @@ class AdminLunchManagementScreen extends StatelessWidget {
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
-
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.025),
@@ -596,12 +569,13 @@ class AdminLunchManagementScreen extends StatelessWidget {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Roll No: ${student.rollNumber}',
-                                        style:
-                                            theme.textTheme.labelLarge?.copyWith(
+                                        style: theme.textTheme.labelLarge
+                                            ?.copyWith(
                                           fontWeight: FontWeight.w700,
                                           fontSize: 14,
                                           color: theme.colorScheme.primary,
@@ -613,8 +587,8 @@ class AdminLunchManagementScreen extends StatelessWidget {
                                       const SizedBox(height: 2),
                                       Text(
                                         student.fullName,
-                                        style:
-                                            theme.textTheme.titleMedium?.copyWith(
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
                                           fontWeight: FontWeight.w500,
                                           fontSize: 14,
                                           height: 1.2,
@@ -622,7 +596,6 @@ class AdminLunchManagementScreen extends StatelessWidget {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
-
                                     ],
                                   ),
                                 ),
@@ -644,7 +617,8 @@ class AdminLunchManagementScreen extends StatelessWidget {
                             ] else ...[
                               Container(
                                 width: double.infinity,
-                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 6),
                                 decoration: BoxDecoration(
                                   color: _getStatusColor(status)
                                       .withValues(alpha: 0.12),
@@ -1100,6 +1074,184 @@ class AdminLunchManagementScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLunchOverview(
+      ThemeData theme, LunchController controller, bool isDesktop) {
+    final percent = controller.lunchPercentage.clamp(0, 100);
+    final accent = percent >= 75
+        ? Colors.green
+        : percent >= 40
+            ? Colors.orange
+            : Colors.red;
+
+    return Container(
+      padding: EdgeInsets.all(isDesktop ? 14 : 12),
+      decoration: BoxDecoration(
+        color: Colors.green.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.18)),
+      ),
+      child: isDesktop
+          ? Row(
+              children: [
+                _buildOverviewIcon(Icons.restaurant_menu_rounded, accent),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildLunchOverviewCopy(theme, controller, percent),
+                ),
+                const SizedBox(width: 16),
+                SizedBox(
+                  width: 240,
+                  child:
+                      _buildLunchProgress(theme, controller, percent, accent),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _buildOverviewIcon(Icons.restaurant_menu_rounded, accent),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child:
+                          _buildLunchOverviewCopy(theme, controller, percent),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildLunchProgress(theme, controller, percent, accent),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildOverviewIcon(IconData icon, Color color) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, color: color, size: 22),
+    );
+  }
+
+  Widget _buildLunchOverviewCopy(
+      ThemeData theme, LunchController controller, int percent) {
+    final section = [
+      if (controller.selectedClass != null) 'Class ${controller.selectedClass}',
+      if (controller.selectedSection != null)
+        'Section ${controller.selectedSection}',
+      DateFormat('EEE, MMM d').format(controller.selectedDate),
+    ].join(' - ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$percent% full meals recorded',
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          section,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLunchProgress(
+      ThemeData theme, LunchController controller, int percent, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(
+            value: percent / 100,
+            minHeight: 9,
+            backgroundColor: theme.colorScheme.surfaceContainerHighest
+                .withValues(alpha: 0.7),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          '${controller.fullMealCount} full, ${controller.halfMealCount} half, ${controller.notTakenCount} none',
+          textAlign: TextAlign.right,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLunchEmptyState(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 48),
+      child: Center(
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 520),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.restaurant_menu_rounded,
+                  color: Colors.green,
+                  size: 30,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Select a roster to begin',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Choose class, section, and date, then load students to record lunch status.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

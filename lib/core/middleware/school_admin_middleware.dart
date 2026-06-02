@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/core/constants/app_constants.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
+import 'package:campus_care/services/auth_service.dart';
 import 'package:campus_care/services/storage_service.dart';
 
 /// School admin middleware
@@ -16,7 +17,7 @@ class SchoolAdminMiddleware extends GetMiddleware {
     final authController = Get.find<AuthController>();
 
     // If not logged in, redirect to login
-    if (!authController.isLoggedIn) {
+    if (!authController.isLoggedIn && !AuthService.isLoggedIn) {
       return const RouteSettings(name: AppRoutes.login);
     }
 

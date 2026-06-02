@@ -41,16 +41,17 @@ class _StudentNotificationsScreenState
     try {
       final student = _authController.currentStudent;
       if (student == null) {
-        setState(() {
-          _isLoading = false;
-        });
         return;
       }
 
       _studentClassId = student.class_;
       _studentSection = student.section;
 
-      final noticesData = await _noticeApi.getNotices();
+      final noticesData = await _noticeApi.getNotices(
+        classId: _studentClassId,
+        section: _studentSection,
+        targetRole: 'student',
+      );
       final allNotices = noticesData
           .whereType<Map>()
           .map((data) => NoticeModel.fromJson(Map<String, dynamic>.from(data)))
@@ -65,13 +66,15 @@ class _StudentNotificationsScreenState
             return false;
           }
         }
-        if (notice.targetSections != null && notice.targetSections!.isNotEmpty) {
+        if (notice.targetSections != null &&
+            notice.targetSections!.isNotEmpty) {
           if (!notice.targetSections!.contains(_studentSection)) {
             return false;
           }
         }
         // Check if notice has expired
-        if (notice.expiryDate != null && notice.expiryDate!.isBefore(DateTime.now())) {
+        if (notice.expiryDate != null &&
+            notice.expiryDate!.isBefore(DateTime.now())) {
           return false;
         }
         return true;
@@ -79,31 +82,27 @@ class _StudentNotificationsScreenState
 
       _notices.sort((a, b) {
         final priorityOrder = {'high': 3, 'medium': 2, 'low': 1};
-        final aPriority =
-            priorityOrder[a.priority.toLowerCase().replaceAll('normal', 'medium')] ?? 0;
-        final bPriority =
-            priorityOrder[b.priority.toLowerCase().replaceAll('normal', 'medium')] ?? 0;
+        final aPriority = priorityOrder[
+                a.priority.toLowerCase().replaceAll('normal', 'medium')] ??
+            0;
+        final bPriority = priorityOrder[
+                b.priority.toLowerCase().replaceAll('normal', 'medium')] ??
+            0;
         if (aPriority != bPriority) {
           return bPriority.compareTo(aPriority);
         }
         return b.issuedDate.compareTo(a.issuedDate);
       });
-    } catch (e) {
-      // Handle error
+    } catch (_) {
+      _notices = [];
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
-
-
-
-
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -142,14 +141,16 @@ class _StudentNotificationsScreenState
                   itemCount: _notices.length,
                   itemBuilder: (context, index) {
                     final notice = _notices[index];
-                    final priorityColor = AppUtils.getPriorityColor(notice.priority);
+                    final priorityColor =
+                        AppUtils.getPriorityColor(notice.priority);
                     final isExpired = notice.expiryDate != null &&
                         notice.expiryDate!.isBefore(DateTime.now());
 
                     return InfoCard(
                       margin: const EdgeInsets.only(bottom: 12),
                       child: InkWell(
-                        onTap: () => NotificationDetailPopup.show(context, notice),
+                        onTap: () =>
+                            NotificationDetailPopup.show(context, notice),
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
                           decoration: BoxDecoration(
@@ -238,8 +239,8 @@ class _StudentNotificationsScreenState
                                                 .format(notice.issuedDate),
                                             style: theme.textTheme.bodySmall
                                                 ?.copyWith(
-                                              color: theme.colorScheme
-                                                  .onSurfaceVariant,
+                                              color: theme
+                                                  .colorScheme.onSurfaceVariant,
                                             ),
                                           ),
                                           if (isExpired) ...[
@@ -258,7 +259,8 @@ class _StudentNotificationsScreenState
                                               ),
                                               child: Text(
                                                 'Expired',
-                                                style: theme.textTheme.labelSmall
+                                                style: theme
+                                                    .textTheme.labelSmall
                                                     ?.copyWith(
                                                   color: Colors.grey,
                                                 ),
@@ -285,4 +287,3 @@ class _StudentNotificationsScreenState
     );
   }
 }
-

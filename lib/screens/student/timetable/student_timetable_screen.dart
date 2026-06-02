@@ -1,7 +1,6 @@
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/services/api/timetable_api_service.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
-import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/student/student_app_bar.dart';
 import 'package:flutter/material.dart';
@@ -46,7 +45,8 @@ class _StudentTimetableScreenState extends State<StudentTimetableScreen>
     );
     _currentTabIndex = _tabController.index;
     _tabController.addListener(() {
-      if (!_tabController.indexIsChanging && _currentTabIndex != _tabController.index) {
+      if (!_tabController.indexIsChanging &&
+          _currentTabIndex != _tabController.index) {
         setState(() => _currentTabIndex = _tabController.index);
       }
     });
@@ -159,31 +159,7 @@ class _StudentTimetableScreenState extends State<StudentTimetableScreen>
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                SummaryCard(
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today, color: theme.colorScheme.primary),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            DateFormat('EEEE, MMMM dd').format(DateTime.now()),
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'Class schedule',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                _buildTimetableSummaryHero(context),
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
@@ -204,20 +180,24 @@ class _StudentTimetableScreenState extends State<StudentTimetableScreen>
                           itemBuilder: (context, index) {
                             final row = entries[index];
                             final periodNumber =
-                                (row['period_number'] as num?)?.toInt() ?? index + 1;
-                            final subject =
-                                (row['subject_id'] ?? row['subject'] ?? 'Subject').toString();
+                                (row['period_number'] as num?)?.toInt() ??
+                                    index + 1;
+                            final subject = (row['subject_id'] ??
+                                    row['subject'] ??
+                                    'Subject')
+                                .toString();
                             final start = (row['start_time'] ?? '').toString();
                             final end = (row['end_time'] ?? '').toString();
                             final room =
-                                (row['room_number'] ?? row['room'] ?? 'N/A').toString();
+                                (row['room_number'] ?? row['room'] ?? 'N/A')
+                                    .toString();
 
                             return Card(
                               margin: const EdgeInsets.only(bottom: 12),
                               child: ListTile(
                                 leading: CircleAvatar(
-                                  backgroundColor:
-                                      theme.colorScheme.primary.withOpacity(0.1),
+                                  backgroundColor: theme.colorScheme.primary
+                                      .withValues(alpha: 0.1),
                                   child: Text('P$periodNumber'),
                                 ),
                                 title: Text(subject),
@@ -281,6 +261,188 @@ class _StudentTimetableScreenState extends State<StudentTimetableScreen>
             child: Text(label),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTimetableSummaryHero(BuildContext context) {
+    final theme = Theme.of(context);
+    final selectedDay = _days[_currentTabIndex];
+    final selectedEntries = _timetableByDay[selectedDay] ?? [];
+    final totalWeeklyClasses = _timetableByDay.values.fold<int>(
+      0,
+      (total, entries) => total + entries.length,
+    );
+    final firstClass =
+        selectedEntries.isNotEmpty ? selectedEntries.first : null;
+    final startTime = (firstClass?['start_time'] ?? 'N/A').toString();
+    final room =
+        (firstClass?['room_number'] ?? firstClass?['room'] ?? 'N/A').toString();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1D4ED8), Color(0xFF0891B2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0891B2).withValues(alpha: 0.24),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(
+                  Icons.calendar_today_outlined,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      selectedDay,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      DateFormat('MMMM dd, yyyy').format(DateTime.now()),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.78),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.16),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.24)),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '${selectedEntries.length}',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      'Classes',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.76),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _summaryHeroTile(
+                  context,
+                  icon: Icons.access_time_outlined,
+                  label: 'Starts',
+                  value: startTime,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _summaryHeroTile(
+                  context,
+                  icon: Icons.meeting_room_outlined,
+                  label: 'Room',
+                  value: room,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _summaryHeroTile(
+                  context,
+                  icon: Icons.view_week_outlined,
+                  label: 'Weekly',
+                  value: '$totalWeeklyClasses',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryHeroTile(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white, size: 20),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: Colors.white.withValues(alpha: 0.72),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

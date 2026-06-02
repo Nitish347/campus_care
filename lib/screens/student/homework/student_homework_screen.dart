@@ -34,7 +34,8 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
-      if (!_tabController.indexIsChanging && _currentTabIndex != _tabController.index) {
+      if (!_tabController.indexIsChanging &&
+          _currentTabIndex != _tabController.index) {
         setState(() => _currentTabIndex = _tabController.index);
       }
     });
@@ -193,7 +194,8 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                 color: Colors.white.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.filter_list_outlined, color: Colors.white, size: 20),
+              child: const Icon(Icons.filter_list_outlined,
+                  color: Colors.white, size: 20),
             ),
           ),
           const SizedBox(width: 6),
@@ -234,7 +236,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                   Container(
                     width: 1,
                     height: 40,
-                    color: theme.colorScheme.outline.withOpacity(0.3),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.3),
                   ),
                   _buildStatItem(
                     context,
@@ -246,7 +248,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                   Container(
                     width: 1,
                     height: 40,
-                    color: theme.colorScheme.outline.withOpacity(0.3),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.3),
                   ),
                   _buildStatItem(
                     context,
@@ -331,7 +333,8 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
               curve: Curves.easeOutCubic,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: selected ? accent.withValues(alpha: 0.15) : Colors.white24,
+                color:
+                    selected ? accent.withValues(alpha: 0.15) : Colors.white24,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
@@ -429,7 +432,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color: isOverdue
-                ? Colors.red.withOpacity(0.3)
+                ? Colors.red.withValues(alpha: 0.3)
                 : theme.colorScheme.outlineVariant,
             width: 1,
           ),
@@ -448,7 +451,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: subjectColor.withOpacity(0.1),
+                        color: subjectColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -477,7 +480,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: subjectColor.withOpacity(0.1),
+                                  color: subjectColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -493,7 +496,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: priorityColor.withOpacity(0.1),
+                                  color: priorityColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Row(
@@ -556,7 +559,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: isOverdue
-                            ? Colors.red.withOpacity(0.1)
+                            ? Colors.red.withValues(alpha: 0.1)
                             : theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -594,6 +597,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
   }
 
   void _showFilterDialog() {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -601,13 +605,16 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: _filters.map((filter) {
-            return RadioListTile<String>(
+            final isSelected = _selectedFilter == filter;
+            return ListTile(
               title: Text(filter),
-              value: filter,
-              groupValue: _selectedFilter,
-              onChanged: (value) {
+              trailing: isSelected
+                  ? Icon(Icons.check_rounded, color: theme.colorScheme.primary)
+                  : null,
+              selected: isSelected,
+              onTap: () {
                 setState(() {
-                  _selectedFilter = value!;
+                  _selectedFilter = filter;
                 });
                 Navigator.pop(context);
               },
@@ -677,7 +684,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: subjectColor.withOpacity(0.1),
+                      color: subjectColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -758,7 +765,7 @@ class _StudentHomeworkScreenState extends State<StudentHomeworkScreen>
                   margin: const EdgeInsets.only(top: 16),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(

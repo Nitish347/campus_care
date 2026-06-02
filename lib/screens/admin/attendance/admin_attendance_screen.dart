@@ -55,18 +55,7 @@ class AdminAttendanceScreen extends GetView<AttendanceController> {
                     }
 
                     if (controller.students.isEmpty) {
-                      return EmptyState(
-                        icon: Icons.fact_check_outlined,
-                        title: 'No Class Selected',
-                        message:
-                            'Select a class, section, and date to view or mark attendance.',
-                        // action: PrimaryButton(
-                        //   onPressed: () {
-                        //     // Focus action if needed
-                        //   },
-                        //   child: const Text('Select Criteria'),
-                        // ),
-                      );
+                      return _buildAttendanceEmptyState(theme);
                     }
 
                     return Column(
@@ -271,6 +260,8 @@ class AdminAttendanceScreen extends GetView<AttendanceController> {
                       theme.colorScheme.outlineVariant.withValues(alpha: 0.28),
                   height: 1,
                 ),
+                const SizedBox(height: 10),
+                _buildAttendanceOverview(theme, isDesktop),
                 const SizedBox(height: 10),
                 CustomTextField(
                   fieldHeight: _kFilterFieldHeight,
@@ -575,6 +566,135 @@ class AdminAttendanceScreen extends GetView<AttendanceController> {
     );
   }
 
+  Widget _buildAttendanceOverview(ThemeData theme, bool isDesktop) {
+    final percent = controller.attendancePercentage.clamp(0, 100);
+    final accent = percent >= 90
+        ? Colors.green
+        : percent >= 70
+            ? Colors.orange
+            : Colors.red;
+
+    return Container(
+      padding: EdgeInsets.all(isDesktop ? 14 : 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.16),
+        ),
+      ),
+      child: isDesktop
+          ? Row(
+              children: [
+                _buildOverviewIcon(theme, Icons.how_to_reg_rounded, accent),
+                const SizedBox(width: 12),
+                Expanded(child: _buildOverviewCopy(theme, percent)),
+                const SizedBox(width: 16),
+                SizedBox(
+                  width: 240,
+                  child: _buildOverviewProgress(theme, percent, accent),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _buildOverviewIcon(theme, Icons.how_to_reg_rounded, accent),
+                    const SizedBox(width: 10),
+                    Expanded(child: _buildOverviewCopy(theme, percent)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _buildOverviewProgress(theme, percent, accent),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildOverviewIcon(ThemeData theme, IconData icon, Color color) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, color: color, size: 22),
+    );
+  }
+
+  Widget _buildOverviewCopy(ThemeData theme, int percent) {
+    final section = [
+      if (controller.selectedClass != null) 'Class ${controller.selectedClass}',
+      if (controller.selectedSection != null)
+        'Section ${controller.selectedSection}',
+      DateFormat('EEE, MMM d').format(controller.selectedDate),
+    ].join(' - ');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$percent% attendance marked',
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          section,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOverviewProgress(ThemeData theme, int percent, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(
+            value: percent / 100,
+            minHeight: 9,
+            backgroundColor: theme.colorScheme.surfaceContainerHighest
+                .withValues(alpha: 0.7),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          '${controller.presentCount} present, ${controller.absentCount} absent',
+          textAlign: TextAlign.right,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAttendanceEmptyState(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 48),
+      child: EmptyState(
+        icon: Icons.fact_check_outlined,
+        title: 'Select a roster to begin',
+        message:
+            'Choose class, section, and date, then load the roster to view or mark attendance.',
+      ),
+    );
+  }
+
 // Removing _buildFilterCard as it's now part of _buildUnifiedHeader
 
   Widget _buildDatePicker(BuildContext context, ThemeData theme) {
@@ -725,7 +845,6 @@ class AdminAttendanceScreen extends GetView<AttendanceController> {
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
-
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.025),
@@ -752,7 +871,8 @@ class AdminAttendanceScreen extends GetView<AttendanceController> {
                           children: [
                             CircleAvatar(
                               radius: 25,
-                              backgroundColor: theme.colorScheme.primaryContainer
+                              backgroundColor: theme
+                                  .colorScheme.primaryContainer
                                   .withValues(alpha: 0.6),
                               child: Text(
                                 student.fullName.substring(0, 1).toUpperCase(),
@@ -769,7 +889,7 @@ class AdminAttendanceScreen extends GetView<AttendanceController> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '${student.rollNumber}',
+                                    student.rollNumber,
                                     style: theme.textTheme.labelLarge?.copyWith(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 16,
@@ -782,7 +902,8 @@ class AdminAttendanceScreen extends GetView<AttendanceController> {
                                   const SizedBox(height: 2),
                                   Text(
                                     student.fullName,
-                                    style: theme.textTheme.titleMedium?.copyWith(
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.w500,
                                       fontSize: 14,
                                       height: 1.2,
@@ -839,8 +960,8 @@ class AdminAttendanceScreen extends GetView<AttendanceController> {
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 6),
                             decoration: BoxDecoration(
-                              color:
-                                  _getStatusColor(status).withValues(alpha: 0.12),
+                              color: _getStatusColor(status)
+                                  .withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             alignment: Alignment.center,

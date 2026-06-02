@@ -30,12 +30,6 @@ class AdminController extends GetxController {
   final _dashboardStats = <String, dynamic>{}.obs;
   Map<String, dynamic> get dashboardStats => _dashboardStats;
 
-  @override
-  void onInit() {
-    super.onInit();
-    loadAdmins();
-  }
-
   Future<void> fetchDashboardStats({bool showErrorSnackbar = false}) async {
     try {
       _isDashboardLoading.value = true;

@@ -35,10 +35,8 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Defer navigation check until GetMaterialApp is fully initialized
-    Future.microtask(() {
-      checkLoginStatus();
-    });
+    _isLoggedIn.value = AuthService.isLoggedIn;
+    _currentRole.value = AuthService.userRole ?? "";
   }
 
   @override
@@ -48,16 +46,17 @@ class AuthController extends GetxController {
     super.onClose();
   }
 
-  void checkLoginStatus() {
+  Future<void> checkLoginStatus() async {
     _isLoggedIn.value = AuthService.isLoggedIn;
     if (_isLoggedIn.value) {
       _currentRole.value = AuthService.userRole ?? "";
       if (_currentRole.value.isNotEmpty) {
-        _navigateToRoleDashboard();
+        await _navigateToRoleDashboard();
+        return;
       }
-    } else {
-      Get.offAllNamed(AppRoutes.login);
     }
+
+    Get.offAllNamed(AppRoutes.login);
   }
 
   Future<void> login() async {
@@ -77,13 +76,14 @@ class AuthController extends GetxController {
       if (user != null) {
         // _currentUser.value = user;
         _isLoggedIn.value = true;
+        _currentRole.value = AuthService.userRole ?? role;
 
         // Clear form
         emailController.clear();
         passwordController.clear();
 
         // Navigate to appropriate dashboard
-        _navigateToRoleDashboard();
+        await _navigateToRoleDashboard();
 
         AppNotifier.success(
           'Success',
@@ -123,7 +123,7 @@ class AuthController extends GetxController {
         _currentRole.value = role;
 
         // Navigate to appropriate dashboard
-        _navigateToRoleDashboard();
+        await _navigateToRoleDashboard();
 
         AppNotifier.success(
           'Success',
@@ -169,7 +169,7 @@ class AuthController extends GetxController {
     );
   }
 
-  void _navigateToRoleDashboard() async {
+  Future<void> _navigateToRoleDashboard() async {
     final data = await AuthService.getCurrentUser();
 
     if (data == null) {

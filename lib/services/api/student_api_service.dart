@@ -9,9 +9,15 @@ class StudentApiService {
   Future<List<dynamic>> getStudents({
     Map<String, dynamic>? filters,
   }) async {
+    final queryParameters = <String, dynamic>{
+      ...?filters,
+      'page': filters?['page'] ?? 1,
+      'limit': filters?['limit'] ?? AppConstants.defaultPageSize,
+    };
+
     final response = await _apiClient.get(
       AppConstants.studentsEndpoint,
-      queryParameters: filters,
+      queryParameters: queryParameters,
     );
 
     if (response['success'] == true && response['data'] != null) {
@@ -19,6 +25,18 @@ class StudentApiService {
     }
 
     return [];
+  }
+
+  Future<Map<String, dynamic>> getDashboardSummary() async {
+    final response = await _apiClient.get(
+      '${AppConstants.studentsEndpoint}/me/dashboard-summary',
+    );
+
+    if (response['success'] == true && response['data'] != null) {
+      return Map<String, dynamic>.from(response['data'] as Map);
+    }
+
+    throw Exception(response['message'] ?? 'Failed to load dashboard summary');
   }
 
   Future<Map<String, dynamic>> getStudentsPage({
@@ -105,15 +123,12 @@ class StudentApiService {
 
   /// Search students
   Future<List<dynamic>> searchStudents(String query) async {
-    final response = await _apiClient.get(
-      AppConstants.studentsEndpoint,
-      queryParameters: {'search': query},
+    final response = await getStudentsPage(
+      page: 1,
+      limit: AppConstants.defaultPageSize,
+      search: query,
     );
 
-    if (response['success'] == true && response['data'] != null) {
-      return response['data'] as List<dynamic>;
-    }
-
-    return [];
+    return response['data'] as List<dynamic>? ?? [];
   }
 }

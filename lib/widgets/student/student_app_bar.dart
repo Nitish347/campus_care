@@ -21,7 +21,8 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => Size.fromHeight(64 + (bottom?.preferredSize.height ?? 0));
+  Size get preferredSize =>
+      Size.fromHeight(64 + (bottom?.preferredSize.height ?? 0));
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +34,9 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
     final shouldShowBack = showBackButton ?? canPop;
 
     return Container(
-      height: 64 + MediaQuery.of(context).padding.top + (bottom?.preferredSize.height ?? 0),
+      height: 64 +
+          MediaQuery.of(context).padding.top +
+          (bottom?.preferredSize.height ?? 0),
       padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -100,16 +103,20 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ),
                     ),
                   const SizedBox(width: 10),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.3,
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0,
+                      ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   if (showRightActions) ...[
                     GetBuilder<ThemeController>(
                       builder: (themeController) => _AppBarIconButton(
@@ -122,15 +129,18 @@ class StudentAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                     _AppBarIconButton(
                       icon: Icons.notifications_outlined,
-                      onPressed: () => Get.toNamed(AppRoutes.studentNotifications),
+                      onPressed: () =>
+                          Get.toNamed(AppRoutes.studentNotifications),
                       tooltip: 'Notifications',
                     ),
                     const SizedBox(width: 8),
                     Obx(
                       () => _UserAvatarButton(
-                        name: authController.currentStudent?.fullName ?? 'Student',
+                        name: authController.currentStudent?.fullName ??
+                            'Student',
                         theme: theme,
-                        onProfileTap: () => Get.toNamed(AppRoutes.studentProfile),
+                        onProfileTap: () =>
+                            Get.toNamed(AppRoutes.studentProfile),
                         onLogoutTap: () => authController.logout(),
                       ),
                     ),
@@ -224,6 +234,7 @@ class _UserAvatarButton extends StatelessWidget {
       itemBuilder: (context) => [
         PopupMenuItem(
           value: 'profile',
+          onTap: onProfileTap,
           child: Row(
             children: [
               Icon(Icons.person_outline_rounded,
@@ -232,11 +243,11 @@ class _UserAvatarButton extends StatelessWidget {
               const Text('My Profile'),
             ],
           ),
-          onTap: onProfileTap,
         ),
         const PopupMenuDivider(),
         PopupMenuItem(
           value: 'logout',
+          onTap: onLogoutTap,
           child: Row(
             children: [
               Icon(Icons.logout_rounded,
@@ -245,7 +256,6 @@ class _UserAvatarButton extends StatelessWidget {
               Text('Logout', style: TextStyle(color: theme.colorScheme.error)),
             ],
           ),
-          onTap: onLogoutTap,
         ),
       ],
     );

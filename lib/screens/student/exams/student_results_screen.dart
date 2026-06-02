@@ -2,7 +2,6 @@ import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/models/exam_result_model.dart';
 import 'package:campus_care/services/api/exam_result_api_service.dart';
 import 'package:campus_care/widgets/common/empty_state.dart';
-import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/student/student_app_bar.dart';
 import 'package:flutter/material.dart';
@@ -54,7 +53,11 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
   }
 
   List<String> get _filters {
-    final subjects = _results.map((e) => e.subject).where((s) => s.isNotEmpty).toSet().toList()
+    final subjects = _results
+        .map((e) => e.subject)
+        .where((s) => s.isNotEmpty)
+        .toSet()
+        .toList()
       ..sort();
     return ['All', ...subjects];
   }
@@ -72,7 +75,8 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
 
   String get _bestSubject {
     if (_results.isEmpty) return 'N/A';
-    final sorted = [..._results]..sort((a, b) => b.percentage.compareTo(a.percentage));
+    final sorted = [..._results]
+      ..sort((a, b) => b.percentage.compareTo(a.percentage));
     return sorted.first.subject;
   }
 
@@ -111,7 +115,8 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
                 color: Colors.white.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.filter_list_outlined, color: Colors.white, size: 20),
+              child: const Icon(Icons.filter_list_outlined,
+                  color: Colors.white, size: 20),
             ),
           ),
           const SizedBox(width: 6),
@@ -134,44 +139,7 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                SummaryCard(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _summaryItem(
-                        context,
-                        Icons.assessment_outlined,
-                        '${_results.length}',
-                        'Total Exams',
-                        theme.colorScheme.primary,
-                      ),
-                      Container(
-                        width: 1,
-                        height: 40,
-                        color: theme.colorScheme.outline.withOpacity(0.3),
-                      ),
-                      _summaryItem(
-                        context,
-                        Icons.trending_up,
-                        '${_averagePercentage.toStringAsFixed(1)}%',
-                        'Average',
-                        Colors.green,
-                      ),
-                      Container(
-                        width: 1,
-                        height: 40,
-                        color: theme.colorScheme.outline.withOpacity(0.3),
-                      ),
-                      _summaryItem(
-                        context,
-                        Icons.star_outline,
-                        _bestSubject,
-                        'Best Subject',
-                        Colors.orange,
-                      ),
-                    ],
-                  ),
-                ),
+                _buildResultsSummaryHero(context),
                 Expanded(
                   child: _filteredResults.isEmpty
                       ? const EmptyState(
@@ -191,8 +159,10 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
                                 margin: const EdgeInsets.only(bottom: 12),
                                 child: ListTile(
                                   leading: CircleAvatar(
-                                    backgroundColor: gradeColor.withOpacity(0.1),
-                                    child: Icon(_subjectIcon(result.subject), color: gradeColor),
+                                    backgroundColor:
+                                        gradeColor.withValues(alpha: 0.1),
+                                    child: Icon(_subjectIcon(result.subject),
+                                        color: gradeColor),
                                   ),
                                   title: Text(result.subject),
                                   subtitle: Text(
@@ -205,7 +175,8 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
                                     children: [
                                       Text(
                                         grade,
-                                        style: theme.textTheme.titleMedium?.copyWith(
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
                                           color: gradeColor,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -216,7 +187,8 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
                                       ),
                                     ],
                                   ),
-                                  onTap: () => _showResultDetails(context, result),
+                                  onTap: () =>
+                                      _showResultDetails(context, result),
                                 ),
                               );
                             },
@@ -228,38 +200,184 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
     );
   }
 
-  Widget _summaryItem(
-    BuildContext context,
-    IconData icon,
-    String value,
-    String label,
-    Color color,
-  ) {
+  Widget _buildResultsSummaryHero(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+    final average = _averagePercentage.toStringAsFixed(1);
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1D4ED8), Color(0xFF0891B2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0891B2).withValues(alpha: 0.24),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
-        ),
-      ],
+        ],
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(
+                  Icons.workspace_premium_outlined,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Result overview',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _results.isEmpty
+                          ? 'No marks published yet'
+                          : 'Best in $_bestSubject',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.78),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 82,
+                height: 82,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.16),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.24)),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      average,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      'Avg %',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.76),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _summaryHeroTile(
+                  context,
+                  icon: Icons.assessment_outlined,
+                  label: 'Total',
+                  value: '${_results.length}',
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _summaryHeroTile(
+                  context,
+                  icon: Icons.trending_up_outlined,
+                  label: 'Average',
+                  value: '$average%',
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _summaryHeroTile(
+                  context,
+                  icon: Icons.star_outline_rounded,
+                  label: 'Best',
+                  value: _bestSubject,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryHeroTile(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white, size: 20),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: Colors.white.withValues(alpha: 0.72),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   void _showFilterDialog() {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -267,12 +385,15 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: _filters.map((filter) {
-            return RadioListTile<String>(
+            final isSelected = _selectedFilter == filter;
+            return ListTile(
               title: Text(filter),
-              value: filter,
-              groupValue: _selectedFilter,
-              onChanged: (value) {
-                setState(() => _selectedFilter = value!);
+              trailing: isSelected
+                  ? Icon(Icons.check_rounded, color: theme.colorScheme.primary)
+                  : null,
+              selected: isSelected,
+              onTap: () {
+                setState(() => _selectedFilter = filter);
                 Navigator.pop(context);
               },
             );
@@ -305,13 +426,15 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Text('Marks: ${result.marks.toStringAsFixed(0)} / ${result.totalMarks.toStringAsFixed(0)}'),
+            Text(
+                'Marks: ${result.marks.toStringAsFixed(0)} / ${result.totalMarks.toStringAsFixed(0)}'),
             const SizedBox(height: 8),
             Text('Grade: $grade', style: TextStyle(color: gradeColor)),
             const SizedBox(height: 8),
             Text('Percentage: ${result.percentage.toStringAsFixed(1)}%'),
             const SizedBox(height: 8),
-            Text('Updated: ${DateFormat('MMMM dd, yyyy').format(result.updatedAt)}'),
+            Text(
+                'Updated: ${DateFormat('MMMM dd, yyyy').format(result.updatedAt)}'),
             if ((result.remarks ?? '').trim().isNotEmpty) ...[
               const SizedBox(height: 12),
               Text(result.remarks!),

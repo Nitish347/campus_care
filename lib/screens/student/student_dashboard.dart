@@ -1,11 +1,6 @@
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/core/routes/app_routes.dart';
-import 'package:campus_care/services/api/attendance_api_service.dart';
-import 'package:campus_care/services/api/exam_api_service.dart';
-import 'package:campus_care/services/api/homework_api_service.dart';
-import 'package:campus_care/services/api/lunch_api_service.dart';
-import 'package:campus_care/services/api/notice_api_service.dart';
-import 'package:campus_care/services/api/transport_api_service.dart';
+import 'package:campus_care/services/api/student_api_service.dart';
 import 'package:campus_care/widgets/cards/dashboard_card.dart';
 import 'package:campus_care/widgets/cards/stat_card.dart';
 import 'package:campus_care/widgets/common/info_card.dart';
@@ -26,16 +21,11 @@ class StudentDashboard extends StatefulWidget {
 
 class _StudentDashboardState extends State<StudentDashboard> {
   final AuthController _authController = Get.find<AuthController>();
-  final HomeworkApiService _homeworkApi = HomeworkApiService();
-  final AttendanceApiService _attendanceApi = AttendanceApiService();
-  final NoticeApiService _noticeApi = NoticeApiService();
-  final ExamApiService _examApi = ExamApiService();
-  final LunchApiService _lunchApi = LunchApiService();
-  final TransportApiService _transportApi = TransportApiService();
+  final StudentApiService _studentApi = StudentApiService();
 
   bool _isLoading = true;
   int _activeHomework = 0;
-  int _attendancePercentage = 0;
+  double _attendancePercentage = 0;
   String _latestLunchStatus = 'N/A';
   String _transportRouteSummary = 'Not assigned';
   List<Map<String, dynamic>> _upcomingExams = [];
@@ -63,6 +53,13 @@ class _StudentDashboardState extends State<StudentDashboard> {
     return DateTime.now();
   }
 
+  List<Map<String, dynamic>> _asMapList(dynamic value) {
+    if (value is! List) return const [];
+    return value.whereType<Map>().map((item) {
+      return Map<String, dynamic>.from(item);
+    }).toList();
+  }
+
   Future<void> _loadDashboard() async {
     final student = _authController.currentStudent;
     if (student == null) {
@@ -72,92 +69,23 @@ class _StudentDashboardState extends State<StudentDashboard> {
 
     try {
       setState(() => _isLoading = true);
-      final homeworkFuture = _homeworkApi.getHomework(
-        classId: student.class_,
-        section: student.section,
-      );
-      final attendanceFuture = _attendanceApi.getAttendance(studentId: student.id);
-      final noticeFuture = _noticeApi.getNotices();
-      final examFuture =
-          _examApi.getExams(classId: student.class_, section: student.section);
-      final lunchFuture = _lunchApi.getLunch(studentId: student.id);
-      final transportRouteFuture = _transportApi.getRoutes(isActive: true);
-      final transportAssignmentFuture = _transportApi.getAssignments(status: 'active');
-
-      final results = await Future.wait([
-        homeworkFuture,
-        attendanceFuture,
-        noticeFuture,
-        examFuture,
-        lunchFuture,
-        transportRouteFuture,
-        transportAssignmentFuture,
-      ]);
-
-      final homework = results[0].whereType<Map<String, dynamic>>().toList();
-      final attendance = results[1].whereType<Map<String, dynamic>>().toList();
-      final notices = results[2].whereType<Map<String, dynamic>>().toList();
-      final exams = results[3].whereType<Map<String, dynamic>>().toList();
-      final lunchRecords = results[4].whereType<Map<String, dynamic>>().toList();
-      final transportRoutes = results[5].whereType<Map<String, dynamic>>().toList();
-      final transportAssignments = results[6].whereType<Map<String, dynamic>>().toList();
-
-      final now = DateTime.now();
-      final activeHomework = homework.where((item) {
-        final due = _parseDate(item['due_date'] ?? item['dueDate']);
-        return !due.isBefore(now);
-      }).length;
-      final present = attendance.where((a) {
-        final status = (a['status'] ?? '').toString().toLowerCase();
-        return status == 'present';
-      }).length;
-      final attendanceRate =
-          attendance.isEmpty ? 0 : ((present / attendance.length) * 100).round();
-
-      notices.sort((a, b) => _parseDate(b['publish_date']).compareTo(_parseDate(a['publish_date'])));
-
-      final upcomingExams = exams.where((exam) {
-        final examDate = _parseDate(exam['exam_date'] ?? exam['examDate']);
-        return examDate.isAfter(now);
-      }).toList()
-        ..sort((a, b) => _parseDate(a['exam_date']).compareTo(_parseDate(b['exam_date'])));
-
-      lunchRecords.sort((a, b) => _parseDate(b['date']).compareTo(_parseDate(a['date'])));
-      final latestLunch = lunchRecords.isNotEmpty
-          ? (lunchRecords.first['status']?.toString() ?? 'N/A')
-          : 'N/A';
-
-      final studentRouteId = student.routeId;
-      Map<dynamic, dynamic>? matchedRoute;
-      if (studentRouteId != null && studentRouteId.isNotEmpty) {
-        for (final route in transportRoutes) {
-          if (route['id']?.toString() == studentRouteId) {
-            matchedRoute = route;
-            break;
-          }
-        }
-      }
-
-      String transportSummary = 'Not assigned';
-      if (matchedRoute != null) {
-        final routeNumber = matchedRoute['route_number']?.toString() ?? '';
-        final routeName = matchedRoute['route_name']?.toString() ?? '';
-        transportSummary = '$routeNumber ${routeName.trim()}'.trim();
-      } else if (transportAssignments.isNotEmpty) {
-        final first = transportAssignments.first;
-        final routeNumber = first['route_number']?.toString() ?? '';
-        final routeName = first['route_name']?.toString() ?? '';
-        transportSummary = '$routeNumber ${routeName.trim()}'.trim();
-      }
+      final summary = await _studentApi.getDashboardSummary();
+      final upcomingExams = _asMapList(summary['upcoming_exams']);
+      final notices = _asMapList(summary['recent_notices']);
 
       if (!mounted) return;
       setState(() {
-        _activeHomework = activeHomework;
-        _attendancePercentage = attendanceRate;
-        _latestLunchStatus = latestLunch;
-        _transportRouteSummary = transportSummary.isEmpty ? 'Assigned' : transportSummary;
-        _upcomingExams = upcomingExams.cast<Map<String, dynamic>>();
-        _notices = notices.cast<Map<String, dynamic>>();
+        _activeHomework = (summary['active_homework'] as num?)?.toInt() ?? 0;
+        _attendancePercentage =
+            (summary['attendance_percentage'] as num?)?.toDouble() ?? 0;
+        _latestLunchStatus =
+            summary['latest_lunch_status']?.toString() ?? 'N/A';
+        final transportSummary =
+            summary['transport_route_summary']?.toString() ?? 'Not assigned';
+        _transportRouteSummary =
+            transportSummary.isEmpty ? 'Assigned' : transportSummary;
+        _upcomingExams = upcomingExams;
+        _notices = notices;
       });
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -228,7 +156,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
                         StatCard(
                           icon: Icons.check_circle_outline,
                           title: 'Attendance',
-                          value: '$_attendancePercentage%',
+                          value: _attendancePercentage.toStringAsFixed(2),
                           color: Colors.green,
                         ),
                       ],
@@ -252,7 +180,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
                         DashboardCard(
                           icon: Icons.calendar_today_outlined,
                           title: 'Attendance',
-                          subtitle: '$_attendancePercentage% present',
+                          subtitle:
+                              '${_attendancePercentage.toStringAsFixed(2)} monthly',
                           onTap: () => Get.toNamed(AppRoutes.studentAttendance),
                           iconColor: theme.colorScheme.secondary,
                         ),
@@ -274,7 +203,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
                           icon: Icons.assignment_outlined,
                           title: 'Exam Timetable',
                           subtitle: '${_upcomingExams.length} upcoming',
-                          onTap: () => Get.toNamed(AppRoutes.studentExamTimetable),
+                          onTap: () =>
+                              Get.toNamed(AppRoutes.studentExamTimetable),
                           iconColor: theme.colorScheme.secondary,
                         ),
                         DashboardCard(
@@ -305,12 +235,14 @@ class _StudentDashboardState extends State<StudentDashboard> {
                       )
                     else
                       ..._upcomingExams.take(3).map((exam) {
-                        final examDate = _parseDate(exam['exam_date'] ?? exam['examDate']);
+                        final examDate =
+                            _parseDate(exam['exam_date'] ?? exam['examDate']);
                         return InfoCard(
                           child: ListTile(
                             leading: const Icon(Icons.event_note),
                             title: Text(exam['subject']?.toString() ?? 'Exam'),
-                            subtitle: Text(DateFormat('MMM dd, yyyy - hh:mm a').format(examDate)),
+                            subtitle: Text(DateFormat('MMM dd, yyyy - hh:mm a')
+                                .format(examDate)),
                             trailing: Text(
                               exam['type']?.toString().toUpperCase() ?? '',
                               style: theme.textTheme.labelSmall?.copyWith(
@@ -334,7 +266,8 @@ class _StudentDashboardState extends State<StudentDashboard> {
                     else
                       ..._notices.take(3).map((notice) {
                         final publishDate = _parseDate(notice['publish_date']);
-                        final priority = (notice['priority'] ?? 'normal').toString();
+                        final priority =
+                            (notice['priority'] ?? 'normal').toString();
                         final color = priority == 'high'
                             ? Colors.red
                             : priority == 'normal'
@@ -349,9 +282,10 @@ class _StudentDashboardState extends State<StudentDashboard> {
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
-                            title: Text(notice['title']?.toString() ?? 'Notice'),
-                            subtitle:
-                                Text(DateFormat('MMM dd, yyyy').format(publishDate)),
+                            title:
+                                Text(notice['title']?.toString() ?? 'Notice'),
+                            subtitle: Text(
+                                DateFormat('MMM dd, yyyy').format(publishDate)),
                           ),
                         );
                       }),

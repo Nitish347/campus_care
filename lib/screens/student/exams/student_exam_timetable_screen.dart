@@ -1,6 +1,5 @@
 import 'package:campus_care/controllers/exam_controller.dart';
 import 'package:campus_care/models/exam_model.dart';
-import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -146,7 +145,8 @@ class _StudentExamTimetableScreenState
                       color: Colors.white.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.refresh, color: Colors.white, size: 20),
+                    child: const Icon(Icons.refresh,
+                        color: Colors.white, size: 20),
                   ),
                 )),
           InkWell(
@@ -159,7 +159,8 @@ class _StudentExamTimetableScreenState
                 color: Colors.white.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.filter_list_outlined, color: Colors.white, size: 20),
+              child: const Icon(Icons.filter_list_outlined,
+                  color: Colors.white, size: 20),
             ),
           ),
           InkWell(
@@ -172,7 +173,8 @@ class _StudentExamTimetableScreenState
                 color: Colors.white.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.assessment_outlined, color: Colors.white, size: 20),
+              child: const Icon(Icons.assessment_outlined,
+                  color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -186,50 +188,7 @@ class _StudentExamTimetableScreenState
 
         return Column(
           children: [
-            // Summary Header
-            SummaryCard(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildSummaryItem(
-                    context,
-                    Icons.event_outlined,
-                    '${filteredExams.length}',
-                    'Upcoming',
-                    theme.colorScheme.primary,
-                  ),
-                  Container(
-                    width: 1,
-                    height: 40,
-                    color: theme.colorScheme.outline.withOpacity(0.3),
-                  ),
-                  _buildSummaryItem(
-                    context,
-                    Icons.schedule,
-                    filteredExams.isNotEmpty
-                        ? _getTimeRemaining(filteredExams.first.examDate)
-                        : 'N/A',
-                    'Next Exam',
-                    Colors.orange,
-                  ),
-                  Container(
-                    width: 1,
-                    height: 40,
-                    color: theme.colorScheme.outline.withOpacity(0.3),
-                  ),
-                  _buildSummaryItem(
-                    context,
-                    Icons.calendar_month,
-                    filteredExams.isNotEmpty
-                        ? DateFormat('MMM dd')
-                            .format(filteredExams.first.examDate)
-                        : 'N/A',
-                    'Date',
-                    Colors.green,
-                  ),
-                ],
-              ),
-            ),
+            _buildExamSummaryHero(context, filteredExams),
 
             // Exam Table
             Expanded(
@@ -258,7 +217,7 @@ class _StudentExamTimetableScreenState
                             child: DataTable(
                               headingRowColor: WidgetStateProperty.all(
                                 theme.colorScheme.primaryContainer
-                                    .withOpacity(0.5),
+                                    .withValues(alpha: 0.5),
                               ),
                               headingTextStyle:
                                   theme.textTheme.titleSmall?.copyWith(
@@ -305,8 +264,8 @@ class _StudentExamTimetableScreenState
                                           Container(
                                             padding: const EdgeInsets.all(8),
                                             decoration: BoxDecoration(
-                                              color:
-                                                  subjectColor.withOpacity(0.1),
+                                              color: subjectColor.withValues(
+                                                  alpha: 0.1),
                                               borderRadius:
                                                   BorderRadius.circular(8),
                                             ),
@@ -360,7 +319,8 @@ class _StudentExamTimetableScreenState
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 12, vertical: 6),
                                         decoration: BoxDecoration(
-                                          color: typeColor.withOpacity(0.1),
+                                          color:
+                                              typeColor.withValues(alpha: 0.1),
                                           borderRadius:
                                               BorderRadius.circular(6),
                                         ),
@@ -388,14 +348,18 @@ class _StudentExamTimetableScreenState
                                             horizontal: 12, vertical: 6),
                                         decoration: BoxDecoration(
                                           color: isUrgent
-                                              ? Colors.red.withOpacity(0.1)
-                                              : Colors.green.withOpacity(0.1),
+                                              ? Colors.red
+                                                  .withValues(alpha: 0.1)
+                                              : Colors.green
+                                                  .withValues(alpha: 0.1),
                                           borderRadius:
                                               BorderRadius.circular(6),
                                           border: Border.all(
                                             color: isUrgent
-                                                ? Colors.red.withOpacity(0.3)
-                                                : Colors.green.withOpacity(0.3),
+                                                ? Colors.red
+                                                    .withValues(alpha: 0.3)
+                                                : Colors.green
+                                                    .withValues(alpha: 0.3),
                                             width: 1,
                                           ),
                                         ),
@@ -441,37 +405,191 @@ class _StudentExamTimetableScreenState
     );
   }
 
-  Widget _buildSummaryItem(
+  Widget _buildExamSummaryHero(
     BuildContext context,
-    IconData icon,
-    String value,
-    String label,
-    Color color,
+    List<ExamModel> filteredExams,
   ) {
     final theme = Theme.of(context);
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 28),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-          textAlign: TextAlign.center,
+    final nextExam = filteredExams.isNotEmpty ? filteredExams.first : null;
+    final nextTime =
+        nextExam != null ? _getTimeRemaining(nextExam.examDate) : 'No exams';
+    final nextDate = nextExam != null
+        ? DateFormat('MMM dd').format(nextExam.examDate)
+        : 'N/A';
+    final nextSubject = nextExam?.subject ?? 'Schedule clear';
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1D4ED8), Color(0xFF0891B2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0891B2).withValues(alpha: 0.24),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
-        ),
-      ],
+        ],
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(
+                  Icons.event_note_outlined,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Exam schedule',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      nextSubject,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.78),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 76,
+                height: 76,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.16),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.24)),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '${filteredExams.length}',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      'Exams',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.76),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _summaryHeroTile(
+                  context,
+                  icon: Icons.schedule_outlined,
+                  label: 'Next',
+                  value: nextTime,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _summaryHeroTile(
+                  context,
+                  icon: Icons.calendar_month_outlined,
+                  label: 'Date',
+                  value: nextDate,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _summaryHeroTile(
+                  context,
+                  icon: Icons.filter_alt_outlined,
+                  label: 'Filter',
+                  value: _selectedFilter == 'All' ? 'All' : _selectedFilter,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryHeroTile(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white, size: 20),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: Colors.white.withValues(alpha: 0.72),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   void _showFilterDialog() {
+    final theme = Theme.of(context);
     final displayNames = {
       'All': 'All',
       'final': 'Final',
@@ -487,13 +605,16 @@ class _StudentExamTimetableScreenState
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: _filters.map((filter) {
-            return RadioListTile<String>(
+            final isSelected = _selectedFilter == filter;
+            return ListTile(
               title: Text(displayNames[filter] ?? filter),
-              value: filter,
-              groupValue: _selectedFilter,
-              onChanged: (value) {
+              trailing: isSelected
+                  ? Icon(Icons.check_rounded, color: theme.colorScheme.primary)
+                  : null,
+              selected: isSelected,
+              onTap: () {
                 setState(() {
-                  _selectedFilter = value!;
+                  _selectedFilter = filter;
                 });
                 Navigator.pop(context);
               },
@@ -553,7 +674,7 @@ class _StudentExamTimetableScreenState
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: subjectColor.withOpacity(0.1),
+                    color: subjectColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(

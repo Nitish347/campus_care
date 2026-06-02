@@ -19,7 +19,7 @@ class LunchController extends GetxController {
   final _selectedSection = Rxn<String>();
   final _selectedDate = Rx<DateTime>(DateTime.now());
   final _searchQuery = ''.obs;
-  
+
   // UI State toggles
   final _isEditMode = false.obs;
   final _isTableView = true.obs;
@@ -32,21 +32,24 @@ class LunchController extends GetxController {
 
   bool get isLoading => _isLoading.value;
   List<Student> get students => _students;
-  
+
   List<Student> get filteredStudents {
     if (_searchQuery.value.isEmpty) {
       return _students;
     }
     final query = _searchQuery.value.toLowerCase();
-    return _students.where((s) =>
-        s.fullName.toLowerCase().contains(query) ||
-        s.rollNumber.toLowerCase().contains(query) ||
-        s.enrollmentNumber.toLowerCase().contains(query)).toList();
+    return _students
+        .where((s) =>
+            s.fullName.toLowerCase().contains(query) ||
+            s.rollNumber.toLowerCase().contains(query) ||
+            s.enrollmentNumber.toLowerCase().contains(query))
+        .toList();
   }
 
   void setSearchQuery(String query) {
     _searchQuery.value = query;
   }
+
   Map<String, LunchStatus> get lunchMap => _lunchMap;
   String? get selectedClass => _selectedClass.value;
   String? get selectedSection => _selectedSection.value;
@@ -101,13 +104,10 @@ class LunchController extends GetxController {
         await _classController.fetchClasses();
       }
 
-      // Load students for selected class/section
-      final allStudents = await StudentService.getAllStudents();
-      _students.value = allStudents
-          .where((student) =>
-              student.class_ == _selectedClass.value &&
-              student.section == _selectedSection.value)
-          .toList();
+      _students.value = await StudentService.getStudentsByClass(
+        _selectedClass.value!,
+        _selectedSection.value!,
+      );
 
       // Load existing lunch records for the selected date
       final dateString = _formatDate(_selectedDate.value);
@@ -186,8 +186,7 @@ class LunchController extends GetxController {
     }
 
     String? markedBy = _authController.getMarkedBy();
-    String? teacherId = _authController.getMarkedBy();
-    if (markedBy == null || teacherId == null) {
+    if (markedBy == null) {
       Get.snackbar('Error', 'Authentication error: user not found');
       return;
     }
@@ -195,70 +194,46 @@ class LunchController extends GetxController {
     try {
       _isLoading.value = true;
 
+      final dateUnix = DateTime(
+            _selectedDate.value.year,
+            _selectedDate.value.month,
+            _selectedDate.value.day,
+          ).millisecondsSinceEpoch ~/
+          1000;
       final List<Map<String, dynamic>> bulkData = [];
-      final List<Future> updateFutures = [];
 
       for (var student in _students) {
         final status = _lunchMap[student.id] ?? LunchStatus.notTaken;
-        final existingId = _existingLunchIds[student.id];
-
-        if (existingId != null) {
-          // Update existing lunch record
-          updateFutures.add(
-            _lunchService.updateLunch(
-              existingId,
-              {
-                'status': _getStatusString(status),
-                'date': DateTime(_selectedDate.value.year,
-                            _selectedDate.value.month, _selectedDate.value.day)
-                        .millisecondsSinceEpoch ~/
-                    1000,
-                'marked_by': markedBy,
-              },
-            ),
-          );
-        } else {
-          // Add to bulk create with snake_case fields and unix timestamp date
-          bulkData.add({
-            'student_id': student.id,
-            'date': DateTime(_selectedDate.value.year,
-                        _selectedDate.value.month, _selectedDate.value.day)
-                    .millisecondsSinceEpoch ~/
-                1000,
-            'status': _getStatusString(status),
-            'class': _selectedClass.value,
-            'section': _selectedSection.value,
-            'marked_by': markedBy,
-          });
-        }
+        bulkData.add({
+          'student_id': student.id,
+          'date': dateUnix,
+          'status': _getStatusString(status),
+          'class': _selectedClass.value,
+          'section': _selectedSection.value,
+          'marked_by': markedBy,
+        });
       }
 
       int successCount = 0;
       int failureCount = 0;
       List<String> errors = [];
 
-      // Execute updates
-      if (updateFutures.isNotEmpty) {
-        try {
-          await Future.wait(updateFutures);
-          successCount += updateFutures.length;
-        } catch (e) {
-          failureCount += updateFutures.length;
-          errors.add('Update failed: $e');
-        }
-      }
-
-      // Execute bulk create
       if (bulkData.isNotEmpty) {
         final results = await _lunchService.bulkMarkLunch(bulkData);
         for (var result in results) {
-          if (result['success'] == true) {
-            successCount++;
-          } else {
-            failureCount++;
-            if (result['error'] != null) {
-              errors.add(result['error'].toString());
+          if (result is Map<String, dynamic>) {
+            if (result['success'] == true ||
+                result['id'] != null ||
+                result['_id'] != null) {
+              successCount++;
+            } else {
+              failureCount++;
+              if (result['error'] != null) {
+                errors.add(result['error'].toString());
+              }
             }
+          } else {
+            successCount++;
           }
         }
       }

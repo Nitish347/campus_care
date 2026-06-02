@@ -11,12 +11,17 @@ class LunchApiService {
     String? section,
     String? studentId,
     String? date,
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     final queryParams = <String, dynamic>{};
     if (classId != null) queryParams['classId'] = classId;
     if (section != null) queryParams['section'] = section;
     if (studentId != null) queryParams['studentId'] = studentId;
-    if (date != null) {
+    if (startDate != null && endDate != null) {
+      queryParams['startDate'] = startDate.toUtc().toIso8601String();
+      queryParams['endDate'] = endDate.toUtc().toIso8601String();
+    } else if (date != null) {
       // Parse YYYY-MM-DD as local date and convert to UTC for timezone-aware query
       final parts = date.split('-');
       final year = int.parse(parts[0]);

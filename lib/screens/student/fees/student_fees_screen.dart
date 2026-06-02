@@ -46,6 +46,12 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
     return DateTime.now();
   }
 
+  double _parseAmount(dynamic raw) {
+    if (raw is num) return raw.toDouble();
+    if (raw is String) return double.tryParse(raw) ?? 0;
+    return 0;
+  }
+
   Future<void> _loadFees() async {
     final student = _authController.currentStudent;
     if (student == null) {
@@ -56,15 +62,19 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
     try {
       setState(() => _isLoading = true);
       final data = await _feeApi.getFees(studentId: student.id);
-      final fees = data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      final fees = data
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
 
       final pending = <Map<String, dynamic>>[];
       final paid = <Map<String, dynamic>>[];
 
       for (final fee in fees) {
         final status = (fee['status'] ?? '').toString().toLowerCase();
-        final amount = (fee['amount'] as num?)?.toDouble() ?? 0;
-        final paidAmount = (fee['paid_amount'] as num?)?.toDouble() ?? 0;
+        final amount = _parseAmount(fee['amount']);
+        final paidAmount =
+            _parseAmount(fee['paid_amount'] ?? fee['paidAmount']);
         final dueAmount = (amount - paidAmount).clamp(0, amount).toDouble();
 
         final mapped = <String, dynamic>{
@@ -72,7 +82,9 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
           'feeType': (fee['fee_type'] ?? fee['feeType'] ?? 'Fee').toString(),
           'amount': dueAmount > 0 ? dueAmount : amount,
           'dueDate': _parseDate(fee['due_date'] ?? fee['dueDate']),
-          'paidDate': fee['payment_date'] != null ? _parseDate(fee['payment_date']) : null,
+          'paidDate': fee['payment_date'] != null
+              ? _parseDate(fee['payment_date'])
+              : null,
         };
 
         if (status == 'paid' || dueAmount == 0) {
@@ -82,7 +94,8 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
         }
       }
 
-      pending.sort((a, b) => (a['dueDate'] as DateTime).compareTo(b['dueDate'] as DateTime));
+      pending.sort((a, b) =>
+          (a['dueDate'] as DateTime).compareTo(b['dueDate'] as DateTime));
       paid.sort((a, b) {
         final aDate = a['paidDate'] as DateTime? ?? DateTime(1970);
         final bDate = b['paidDate'] as DateTime? ?? DateTime(1970);
@@ -99,10 +112,10 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
     }
   }
 
-  double get _totalPending =>
-      _pendingFees.fold(0, (sum, fee) => sum + ((fee['amount'] as num?)?.toDouble() ?? 0));
-  double get _totalPaid =>
-      _paidFees.fold(0, (sum, fee) => sum + ((fee['amount'] as num?)?.toDouble() ?? 0));
+  double get _totalPending => _pendingFees.fold(
+      0, (sum, fee) => sum + ((fee['amount'] as num?)?.toDouble() ?? 0));
+  double get _totalPaid => _paidFees.fold(
+      0, (sum, fee) => sum + ((fee['amount'] as num?)?.toDouble() ?? 0));
 
   @override
   Widget build(BuildContext context) {
@@ -156,7 +169,8 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
                         children: [
                           Text(
                             'Total Pending',
-                            style: theme.textTheme.titleMedium?.copyWith(color: Colors.white),
+                            style: theme.textTheme.titleMedium
+                                ?.copyWith(color: Colors.white),
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -186,7 +200,8 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
                                   ),
                                 ],
                               ),
-                              Container(width: 1, height: 40, color: Colors.white54),
+                              Container(
+                                  width: 1, height: 40, color: Colors.white54),
                               Column(
                                 children: [
                                   Text(
@@ -234,7 +249,9 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
       return EmptyState(
         icon: Icons.payment_outlined,
         title: isPending ? 'No pending fees' : 'No payment history',
-        message: isPending ? 'You are all caught up with your payments' : 'No payment records available',
+        message: isPending
+            ? 'You are all caught up with your payments'
+            : 'No payment records available',
       );
     }
 
@@ -244,7 +261,8 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
         itemBuilder: (context, index) {
           final fee = fees[index];
           final dueDate = fee['dueDate'] as DateTime?;
-          final isOverdue = isPending && dueDate != null && dueDate.isBefore(DateTime.now());
+          final isOverdue =
+              isPending && dueDate != null && dueDate.isBefore(DateTime.now());
 
           return InfoCard(
             child: ListTile(
@@ -252,18 +270,21 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isOverdue
-                      ? Colors.red.withOpacity(0.1)
+                      ? Colors.red.withValues(alpha: 0.1)
                       : theme.colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   Icons.payment,
-                  color: isOverdue ? Colors.red : theme.colorScheme.onPrimaryContainer,
+                  color: isOverdue
+                      ? Colors.red
+                      : theme.colorScheme.onPrimaryContainer,
                 ),
               ),
               title: Text(
                 fee['feeType'].toString(),
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,7 +299,9 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
                     Text(
                       'Due: ${DateFormat('MMM dd, yyyy').format(dueDate)}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: isOverdue ? Colors.red : theme.colorScheme.onSurfaceVariant,
+                        color: isOverdue
+                            ? Colors.red
+                            : theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -286,7 +309,8 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Paid on: ${DateFormat('MMM dd, yyyy').format(fee['paidDate'] as DateTime)}',
-                      style: theme.textTheme.bodySmall?.copyWith(color: Colors.green),
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: Colors.green),
                     ),
                   ],
                 ],

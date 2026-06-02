@@ -1,4 +1,3 @@
-import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/models/transport/transport_assignment.dart';
 import 'package:campus_care/models/transport/transport_route.dart';
 import 'package:campus_care/models/transport/transport_stop.dart';
@@ -8,7 +7,6 @@ import 'package:campus_care/widgets/common/section_header.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/student/student_app_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class StudentTransportScreen extends StatefulWidget {
   const StudentTransportScreen({super.key});
@@ -18,7 +16,6 @@ class StudentTransportScreen extends StatefulWidget {
 }
 
 class _StudentTransportScreenState extends State<StudentTransportScreen> {
-  final AuthController _authController = Get.find<AuthController>();
   final TransportApiService _transportApi = TransportApiService();
 
   bool _isLoading = true;
@@ -40,51 +37,27 @@ class _StudentTransportScreenState extends State<StudentTransportScreen> {
     });
 
     try {
-      final student = _authController.currentStudent;
-      if (student == null) {
-        throw Exception('Student session not found');
-      }
+      final summary = await _transportApi.getStudentTransportSummary();
+      final routeRaw = summary['route'];
+      final assignmentsRaw = summary['assignments'] as List<dynamic>? ?? [];
+      final stopsRaw = summary['stops'] as List<dynamic>? ?? [];
 
-      final assignmentsRaw = await _transportApi.getAssignments(status: 'active');
       final assignments = assignmentsRaw
-          .map((item) => TransportAssignment.fromJson(item as Map<String, dynamic>))
+          .map((item) =>
+              TransportAssignment.fromJson(item as Map<String, dynamic>))
           .toList();
-
-      final routesRaw = await _transportApi.getRoutes(isActive: true);
-      final routes = routesRaw
-          .map((item) => TransportRoute.fromJson(item as Map<String, dynamic>))
-          .toList();
-
-      String? routeId = student.routeId;
-      if ((routeId == null || routeId.isEmpty) && assignments.isNotEmpty) {
-        routeId = assignments.first.routeId;
-      }
-
-      TransportRoute? matchedRoute;
-      if (routeId != null) {
-        for (final route in routes) {
-          if (route.id == routeId) {
-            matchedRoute = route;
-            break;
-          }
-        }
-      }
-
-      final visibleAssignments = routeId == null
-          ? assignments
-          : assignments.where((assignment) => assignment.routeId == routeId).toList();
-
-      final stopsRaw =
-          routeId == null ? const <dynamic>[] : await _transportApi.getRouteStops(routeId);
       final stops = stopsRaw
           .map((item) => TransportStop.fromJson(item as Map<String, dynamic>))
           .toList();
+      final route = routeRaw is Map<String, dynamic>
+          ? TransportRoute.fromJson(routeRaw)
+          : null;
 
       if (!mounted) return;
       setState(() {
-        _route = matchedRoute;
+        _route = route;
         _stops = stops;
-        _assignments = visibleAssignments;
+        _assignments = assignments;
       });
     } catch (e) {
       if (!mounted) return;
@@ -134,7 +107,8 @@ class _StudentTransportScreenState extends State<StudentTransportScreen> {
                       children: [
                         SectionHeader(
                           title: 'Your Route',
-                          subtitle: 'Pickup, drop, and assigned vehicle details',
+                          subtitle:
+                              'Pickup, drop, and assigned vehicle details',
                         ),
                         const SizedBox(height: 12),
                         if (_error != null)
@@ -162,14 +136,14 @@ class _StudentTransportScreenState extends State<StudentTransportScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '${_route!.routeNumber} • ${_route!.routeName}',
+                                  '${_route!.routeNumber} - ${_route!.routeName}',
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  '${_route!.startLocation} → ${_route!.endLocation}',
+                                  '${_route!.startLocation} -> ${_route!.endLocation}',
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
@@ -211,17 +185,20 @@ class _StudentTransportScreenState extends State<StudentTransportScreen> {
                               child: ListTile(
                                 leading: Icon(Icons.directions_bus_outlined),
                                 title: Text('No active assignment found'),
-                                subtitle: Text('Vehicle and driver details are not available.'),
+                                subtitle: Text(
+                                    'Vehicle and driver details are not available.'),
                               ),
                             )
                           else
                             ..._assignments.map((assignment) => InfoCard(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         assignment.vehicleNumber ?? 'Vehicle',
-                                        style: theme.textTheme.titleSmall?.copyWith(
+                                        style: theme.textTheme.titleSmall
+                                            ?.copyWith(
                                           fontWeight: FontWeight.w700,
                                         ),
                                       ),
@@ -230,14 +207,18 @@ class _StudentTransportScreenState extends State<StudentTransportScreen> {
                                         'Driver: ${assignment.driverName.isEmpty ? 'N/A' : assignment.driverName}',
                                         style: theme.textTheme.bodyMedium,
                                       ),
-                                      if ((assignment.driverPhone ?? '').isNotEmpty)
+                                      if ((assignment.driverPhone ?? '')
+                                          .isNotEmpty)
                                         Text(
                                           'Driver Phone: ${assignment.driverPhone}',
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            color: theme.colorScheme.onSurfaceVariant,
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: theme
+                                                .colorScheme.onSurfaceVariant,
                                           ),
                                         ),
-                                      if ((assignment.attendantName ?? '').isNotEmpty) ...[
+                                      if ((assignment.attendantName ?? '')
+                                          .isNotEmpty) ...[
                                         const SizedBox(height: 6),
                                         Text(
                                           'Attendant: ${assignment.attendantName}',
@@ -273,7 +254,7 @@ class _StudentTransportScreenState extends State<StudentTransportScreen> {
                                         'Pickup: ${stop.pickupTime}',
                                       if ((stop.dropTime ?? '').isNotEmpty)
                                         'Drop: ${stop.dropTime}',
-                                    ].join('  •  '),
+                                    ].join('  -  '),
                                   ),
                                 ),
                               ),

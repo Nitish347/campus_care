@@ -1,7 +1,5 @@
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/services/api/lunch_api_service.dart';
-import 'package:campus_care/widgets/common/empty_state.dart';
-import 'package:campus_care/widgets/common/summary_card.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/student/student_app_bar.dart';
 import 'package:flutter/material.dart';
@@ -38,14 +36,27 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
 
     try {
       setState(() => _isLoading = true);
-      final data = await _lunchApi.getLunch(studentId: student.id);
-      final records =
-          data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
-      records.sort((a, b) => _parseUnix(b['date']).compareTo(_parseUnix(a['date'])));
-      if (records.isNotEmpty) {
-        final latest = _parseUnix(records.first['date']);
-        _selectedMonth = DateTime(latest.year, latest.month);
-      }
+      final startDate = DateTime(_selectedMonth.year, _selectedMonth.month, 1);
+      final endDate = DateTime(
+        _selectedMonth.year,
+        _selectedMonth.month + 1,
+        0,
+        23,
+        59,
+        59,
+        999,
+      );
+      final data = await _lunchApi.getLunch(
+        studentId: student.id,
+        startDate: startDate,
+        endDate: endDate,
+      );
+      final records = data
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+      records.sort(
+          (a, b) => _parseUnix(b['date']).compareTo(_parseUnix(a['date'])));
       setState(() => _records = records);
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -69,6 +80,14 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
   }
 
   String _status(dynamic raw) => (raw?.toString() ?? 'Not Taken').trim();
+
+  List<Map<String, dynamic>> get _monthRecords {
+    return _records.where((record) {
+      final date = _parseUnix(record['date']);
+      return date.year == _selectedMonth.year &&
+          date.month == _selectedMonth.month;
+    }).toList();
+  }
 
   List<Map<String, dynamic>> _calendarDataForMonth(DateTime month) {
     final firstDay = DateTime(month.year, month.month, 1);
@@ -103,12 +122,17 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
     return cells;
   }
 
-  int get _fullMealCount =>
-      _records.where((r) => _status(r['status']).toLowerCase() == 'full meal').length;
-  int get _halfMealCount =>
-      _records.where((r) => _status(r['status']).toLowerCase() == 'half meal').length;
-  int get _notTakenCount =>
-      _records.where((r) => _status(r['status']).toLowerCase() == 'not taken').length;
+  int get _fullMealCount => _monthRecords
+      .where((r) => _status(r['status']).toLowerCase() == 'full meal')
+      .length;
+  int get _halfMealCount => _monthRecords
+      .where((r) => _status(r['status']).toLowerCase() == 'half meal')
+      .length;
+  int get _notTakenCount => _monthRecords
+      .where((r) => _status(r['status']).toLowerCase() == 'not taken')
+      .length;
+
+  int get _mealMarkedCount => _monthRecords.length;
 
   Color _statusColor(String status, ThemeData theme) {
     switch (status.toLowerCase()) {
@@ -142,12 +166,14 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
     setState(() {
       _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1);
     });
+    _loadLunch();
   }
 
   void _nextMonth() {
     setState(() {
       _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
     });
+    _loadLunch();
   }
 
   @override
@@ -180,160 +206,373 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                SummaryCard(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _summaryItem(context, 'Full Meal', '$_fullMealCount', Colors.green),
-                      _summaryItem(context, 'Half Meal', '$_halfMealCount', Colors.orange),
-                      _summaryItem(context, 'Not Taken', '$_notTakenCount', theme.colorScheme.outline),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
+          : RefreshIndicator(
+              onRefresh: _loadLunch,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 24),
+                children: [
+                  ResponsivePadding(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        IconButton(
-                          onPressed: _previousMonth,
-                          icon: const Icon(Icons.chevron_left_rounded),
-                        ),
-                        Expanded(
-                          child: Center(
-                            child: Text(
-                              DateFormat('MMMM yyyy').format(_selectedMonth),
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: _nextMonth,
-                          icon: const Icon(Icons.chevron_right_rounded),
-                        ),
+                        _buildLunchHero(theme),
+                        const SizedBox(height: 16),
+                        _buildMonthSwitcher(theme),
+                        const SizedBox(height: 14),
+                        _buildLegend(theme),
+                        const SizedBox(height: 14),
+                        _buildCalendarCard(theme, weekDays, cells, todayDate),
                       ],
                     ),
                   ),
-                ),
-                Expanded(
-                  child: ResponsivePadding(
-                    child: _records.isEmpty
-                        ? const EmptyState(
-                            icon: Icons.no_meals,
-                            title: 'No lunch records',
-                            message: 'No lunch records found for this month.',
-                          )
-                        : Column(
-                            children: [
-                              GridView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 7,
-                                  crossAxisSpacing: 6,
-                                  mainAxisSpacing: 6,
-                                ),
-                                itemCount: 7,
-                                itemBuilder: (_, index) => Center(
-                                  child: Text(
-                                    weekDays[index],
-                                    style: theme.textTheme.labelLarge?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Expanded(
-                                child: GridView.builder(
-                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 7,
-                                    crossAxisSpacing: 6,
-                                    mainAxisSpacing: 6,
-                                  ),
-                                  itemCount: cells.length,
-                                  itemBuilder: (_, index) {
-                                    final item = cells[index];
-                                    final date = item['date'] as DateTime?;
-                                    if (date == null) return const SizedBox.shrink();
-
-                                    final status = item['status'] as String?;
-                                    final record = item['record'] as Map<String, dynamic>?;
-                                    final isToday =
-                                        DateTime(date.year, date.month, date.day) == todayDate;
-
-                                    final color = status == null
-                                        ? theme.colorScheme.outline.withValues(alpha: 0.25)
-                                        : _statusColor(status, theme);
-
-                                    return InkWell(
-                                      borderRadius: BorderRadius.circular(12),
-                                      onTap: record == null
-                                          ? null
-                                          : () => _showLunchDetails(context, date, status!),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: color.withValues(alpha: 0.14),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: isToday ? theme.colorScheme.primary : color.withValues(alpha: 0.5),
-                                            width: isToday ? 2 : 1.2,
-                                          ),
-                                        ),
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              DateFormat('dd').format(date),
-                                              style: theme.textTheme.titleSmall?.copyWith(
-                                                fontWeight: FontWeight.w700,
-                                                color: isToday ? theme.colorScheme.primary : null,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            if (status != null)
-                                              Icon(
-                                                _statusIcon(status),
-                                                size: 14,
-                                                color: color,
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
     );
   }
 
-  Widget _summaryItem(BuildContext context, String label, String value, Color color) {
-    final theme = Theme.of(context);
-    return Column(
+  Widget _buildLunchHero(ThemeData theme) {
+    final primaryStatus = _fullMealCount >= _halfMealCount
+        ? 'Full meal'
+        : _halfMealCount > 0
+            ? 'Half meal'
+            : 'No meals';
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1D4ED8), Color(0xFF0891B2)],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0891B2).withValues(alpha: 0.20),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      DateFormat('MMMM').format(_selectedMonth),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.78),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Lunch overview',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _mealMarkedCount == 0
+                          ? 'No lunch records have been marked this month.'
+                          : '$_mealMarkedCount lunch record${_mealMarkedCount == 1 ? '' : 's'} this month',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.82),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Container(
+                width: 92,
+                height: 92,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.14),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.24)),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.restaurant_rounded,
+                        color: Color(0xFFFFEDD5), size: 24),
+                    const SizedBox(height: 4),
+                    Text(
+                      primaryStatus,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _heroStat(theme, 'Full', '$_fullMealCount',
+                    Icons.restaurant_rounded, const Color(0xFFBBF7D0)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _heroStat(theme, 'Half', '$_halfMealCount',
+                    Icons.lunch_dining_rounded, const Color(0xFFFFEDD5)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _heroStat(theme, 'Not Taken', '$_notTakenCount',
+                    Icons.no_meals_rounded, Colors.white),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _heroStat(
+    ThemeData theme,
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: Colors.white.withValues(alpha: 0.78),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthSwitcher(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color:
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+            color: theme.colorScheme.outline.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: [
+          IconButton.filledTonal(
+            onPressed: _previousMonth,
+            icon: const Icon(Icons.chevron_left_rounded),
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                Text(
+                  DateFormat('MMMM yyyy').format(_selectedMonth),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  'Tap a marked date for details',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton.filledTonal(
+            onPressed: _nextMonth,
+            icon: const Icon(Icons.chevron_right_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegend(ThemeData theme) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 8,
       children: [
-        Text(
-          value,
-          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, color: color),
-        ),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-        ),
+        _legendPill('Full Meal', Colors.green, Icons.restaurant_rounded, theme),
+        _legendPill(
+            'Half Meal', Colors.orange, Icons.lunch_dining_rounded, theme),
+        _legendPill('Not Taken', theme.colorScheme.outline,
+            Icons.no_meals_rounded, theme),
       ],
+    );
+  }
+
+  Widget _legendPill(
+    String text,
+    Color color,
+    IconData icon,
+    ThemeData theme,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarCard(
+    ThemeData theme,
+    List<String> weekDays,
+    List<Map<String, dynamic>> cells,
+    DateTime todayDate,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+            color: theme.colorScheme.outline.withValues(alpha: 0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              childAspectRatio: 1.3,
+            ),
+            itemCount: 7,
+            itemBuilder: (_, index) => Center(
+              child: Text(
+                weekDays[index],
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              crossAxisSpacing: 7,
+              mainAxisSpacing: 7,
+            ),
+            itemCount: cells.length,
+            itemBuilder: (_, index) {
+              final item = cells[index];
+              final date = item['date'] as DateTime?;
+              if (date == null) return const SizedBox.shrink();
+
+              final status = item['status'] as String?;
+              final record = item['record'] as Map<String, dynamic>?;
+              final isToday =
+                  DateTime(date.year, date.month, date.day) == todayDate;
+              final color = status == null
+                  ? theme.colorScheme.outline
+                  : _statusColor(status, theme);
+
+              return InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: record == null
+                    ? null
+                    : () => _showLunchDetails(context, date, status!),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color:
+                        color.withValues(alpha: status == null ? 0.06 : 0.13),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isToday
+                          ? theme.colorScheme.primary
+                          : color.withValues(
+                              alpha: status == null ? 0.12 : 0.38),
+                      width: isToday ? 2 : 1,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        DateFormat('d').format(date),
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: isToday ? theme.colorScheme.primary : null,
+                        ),
+                      ),
+                      if (status != null) ...[
+                        const SizedBox(height: 2),
+                        Icon(_statusIcon(status), size: 15, color: color),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 

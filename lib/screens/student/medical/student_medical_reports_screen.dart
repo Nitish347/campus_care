@@ -19,7 +19,8 @@ class StudentMedicalReportsScreen extends StatefulWidget {
       _StudentMedicalReportsScreenState();
 }
 
-class _StudentMedicalReportsScreenState extends State<StudentMedicalReportsScreen> {
+class _StudentMedicalReportsScreenState
+    extends State<StudentMedicalReportsScreen> {
   final MedicalRecordApiService _medicalApi = MedicalRecordApiService();
   final AuthController _authController = Get.find<AuthController>();
 
@@ -80,7 +81,8 @@ class _StudentMedicalReportsScreenState extends State<StudentMedicalReportsScree
         if (parametersRaw is List) {
           params = parametersRaw
               .whereType<Map>()
-              .map((e) => HealthParameters.fromJson(Map<String, dynamic>.from(e)))
+              .map((e) =>
+                  HealthParameters.fromJson(Map<String, dynamic>.from(e)))
               .toList();
         }
 
@@ -166,13 +168,14 @@ class _StudentMedicalReportsScreenState extends State<StudentMedicalReportsScree
                       Container(
                         width: 1,
                         height: 40,
-                        color: theme.colorScheme.outline.withOpacity(0.3),
+                        color: theme.colorScheme.outline.withValues(alpha: 0.3),
                       ),
                       _summaryItem(
                         context,
                         Icons.calendar_today,
                         _records.isNotEmpty
-                            ? DateFormat('MMM yyyy').format(_records.first.checkupDate)
+                            ? DateFormat('MMM yyyy')
+                                .format(_records.first.checkupDate)
                             : 'N/A',
                         'Last Checkup',
                         Colors.green,
@@ -198,8 +201,10 @@ class _StudentMedicalReportsScreenState extends State<StudentMedicalReportsScree
                                 margin: const EdgeInsets.only(bottom: 12),
                                 child: ListTile(
                                   leading: CircleAvatar(
-                                    backgroundColor: color.withOpacity(0.12),
-                                    child: Icon(_typeIcon(record.checkupType), color: color),
+                                    backgroundColor:
+                                        color.withValues(alpha: 0.12),
+                                    child: Icon(_typeIcon(record.checkupType),
+                                        color: color),
                                   ),
                                   title: Text(record.checkupType),
                                   subtitle: Text(
@@ -215,8 +220,10 @@ class _StudentMedicalReportsScreenState extends State<StudentMedicalReportsScree
                                             vertical: 6,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: theme.colorScheme.surfaceContainerHighest,
-                                            borderRadius: BorderRadius.circular(8),
+                                            color: theme.colorScheme
+                                                .surfaceContainerHighest,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
                                           ),
                                           child: Text(
                                             '${record.attachment.length} file${record.attachment.length > 1 ? 's' : ''}',
@@ -282,14 +289,15 @@ class _StudentMedicalReportsScreenState extends State<StudentMedicalReportsScree
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: color.withOpacity(0.1),
+                  backgroundColor: color.withValues(alpha: 0.1),
                   child: Icon(_typeIcon(record.checkupType), color: color),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     record.checkupType,
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -297,7 +305,8 @@ class _StudentMedicalReportsScreenState extends State<StudentMedicalReportsScree
             const SizedBox(height: 16),
             Text('Doctor: ${record.drName}'),
             const SizedBox(height: 8),
-            Text('Date: ${DateFormat('MMMM dd, yyyy').format(record.checkupDate)}'),
+            Text(
+                'Date: ${DateFormat('MMMM dd, yyyy').format(record.checkupDate)}'),
             if ((record.remark ?? '').trim().isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
