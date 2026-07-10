@@ -26,6 +26,9 @@ class InstituteContextService extends GetxService {
 
   /// Load saved institute context from storage
   void _loadSavedContext() {
+    if (!StorageService.isInitialized) {
+      return;
+    }
     final savedId = StorageService.prefs.getString(_keyInstituteId);
     if (savedId != null) {
       // Context will be restored when institute controller loads

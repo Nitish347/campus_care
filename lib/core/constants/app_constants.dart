@@ -40,7 +40,6 @@ class AppConstants {
       String.fromEnvironment('API_BASE_URL', defaultValue: '');
 
   static String get baseUrl {
-    // return "http://127.0.0.1:8787";
     if (_baseUrlFromEnv.isNotEmpty) {
       return _baseUrlFromEnv;
     }
@@ -59,6 +58,7 @@ class AppConstants {
   static const String subjectsEndpoint = '/subjects';
   static const String attendanceEndpoint = '/attendance';
   static const String lunchEndpoint = '/lunch';
+  static const String holidaysEndpoint = '/holidays';
   static const String homeworkEndpoint = '/homework';
   static const String homeworkSubmissionsEndpoint = '/homework-submissions';
   static const String examsEndpoint = '/exams';
@@ -71,6 +71,7 @@ class AppConstants {
   static const String transportEndpoint = '/transport';
   static const String institutesEndpoint = '/institutes';
   static const String uploadsEndpoint = '/uploads';
+  static const String teacherAttendanceEndpoint = '/teacher-attendance';
 
   // Storage Keys for API
   static const String keyAuthToken = 'auth_token';

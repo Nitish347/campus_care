@@ -408,6 +408,10 @@ class AdminLunchManagementScreen extends StatelessWidget {
 
             // Student List or Table View
             Obx(() {
+              if (controller.isSelectedDateHoliday) {
+                return _buildHolidayState(theme, controller);
+              }
+
               if (controller.students.isEmpty && !controller.isLoading) {
                 return _buildLunchEmptyState(theme);
               }
@@ -1248,6 +1252,49 @@ class AdminLunchManagementScreen extends StatelessWidget {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHolidayState(ThemeData theme, LunchController controller) {
+    final holiday = controller.selectedHoliday;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 48),
+      child: Center(
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 520),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.green.withValues(alpha: 0.22),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.event_busy_rounded,
+                  color: Colors.green, size: 44),
+              const SizedBox(height: 14),
+              Text(
+                holiday?.name ?? 'Holiday',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Lunch is skipped for this date and no meal/absent records will be created.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),

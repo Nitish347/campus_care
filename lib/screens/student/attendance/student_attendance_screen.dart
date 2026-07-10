@@ -1,7 +1,9 @@
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/models/student/student.dart';
 import 'package:campus_care/models/student/student_attendance_model.dart';
+import 'package:campus_care/models/holiday_model.dart';
 import 'package:campus_care/services/api/attendance_api_service.dart';
+import 'package:campus_care/services/api/holiday_api_service.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/student/student_app_bar.dart';
 import 'package:flutter/material.dart';
@@ -18,11 +20,13 @@ class StudentAttendanceScreen extends StatefulWidget {
 
 class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   final AttendanceApiService _attendanceApi = AttendanceApiService();
+  final HolidayApiService _holidayApi = HolidayApiService();
   final AuthController _authController = Get.find<AuthController>();
   final DateTime _today = DateTime.now();
 
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
   List<StudentAttendanceModel> _allAttendance = [];
+  List<HolidayModel> _holidays = [];
   bool _isLoading = true;
 
   @override
@@ -49,6 +53,10 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
       );
       final attendanceData = await _attendanceApi.getAttendance(
         studentId: currentUser.id,
+        startDate: startDate,
+        endDate: endDate,
+      );
+      _holidays = await _holidayApi.getHolidays(
         startDate: startDate,
         endDate: endDate,
       );
@@ -107,14 +115,18 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
       final date = DateTime(month.year, month.month, day);
       final dateOnly = DateTime(date.year, date.month, date.day);
       final isFuture = dateOnly.isAfter(today);
+      final holiday = _holidayForDate(dateOnly);
+      final isWeekOff = holiday == null && dateOnly.weekday == DateTime.sunday;
 
       StudentAttendanceModel? attendanceRecord;
-      for (final att in _allAttendance) {
-        final attDate =
-            DateTime(att.dateTime.year, att.dateTime.month, att.dateTime.day);
-        if (attDate == dateOnly) {
-          attendanceRecord = att;
-          break;
+      if (holiday == null && !isWeekOff) {
+        for (final att in _allAttendance) {
+          final attDate =
+              DateTime(att.dateTime.year, att.dateTime.month, att.dateTime.day);
+          if (attDate == dateOnly) {
+            attendanceRecord = att;
+            break;
+          }
         }
       }
 
@@ -122,6 +134,8 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
         'date': date,
         'status': attendanceRecord?.status,
         'attendance': attendanceRecord,
+        'holiday': holiday,
+        'isWeekOff': isWeekOff,
         'isFuture': isFuture,
       });
     }
@@ -131,13 +145,34 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   List<Map<String, dynamic>> get _attendance =>
       _calendarDataForMonth(_selectedMonth);
 
-  int get _presentDays =>
-      _attendance.where((a) => a['status'] == 'present').length;
+  int get _presentDays => _attendance
+      .where((a) =>
+          a['holiday'] == null &&
+          a['isWeekOff'] != true &&
+          a['status'] == 'present')
+      .length;
 
-  int get _absentDays =>
-      _attendance.where((a) => a['status'] == 'absent').length;
+  int get _absentDays => _attendance
+      .where((a) =>
+          a['holiday'] == null &&
+          a['isWeekOff'] != true &&
+          a['status'] == 'absent')
+      .length;
 
-  int get _markedDays => _attendance.where((a) => a['status'] != null).length;
+  int get _markedDays => _attendance
+      .where((a) =>
+          a['holiday'] == null && a['isWeekOff'] != true && a['status'] != null)
+      .length;
+  int get _holidayDays => _attendance.where((a) => a['holiday'] != null).length;
+  int get _weekOffDays =>
+      _attendance.where((a) => a['isWeekOff'] == true).length;
+
+  HolidayModel? _holidayForDate(DateTime date) {
+    for (final holiday in _holidays) {
+      if (holiday.isActive && holiday.isSameDate(date)) return holiday;
+    }
+    return null;
+  }
 
   double get _monthlyAttendanceRate {
     final markedDays = _markedDays;
@@ -327,6 +362,15 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                 child: _heroStat(theme, 'Marked', '$_markedDays',
                     Icons.event_available_rounded, Colors.white),
               ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _heroStat(
+                    theme,
+                    'Off Days',
+                    '${_holidayDays + _weekOffDays}',
+                    Icons.event_busy_rounded,
+                    const Color(0xFFBAE6FD)),
+              ),
             ],
           ),
         ],
@@ -421,6 +465,8 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
       children: [
         _legendPill('Present', Colors.green, Icons.check_circle_rounded, theme),
         _legendPill('Absent', Colors.red, Icons.cancel_rounded, theme),
+        _legendPill('Holiday', Colors.blue, Icons.event_busy_rounded, theme),
+        _legendPill('Sunday', Colors.purple, Icons.weekend_rounded, theme),
         _legendPill('No Record', theme.colorScheme.outline,
             Icons.radio_button_unchecked_rounded, theme),
       ],
@@ -515,36 +561,61 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               final status = item['status'] as String?;
               final attendanceRecord =
                   item['attendance'] as StudentAttendanceModel?;
+              final holiday = item['holiday'] as HolidayModel?;
+              final isWeekOff = item['isWeekOff'] == true;
               final isPresent = status == 'present';
               final isAbsent = status == 'absent';
               final isToday =
                   DateTime(date.year, date.month, date.day) == today;
-              final color = isPresent
-                  ? Colors.green
-                  : isAbsent
-                      ? Colors.red
-                      : theme.colorScheme.outline;
-              final icon = isPresent
-                  ? Icons.check_rounded
-                  : isAbsent
-                      ? Icons.close_rounded
-                      : null;
+              final color = holiday != null
+                  ? Colors.blue
+                  : isWeekOff
+                      ? Colors.purple
+                      : isPresent
+                          ? Colors.green
+                          : isAbsent
+                              ? Colors.red
+                              : theme.colorScheme.outline;
+              final icon = holiday != null
+                  ? Icons.event_busy_rounded
+                  : isWeekOff
+                      ? Icons.weekend_rounded
+                      : isPresent
+                          ? Icons.check_rounded
+                          : isAbsent
+                              ? Icons.close_rounded
+                              : null;
 
               return InkWell(
                 borderRadius: BorderRadius.circular(14),
-                onTap: attendanceRecord == null
-                    ? null
-                    : () => _showAttendanceDetails(context, attendanceRecord),
+                onTap: holiday != null
+                    ? () => _showHolidayDetails(context, holiday)
+                    : isWeekOff
+                        ? () => _showWeekOffDetails(context, date)
+                        : attendanceRecord == null
+                            ? null
+                            : () => _showAttendanceDetails(
+                                context, attendanceRecord),
                 child: Container(
                   decoration: BoxDecoration(
                     color: color.withValues(
-                        alpha: isPresent || isAbsent ? 0.13 : 0.06),
+                        alpha: isPresent ||
+                                isAbsent ||
+                                holiday != null ||
+                                isWeekOff
+                            ? 0.13
+                            : 0.06),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: isToday
                           ? theme.colorScheme.primary
                           : color.withValues(
-                              alpha: isPresent || isAbsent ? 0.38 : 0.12),
+                              alpha: isPresent ||
+                                      isAbsent ||
+                                      holiday != null ||
+                                      isWeekOff
+                                  ? 0.38
+                                  : 0.12),
                       width: isToday ? 2 : 1,
                     ),
                   ),
@@ -610,6 +681,68 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               Text(attendance.remark!),
             ],
             const SizedBox(height: 14),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showHolidayDetails(BuildContext context, HolidayModel holiday) {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              holiday.name,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(DateFormat('EEEE, MMM dd, yyyy').format(holiday.date)),
+            const SizedBox(height: 8),
+            Text('Attendance not counted on holidays.',
+                style: theme.textTheme.bodyMedium),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showWeekOffDetails(BuildContext context, DateTime date) {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Sunday Week Off',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Colors.purple,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(DateFormat('EEEE, MMM dd, yyyy').format(date)),
+            const SizedBox(height: 8),
+            Text('Attendance is not counted on Sundays.',
+                style: theme.textTheme.bodyMedium),
           ],
         ),
       ),

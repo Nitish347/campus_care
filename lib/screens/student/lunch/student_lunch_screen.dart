@@ -1,4 +1,6 @@
 import 'package:campus_care/controllers/auth_controller.dart';
+import 'package:campus_care/models/holiday_model.dart';
+import 'package:campus_care/services/api/holiday_api_service.dart';
 import 'package:campus_care/services/api/lunch_api_service.dart';
 import 'package:campus_care/widgets/responsive/responsive_padding.dart';
 import 'package:campus_care/widgets/student/student_app_bar.dart';
@@ -15,11 +17,13 @@ class StudentLunchScreen extends StatefulWidget {
 
 class _StudentLunchScreenState extends State<StudentLunchScreen> {
   final LunchApiService _lunchApi = LunchApiService();
+  final HolidayApiService _holidayApi = HolidayApiService();
   final AuthController _authController = Get.find<AuthController>();
 
   bool _isLoading = true;
   DateTime _selectedMonth = DateTime(DateTime.now().year, DateTime.now().month);
   List<Map<String, dynamic>> _records = [];
+  List<HolidayModel> _holidays = [];
 
   @override
   void initState() {
@@ -48,6 +52,10 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
       );
       final data = await _lunchApi.getLunch(
         studentId: student.id,
+        startDate: startDate,
+        endDate: endDate,
+      );
+      _holidays = await _holidayApi.getHolidays(
         startDate: startDate,
         endDate: endDate,
       );
@@ -85,8 +93,17 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
     return _records.where((record) {
       final date = _parseUnix(record['date']);
       return date.year == _selectedMonth.year &&
-          date.month == _selectedMonth.month;
+          date.month == _selectedMonth.month &&
+          _holidayForDate(DateTime(date.year, date.month, date.day)) == null &&
+          DateTime(date.year, date.month, date.day).weekday != DateTime.sunday;
     }).toList();
+  }
+
+  HolidayModel? _holidayForDate(DateTime date) {
+    for (final holiday in _holidays) {
+      if (holiday.isActive && holiday.isSameDate(date)) return holiday;
+    }
+    return null;
   }
 
   List<Map<String, dynamic>> _calendarDataForMonth(DateTime month) {
@@ -102,14 +119,18 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
     for (int day = 1; day <= lastDay.day; day++) {
       final date = DateTime(month.year, month.month, day);
       final dateOnly = DateTime(date.year, date.month, date.day);
+      final holiday = _holidayForDate(dateOnly);
+      final isWeekOff = holiday == null && dateOnly.weekday == DateTime.sunday;
 
       Map<String, dynamic>? record;
-      for (final item in _records) {
-        final d = _parseUnix(item['date']);
-        final itemDate = DateTime(d.year, d.month, d.day);
-        if (itemDate == dateOnly) {
-          record = item;
-          break;
+      if (holiday == null && !isWeekOff) {
+        for (final item in _records) {
+          final d = _parseUnix(item['date']);
+          final itemDate = DateTime(d.year, d.month, d.day);
+          if (itemDate == dateOnly) {
+            record = item;
+            break;
+          }
         }
       }
 
@@ -117,6 +138,8 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
         'date': date,
         'status': record == null ? null : _status(record['status']),
         'record': record,
+        'holiday': holiday,
+        'isWeekOff': isWeekOff,
       });
     }
     return cells;
@@ -133,6 +156,14 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
       .length;
 
   int get _mealMarkedCount => _monthRecords.length;
+  int get _holidayCount => _holidays
+      .where((h) =>
+          h.date.year == _selectedMonth.year &&
+          h.date.month == _selectedMonth.month)
+      .length;
+  int get _weekOffCount => _calendarDataForMonth(_selectedMonth)
+      .where((cell) => cell['isWeekOff'] == true)
+      .length;
 
   Color _statusColor(String status, ThemeData theme) {
     switch (status.toLowerCase()) {
@@ -339,6 +370,15 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
                 child: _heroStat(theme, 'Not Taken', '$_notTakenCount',
                     Icons.no_meals_rounded, Colors.white),
               ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _heroStat(
+                    theme,
+                    'Off Days',
+                    '${_holidayCount + _weekOffCount}',
+                    Icons.event_busy_rounded,
+                    const Color(0xFFBAE6FD)),
+              ),
             ],
           ),
         ],
@@ -434,6 +474,8 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
         _legendPill('Full Meal', Colors.green, Icons.restaurant_rounded, theme),
         _legendPill(
             'Half Meal', Colors.orange, Icons.lunch_dining_rounded, theme),
+        _legendPill('Holiday', Colors.blue, Icons.event_busy_rounded, theme),
+        _legendPill('Sunday', Colors.purple, Icons.weekend_rounded, theme),
         _legendPill('Not Taken', theme.colorScheme.outline,
             Icons.no_meals_rounded, theme),
       ],
@@ -527,27 +569,43 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
 
               final status = item['status'] as String?;
               final record = item['record'] as Map<String, dynamic>?;
+              final holiday = item['holiday'] as HolidayModel?;
+              final isWeekOff = item['isWeekOff'] == true;
               final isToday =
                   DateTime(date.year, date.month, date.day) == todayDate;
-              final color = status == null
-                  ? theme.colorScheme.outline
-                  : _statusColor(status, theme);
+              final color = holiday != null
+                  ? Colors.blue
+                  : isWeekOff
+                      ? Colors.purple
+                      : status == null
+                          ? theme.colorScheme.outline
+                          : _statusColor(status, theme);
 
               return InkWell(
                 borderRadius: BorderRadius.circular(14),
-                onTap: record == null
-                    ? null
-                    : () => _showLunchDetails(context, date, status!),
+                onTap: holiday != null
+                    ? () => _showHolidayDetails(context, holiday)
+                    : isWeekOff
+                        ? () => _showWeekOffDetails(context, date)
+                        : record == null
+                            ? null
+                            : () => _showLunchDetails(context, date, status!),
                 child: Container(
                   decoration: BoxDecoration(
-                    color:
-                        color.withValues(alpha: status == null ? 0.06 : 0.13),
+                    color: color.withValues(
+                        alpha: status == null && holiday == null && !isWeekOff
+                            ? 0.06
+                            : 0.13),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: isToday
                           ? theme.colorScheme.primary
                           : color.withValues(
-                              alpha: status == null ? 0.12 : 0.38),
+                              alpha: status == null &&
+                                      holiday == null &&
+                                      !isWeekOff
+                                  ? 0.12
+                                  : 0.38),
                       width: isToday ? 2 : 1,
                     ),
                   ),
@@ -561,9 +619,17 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
                           color: isToday ? theme.colorScheme.primary : null,
                         ),
                       ),
-                      if (status != null) ...[
+                      if (holiday != null || isWeekOff || status != null) ...[
                         const SizedBox(height: 2),
-                        Icon(_statusIcon(status), size: 15, color: color),
+                        Icon(
+                          holiday != null
+                              ? Icons.event_busy_rounded
+                              : isWeekOff
+                                  ? Icons.weekend_rounded
+                                  : _statusIcon(status!),
+                          size: 15,
+                          color: color,
+                        ),
                       ],
                     ],
                   ),
@@ -606,6 +672,68 @@ class _StudentLunchScreenState extends State<StudentLunchScreen> {
               ),
             ),
             const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showHolidayDetails(BuildContext context, HolidayModel holiday) {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              holiday.name,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(DateFormat('EEEE, MMM dd, yyyy').format(holiday.date)),
+            const SizedBox(height: 8),
+            Text('Lunch records are not counted on holidays.',
+                style: theme.textTheme.bodyMedium),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showWeekOffDetails(BuildContext context, DateTime date) {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Sunday Week Off',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Colors.purple,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(DateFormat('EEEE, MMM dd, yyyy').format(date)),
+            const SizedBox(height: 8),
+            Text('Lunch records are not counted on Sundays.',
+                style: theme.textTheme.bodyMedium),
           ],
         ),
       ),

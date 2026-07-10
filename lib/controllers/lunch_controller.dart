@@ -3,11 +3,14 @@ import 'package:get/get.dart';
 import 'package:campus_care/models/student/student.dart';
 import 'package:campus_care/services/student_service.dart';
 import 'package:campus_care/services/api/lunch_api_service.dart';
+import 'package:campus_care/services/api/holiday_api_service.dart';
+import 'package:campus_care/models/holiday_model.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/controllers/class_controller.dart';
 
 class LunchController extends GetxController {
   final LunchApiService _lunchService = LunchApiService();
+  final HolidayApiService _holidayService = HolidayApiService();
   final AuthController _authController = Get.find<AuthController>();
   final ClassController _classController = Get.put(ClassController());
 
@@ -18,6 +21,7 @@ class LunchController extends GetxController {
   final _selectedClass = Rxn<String>();
   final _selectedSection = Rxn<String>();
   final _selectedDate = Rx<DateTime>(DateTime.now());
+  final _selectedHoliday = Rxn<HolidayModel>();
   final _searchQuery = ''.obs;
 
   // UI State toggles
@@ -54,6 +58,8 @@ class LunchController extends GetxController {
   String? get selectedClass => _selectedClass.value;
   String? get selectedSection => _selectedSection.value;
   DateTime get selectedDate => _selectedDate.value;
+  HolidayModel? get selectedHoliday => _selectedHoliday.value;
+  bool get isSelectedDateHoliday => _selectedHoliday.value != null;
 
   // Statistics
   int get totalStudents => _students.length;
@@ -88,6 +94,7 @@ class LunchController extends GetxController {
     _students.clear();
     _lunchMap.clear();
     _existingLunchIds.clear();
+    _selectedHoliday.value = null;
   }
 
   Future<void> loadStudentsAndLunch() async {
@@ -98,6 +105,18 @@ class LunchController extends GetxController {
 
     try {
       _isLoading.value = true;
+      _selectedHoliday.value =
+          await _holidayService.getHolidayForDate(_selectedDate.value);
+      if (_selectedHoliday.value != null) {
+        _students.clear();
+        _lunchMap.clear();
+        _existingLunchIds.clear();
+        Get.snackbar(
+          'Holiday',
+          'Lunch is skipped for ${_selectedHoliday.value!.name}',
+        );
+        return;
+      }
 
       // Ensure classes are loaded
       if (_classController.classes.isEmpty) {
@@ -161,11 +180,13 @@ class LunchController extends GetxController {
   }
 
   void toggleStudentLunch(String studentId, LunchStatus status) {
+    if (isSelectedDateHoliday) return;
     _lunchMap[studentId] = status;
     _lunchMap.refresh();
   }
 
   void markAllFullMeal() {
+    if (isSelectedDateHoliday) return;
     for (var student in _students) {
       _lunchMap[student.id] = LunchStatus.fullMeal;
     }
@@ -173,6 +194,7 @@ class LunchController extends GetxController {
   }
 
   void markAllNotTaken() {
+    if (isSelectedDateHoliday) return;
     for (var student in _students) {
       _lunchMap[student.id] = LunchStatus.notTaken;
     }
@@ -180,6 +202,15 @@ class LunchController extends GetxController {
   }
 
   Future<void> saveLunch() async {
+    _selectedHoliday.value =
+        await _holidayService.getHolidayForDate(_selectedDate.value);
+    if (_selectedHoliday.value != null) {
+      Get.snackbar(
+        'Holiday',
+        'Lunch is not marked on ${_selectedHoliday.value!.name}',
+      );
+      return;
+    }
     if (_students.isEmpty) {
       Get.snackbar('Error', 'No students to save lunch for');
       return;

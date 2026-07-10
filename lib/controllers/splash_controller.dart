@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:get/get.dart';
 
 class SplashController extends GetxController {
   final AuthController _authController = Get.find<AuthController>();
+  Timer? _loginStatusTimer;
 
   @override
   void onInit() {
@@ -10,10 +13,17 @@ class SplashController extends GetxController {
     _checkLoginStatus();
   }
 
-  Future<void> _checkLoginStatus() async {
+  void _checkLoginStatus() {
     // Artificial delay for splash screen visibility (optional)
-    await Future.delayed(const Duration(seconds: 2));
+    _loginStatusTimer = Timer(const Duration(seconds: 2), () async {
+      if (isClosed) return;
+      await _authController.checkLoginStatus();
+    });
+  }
 
-    await _authController.checkLoginStatus();
+  @override
+  void onClose() {
+    _loginStatusTimer?.cancel();
+    super.onClose();
   }
 }

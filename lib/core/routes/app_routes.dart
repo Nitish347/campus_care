@@ -53,8 +53,11 @@ import 'package:campus_care/models/student/student.dart';
 import 'package:campus_care/models/teacher/teacher.dart';
 import 'package:campus_care/core/middleware/school_admin_middleware.dart';
 import 'package:campus_care/screens/admin/attendance/admin_attendance_screen.dart';
+import 'package:campus_care/screens/admin/attendance/teacher_attendance_management_screen.dart';
 import 'package:campus_care/screens/admin/lunch/admin_lunch_management_screen.dart';
+import 'package:campus_care/screens/admin/holiday/admin_holiday_screen.dart';
 import 'package:campus_care/screens/admin/transport/transport_management_screen.dart';
+import 'package:campus_care/screens/teacher/attendance/teacher_geofence_attendance_screen.dart';
 import 'package:campus_care/controllers/attendance_controller.dart';
 import 'package:campus_care/controllers/transport_controller.dart';
 import 'package:campus_care/screens/admin/academic/subject_management_screen.dart';
@@ -185,7 +188,9 @@ class AppRoutes {
   static const String addClass = '/admin/classes/add';
   static const String addTimetable = '/admin/timetable/add';
   static const String adminAttendance = '/admin/attendance';
+  static const String adminTeacherAttendance = '/admin/teacher-attendance';
   static const String adminLunchManagement = '/admin/lunch';
+  static const String adminHolidays = '/admin/holidays';
   static const String adminTransportManagement = '/admin/transport';
   static const String adminHomework = '/admin/homework';
   static const String adminAddHomework = '/admin/homework/add';
@@ -211,6 +216,8 @@ class AppRoutes {
   static const String studentHomeworkDetail =
       '/teacher/homework/student-detail';
   static const String examManagement = '/teacher/exams';
+  static const String teacherGeofenceAttendance =
+      '/teacher/geofence-attendance';
 
   // Super Admin Routes
   static const String superAdminDashboard = '/super-admin/dashboard';
@@ -275,8 +282,18 @@ class AppRoutes {
       middlewares: [SchoolAdminMiddleware()],
     ),
     GetPage(
+      name: adminTeacherAttendance,
+      page: () => const TeacherAttendanceManagementScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
       name: adminLunchManagement,
       page: () => const AdminLunchManagementScreen(),
+      middlewares: [SchoolAdminMiddleware()],
+    ),
+    GetPage(
+      name: adminHolidays,
+      page: () => const AdminHolidayScreen(),
       middlewares: [SchoolAdminMiddleware()],
     ),
     GetPage(
@@ -526,6 +543,10 @@ class AppRoutes {
           );
         }),
     GetPage(name: examManagement, page: () => const ExamManagementScreen()),
+    GetPage(
+      name: teacherGeofenceAttendance,
+      page: () => const TeacherGeofenceAttendanceScreen(),
+    ),
 
     // Super Admin Pages (Protected by SuperAdminMiddleware)
     GetPage(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart' as shad;
 
 /// Data class for sidebar navigation items
 class SidebarItem {
@@ -43,27 +44,86 @@ class AdminSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final sidebarColor =
+        isDark ? const Color(0xFF09090B) : const Color(0xFF0F172A);
 
     return Container(
-      width: 260,
+      width: 272,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF111827) : const Color(0xFF1E293B),
+        color: sidebarColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 20,
-            offset: const Offset(4, 0),
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 18,
+            offset: const Offset(3, 0),
           ),
         ],
       ),
       child: Column(
         children: [
-          const SizedBox(height: 8),
-
-          // Navigation items
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 18, 12, 10),
+            child: shad.Card(
+              padding: const EdgeInsets.all(12),
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.06),
+              borderColor: Colors.white.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.school_rounded,
+                      color: Color(0xFF0F172A),
+                      size: 21,
+                    ),
+                  ),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          headerTitle ?? 'Campus Care',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Admin Console',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.55),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (headerExtra != null) ...[
+                    const SizedBox(width: 8),
+                    headerExtra!,
+                  ],
+                ],
+              ),
+            ),
+          ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 10),
               children: [
                 for (final section in sections) ...[
                   _SidebarSectionHeader(title: section.title),
@@ -74,8 +134,6 @@ class AdminSidebar extends StatelessWidget {
               ],
             ),
           ),
-
-          // Footer
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -89,7 +147,7 @@ class AdminSidebar extends StatelessWidget {
               'Campus Care v1.0',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.3),
+                color: Colors.white.withValues(alpha: 0.38),
                 fontSize: 11,
               ),
             ),
@@ -114,8 +172,8 @@ class AdminDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      width: 260,
-      backgroundColor: const Color(0xFF1E293B),
+      width: 272,
+      backgroundColor: Colors.transparent,
       child: AdminSidebar(sections: sections, headerTitle: headerTitle),
     );
   }
@@ -129,7 +187,7 @@ class _SidebarSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 50, 12, 6),
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 6),
       child: Row(
         children: [
           Container(
@@ -169,16 +227,17 @@ class _SidebarNavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      margin: const EdgeInsets.symmetric(vertical: 2),
+      margin: const EdgeInsets.symmetric(vertical: 3),
       decoration: BoxDecoration(
-        gradient: item.isSelected
-            ? const LinearGradient(
-                colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              )
-            : null,
-        borderRadius: BorderRadius.circular(10),
+        color: item.isSelected
+            ? Colors.white.withValues(alpha: 0.12)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(
+          color: item.isSelected
+              ? Colors.white.withValues(alpha: 0.18)
+              : Colors.transparent,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -189,10 +248,9 @@ class _SidebarNavItem extends StatelessWidget {
           hoverColor: Colors.white.withValues(alpha: 0.07),
           splashColor: Colors.white.withValues(alpha: 0.1),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               children: [
-                // Left accent bar for selected
                 if (item.isSelected)
                   Container(
                     width: 3,
@@ -209,7 +267,7 @@ class _SidebarNavItem extends StatelessWidget {
                   item.icon,
                   color: item.isSelected
                       ? Colors.white
-                      : Colors.white.withValues(alpha: 0.55),
+                      : Colors.white.withValues(alpha: 0.62),
                   size: 18,
                 ),
                 const SizedBox(width: 12),
@@ -219,10 +277,9 @@ class _SidebarNavItem extends StatelessWidget {
                     style: TextStyle(
                       color: item.isSelected
                           ? Colors.white
-                          : Colors.white.withValues(alpha: 0.65),
-                      fontWeight: item.isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w400,
+                          : Colors.white.withValues(alpha: 0.72),
+                      fontWeight:
+                          item.isSelected ? FontWeight.w700 : FontWeight.w500,
                       fontSize: 13.5,
                     ),
                   ),

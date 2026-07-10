@@ -41,9 +41,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
     _adminController = Get.find<AdminController>();
 
     if (widget.isTeacherDashboard) {
-      _teacherTimetableController = Get.isRegistered<TeacherTimetableController>()
-          ? Get.find<TeacherTimetableController>()
-          : Get.put(TeacherTimetableController());
+      _teacherTimetableController =
+          Get.isRegistered<TeacherTimetableController>()
+              ? Get.find<TeacherTimetableController>()
+              : Get.put(TeacherTimetableController());
       _noticeController = Get.isRegistered<NoticeController>()
           ? Get.find<NoticeController>()
           : Get.put(NoticeController());
@@ -160,9 +161,27 @@ class _AdminDashboardState extends State<AdminDashboard> {
         ),
       if (_hasModuleAccess(AdminModulePermissionKeys.attendance))
         SidebarItem(
-          icon: Icons.how_to_reg_rounded,
-          title: 'Attendance',
-          onTap: () => Get.toNamed(AppRoutes.adminAttendance),
+          icon: widget.isTeacherDashboard
+              ? Icons.my_location_rounded
+              : Icons.how_to_reg_rounded,
+          title: widget.isTeacherDashboard ? 'My Attendance' : 'Attendance',
+          onTap: () => Get.toNamed(widget.isTeacherDashboard
+              ? AppRoutes.teacherGeofenceAttendance
+              : AppRoutes.adminAttendance),
+        ),
+      if (!widget.isTeacherDashboard &&
+          _hasModuleAccess(AdminModulePermissionKeys.attendance))
+        SidebarItem(
+          icon: Icons.location_on_rounded,
+          title: 'Teacher Attendance',
+          onTap: () => Get.toNamed(AppRoutes.adminTeacherAttendance),
+        ),
+      if (!widget.isTeacherDashboard &&
+          _hasModuleAccess(AdminModulePermissionKeys.holidays))
+        SidebarItem(
+          icon: Icons.event_busy_rounded,
+          title: 'Holidays',
+          onTap: () => Get.toNamed(AppRoutes.adminHolidays),
         ),
       if (_hasModuleAccess(AdminModulePermissionKeys.lunchManagement))
         SidebarItem(
@@ -321,11 +340,38 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                     if (_hasModuleAccess(AdminModulePermissionKeys.attendance))
                       DashboardCard(
-                        icon: Icons.how_to_reg_rounded,
-                        title: 'Attendance',
-                        subtitle: 'Manage attendance',
-                        onTap: () => Get.toNamed(AppRoutes.adminAttendance),
+                        icon: widget.isTeacherDashboard
+                            ? Icons.my_location_rounded
+                            : Icons.how_to_reg_rounded,
+                        title: widget.isTeacherDashboard
+                            ? 'My Attendance'
+                            : 'Attendance',
+                        subtitle: widget.isTeacherDashboard
+                            ? 'Check in with GPS'
+                            : 'Manage attendance',
+                        onTap: () => Get.toNamed(widget.isTeacherDashboard
+                            ? AppRoutes.teacherGeofenceAttendance
+                            : AppRoutes.adminAttendance),
                         iconColor: const Color(0xFF0D9488),
+                      ),
+                    if (!widget.isTeacherDashboard &&
+                        _hasModuleAccess(AdminModulePermissionKeys.attendance))
+                      DashboardCard(
+                        icon: Icons.location_on_rounded,
+                        title: 'Teacher Attendance',
+                        subtitle: 'Geofences and logs',
+                        onTap: () =>
+                            Get.toNamed(AppRoutes.adminTeacherAttendance),
+                        iconColor: const Color(0xFFEA580C),
+                      ),
+                    if (!widget.isTeacherDashboard &&
+                        _hasModuleAccess(AdminModulePermissionKeys.holidays))
+                      DashboardCard(
+                        icon: Icons.event_busy_rounded,
+                        title: 'Holidays',
+                        subtitle: 'Manage yearly holidays',
+                        onTap: () => Get.toNamed(AppRoutes.adminHolidays),
+                        iconColor: const Color(0xFF0891B2),
                       ),
                     if (_hasModuleAccess(
                         AdminModulePermissionKeys.lunchManagement))
@@ -684,9 +730,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
       return todayNotices.first;
     }
 
-    final activeNotices =
-        notices.where((notice) => !_isNoticeExpired(notice)).toList()
-          ..sort((a, b) => b.issuedDate.compareTo(a.issuedDate));
+    final activeNotices = notices
+        .where((notice) => !_isNoticeExpired(notice))
+        .toList()
+      ..sort((a, b) => b.issuedDate.compareTo(a.issuedDate));
 
     if (activeNotices.isNotEmpty) {
       return activeNotices.first;
@@ -1283,12 +1330,12 @@ class _WelcomeBanner extends StatelessWidget {
                 authController.currentRole == AppConstants.roleTeacher;
             final admin = authController.currentAdmin;
             final teacher = authController.currentTeacher;
-            final displayName =
-                teacher?.fullName ?? admin?.fullName ?? 'Admin';
+            final displayName = teacher?.fullName ?? admin?.fullName ?? 'Admin';
             final profileImageUrl =
                 teacher?.profileImageUrl ?? admin?.profileImageUrl;
-            final profileRoute =
-                isTeacherRole ? AppRoutes.teacherProfile : AppRoutes.adminProfile;
+            final profileRoute = isTeacherRole
+                ? AppRoutes.teacherProfile
+                : AppRoutes.adminProfile;
 
             return Row(
               mainAxisSize: MainAxisSize.min,

@@ -5,6 +5,7 @@ class AdminModulePermissionKeys {
   static const String subjectManagement = 'subject_management';
   static const String timetable = 'timetable';
   static const String attendance = 'attendance';
+  static const String holidays = 'holidays';
   static const String lunchManagement = 'lunch_management';
   static const String transportManagement = 'transport_management';
   static const String homeworkManagement = 'homework_management';
@@ -19,6 +20,7 @@ class AdminModulePermissionKeys {
     subjectManagement,
     timetable,
     attendance,
+    holidays,
     lunchManagement,
     transportManagement,
     homeworkManagement,
@@ -35,6 +37,7 @@ const Map<String, bool> defaultAdminModulePermissions = {
   AdminModulePermissionKeys.subjectManagement: true,
   AdminModulePermissionKeys.timetable: true,
   AdminModulePermissionKeys.attendance: true,
+  AdminModulePermissionKeys.holidays: true,
   AdminModulePermissionKeys.lunchManagement: true,
   AdminModulePermissionKeys.transportManagement: true,
   AdminModulePermissionKeys.homeworkManagement: true,
@@ -50,6 +53,7 @@ const Map<String, String> adminModulePermissionLabels = {
   AdminModulePermissionKeys.subjectManagement: 'Subject Management',
   AdminModulePermissionKeys.timetable: 'Timetable',
   AdminModulePermissionKeys.attendance: 'Attendance',
+  AdminModulePermissionKeys.holidays: 'Holidays',
   AdminModulePermissionKeys.lunchManagement: 'Lunch Management',
   AdminModulePermissionKeys.transportManagement: 'Transport',
   AdminModulePermissionKeys.homeworkManagement: 'Homework',

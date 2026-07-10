@@ -3,11 +3,14 @@ import 'package:get/get.dart';
 import 'package:campus_care/models/student/student.dart';
 import 'package:campus_care/services/student_service.dart';
 import 'package:campus_care/services/api/attendance_api_service.dart';
+import 'package:campus_care/services/api/holiday_api_service.dart';
+import 'package:campus_care/models/holiday_model.dart';
 import 'package:campus_care/controllers/auth_controller.dart';
 import 'package:campus_care/controllers/class_controller.dart';
 
 class AttendanceController extends GetxController {
   final AttendanceApiService _attendanceService = AttendanceApiService();
+  final HolidayApiService _holidayService = HolidayApiService();
   final AuthController _authController = Get.find<AuthController>();
   final ClassController _classController = Get.put(ClassController());
 
@@ -20,6 +23,7 @@ class AttendanceController extends GetxController {
   final _selectedClass = Rxn<String>();
   final _selectedSection = Rxn<String>();
   final _selectedDate = Rx<DateTime>(DateTime.now());
+  final _selectedHoliday = Rxn<HolidayModel>();
 
   // UI State toggles
   final _isEditMode = false.obs;
@@ -52,6 +56,8 @@ class AttendanceController extends GetxController {
   String? get selectedClass => _selectedClass.value;
   String? get selectedSection => _selectedSection.value;
   DateTime get selectedDate => _selectedDate.value;
+  HolidayModel? get selectedHoliday => _selectedHoliday.value;
+  bool get isSelectedDateHoliday => _selectedHoliday.value != null;
 
   // Statistics
   int get totalStudents => _students.length;
@@ -90,6 +96,7 @@ class AttendanceController extends GetxController {
     _students.clear();
     _attendanceMap.clear();
     _existingAttendanceIds.clear();
+    _selectedHoliday.value = null;
   }
 
   Future<void> loadStudentsAndAttendance() async {
@@ -100,6 +107,18 @@ class AttendanceController extends GetxController {
 
     try {
       _isLoading.value = true;
+      _selectedHoliday.value =
+          await _holidayService.getHolidayForDate(_selectedDate.value);
+      if (_selectedHoliday.value != null) {
+        _students.clear();
+        _attendanceMap.clear();
+        _existingAttendanceIds.clear();
+        Get.snackbar(
+          'Holiday',
+          'Attendance is skipped for ${_selectedHoliday.value!.name}',
+        );
+        return;
+      }
 
       // Ensure classes are loaded so we can look up teacher later
       if (_classController.classes.isEmpty) {
@@ -163,11 +182,13 @@ class AttendanceController extends GetxController {
   }
 
   void toggleStudentAttendance(String studentId, AttendanceStatus status) {
+    if (isSelectedDateHoliday) return;
     _attendanceMap[studentId] = status;
     _attendanceMap.refresh();
   }
 
   void markAllPresent() {
+    if (isSelectedDateHoliday) return;
     for (var student in _students) {
       _attendanceMap[student.id] = AttendanceStatus.present;
     }
@@ -175,6 +196,7 @@ class AttendanceController extends GetxController {
   }
 
   void markAllAbsent() {
+    if (isSelectedDateHoliday) return;
     for (var student in _students) {
       _attendanceMap[student.id] = AttendanceStatus.absent;
     }
@@ -182,6 +204,15 @@ class AttendanceController extends GetxController {
   }
 
   Future<void> saveAttendance() async {
+    _selectedHoliday.value =
+        await _holidayService.getHolidayForDate(_selectedDate.value);
+    if (_selectedHoliday.value != null) {
+      Get.snackbar(
+        'Holiday',
+        'Attendance is not marked on ${_selectedHoliday.value!.name}',
+      );
+      return;
+    }
     if (_students.isEmpty) {
       Get.snackbar('Error', 'No students to save attendance for');
       return;
